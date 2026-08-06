@@ -212,7 +212,7 @@ struct EventMapView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 7) {
                 ForEach(EventService.Range.allCases, id: \.self) { r in
-                    Pill(text: r.label, active: app.range == r, color: Tok.accent) {
+                    Pill(text: r.label, active: app.range == r) {
                         app.range = r
                         focus = nil
                         Task { await app.load() }
@@ -449,22 +449,20 @@ struct CarouselCard: View {
                 if let img = event.image, let url = URL(string: img) {
                     AsyncImage(url: url) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
                 }
-                let b = Fmt.badge(event.startDate)
                 HStack {
-                    VStack(spacing: 0) {
-                        Text(b.m).font(.system(size: 9, weight: .heavy)).foregroundStyle(Tok.accent)
-                        Text(b.day).font(.system(size: 15, weight: .heavy)).foregroundStyle(.white)
-                    }.padding(.horizontal, 6).padding(.vertical, 3)
-                        .background(.black.opacity(0.8), in: RoundedRectangle(cornerRadius: 7))
-                    Spacer()
-                    Text(Fmt.distance(event.distanceKm)).font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
-                        .padding(.horizontal, 9).padding(.vertical, 3)
-                        .background(.black.opacity(0.8), in: Capsule())
+                    Text(Fmt.when(event.startDate).text.uppercased())
+                        .font(.system(size: 10, weight: .bold)).kerning(0.7).foregroundStyle(.white)
+                        .padding(.horizontal, 9).padding(.vertical, 4)
+                        .background(.black.opacity(0.78), in: Capsule())
+                    Spacer(minLength: 6)
+                    Text(Fmt.distance(event.distanceKm)).font(.system(size: 11, weight: .bold)).foregroundStyle(.white)
+                        .padding(.horizontal, 9).padding(.vertical, 4)
+                        .background(.black.opacity(0.78), in: Capsule())
                 }.padding(8)
             }
             .frame(height: 96).clipped()
             VStack(alignment: .leading, spacing: 4) {
-                Text(event.title).font(.system(size: 14.5, weight: .bold)).foregroundStyle(Tok.text).lineLimit(1)
+                Text(event.title).font(.system(size: 14.5, weight: .semibold)).foregroundStyle(Tok.text).lineLimit(1)
                 Text("\(Fmt.time(event.startDate)) · \(event.venue ?? "Venue TBA")")
                     .font(.system(size: 12)).foregroundStyle(Tok.muted).lineLimit(1)
             }.padding(10)

@@ -91,7 +91,7 @@ struct OnboardingView: View {
     private var locationStep: some View {
         VStack(spacing: 0) {
             Spacer()
-            artCircle("location.fill", Tok.accent2)
+            artCircle("location.fill", Tok.link)
             Text("Sorted by what's closest to you").font(.system(size: 24, weight: .heavy))
                 .foregroundStyle(Tok.text).multilineTextAlignment(.center).padding(.top, 22)
             Text("Allow location so we can find your nearest town and rank events by distance. It's used only to sort by distance and is never stored.")
@@ -101,7 +101,7 @@ struct OnboardingView: View {
                 Label(app.locAuthorized ? "Location enabled" : "Allow location",
                       systemImage: app.locAuthorized ? "checkmark.circle.fill" : "location.fill")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(app.locAuthorized ? Tok.freeFg : Tok.accent2)
+                    .foregroundStyle(app.locAuthorized ? Tok.freeFg : Tok.link)
                     .padding(.horizontal, 16).padding(.vertical, 10)
                     .background(Tok.panel, in: Capsule())
                     .overlay(Capsule().stroke(Tok.hairline, lineWidth: 1))
@@ -129,13 +129,13 @@ struct OnboardingView: View {
                             HStack(spacing: 8) {
                                 Text(p.emoji).font(.system(size: 18))
                                 Text(p.label).font(.system(size: 13.5, weight: .semibold))
-                                    .foregroundStyle(on ? .white : Tok.text).lineLimit(1).minimumScaleFactor(0.8)
+                                    .foregroundStyle(on ? Tok.activeFg : Tok.text).lineLimit(1).minimumScaleFactor(0.8)
                                 Spacer(minLength: 0)
-                                if on { Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)).foregroundStyle(.white) }
+                                if on { Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)).foregroundStyle(Tok.activeFg) }
                             }
                             .padding(.horizontal, 12).padding(.vertical, 12)
-                            .background(on ? Tok.accent : Tok.panel, in: RoundedRectangle(cornerRadius: 12))
-                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(on ? Tok.accent : Tok.hairline, lineWidth: 1))
+                            .background(on ? Tok.activeBg : Tok.panel, in: RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(on ? Tok.activeBg : Tok.hairline, lineWidth: 1))
                         }
                         .buttonStyle(.plain)
                     }

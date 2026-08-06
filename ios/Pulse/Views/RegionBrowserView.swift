@@ -101,23 +101,23 @@ struct RegionBrowserView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(city.label)
                         .font(.system(size: 14.5, weight: .semibold))
-                        .foregroundStyle(selected ? .white : Tok.text)
+                        .foregroundStyle(selected ? Tok.activeFg : Tok.text)
                     if let area = city.area, area != city.label {
                         Text(area)
                             .font(.system(size: 12))
-                            .foregroundStyle(selected ? .white.opacity(0.85) : Tok.muted)
+                            .foregroundStyle(selected ? Tok.activeFg.opacity(0.85) : Tok.muted)
                     }
                 }
                 Spacer(minLength: 0)
                 if selected {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
+                        .font(.system(size: 12, weight: .bold)).foregroundStyle(Tok.activeFg)
                 }
             }
             .padding(.horizontal, 13).padding(.vertical, 11)
-            .background(selected ? Tok.accent : Tok.panel, in: RoundedRectangle(cornerRadius: 12))
+            .background(selected ? Tok.activeBg : Tok.panel, in: RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12)
-                .stroke(selected ? Tok.accent : Tok.hairline, lineWidth: 1))
+                .stroke(selected ? Tok.activeBg : Tok.hairline, lineWidth: 1))
         }
         .buttonStyle(.plain)
     }

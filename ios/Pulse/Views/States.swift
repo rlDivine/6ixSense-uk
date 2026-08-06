@@ -98,7 +98,7 @@ struct EmptyState: View {
             Button("Reset filters", action: reset)
                 .font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
                 .padding(.horizontal, 20).padding(.vertical, 11)
-                .background(Tok.accent, in: RoundedRectangle(cornerRadius: 12))
+                .background(Tok.activeBg, in: RoundedRectangle(cornerRadius: 12))
                 .padding(.top, 6)
         }
         .multilineTextAlignment(.center).padding(40)
@@ -118,7 +118,7 @@ struct ErrorState: View {
             Button("Retry", action: retry)
                 .font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
                 .padding(.horizontal, 20).padding(.vertical, 11)
-                .background(Tok.accent, in: RoundedRectangle(cornerRadius: 12))
+                .background(Tok.activeBg, in: RoundedRectangle(cornerRadius: 12))
                 .padding(.top, 6)
         }
         .multilineTextAlignment(.center).padding(40)

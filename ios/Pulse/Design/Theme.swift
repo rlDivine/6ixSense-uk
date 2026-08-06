@@ -2,11 +2,15 @@ import SwiftUI
 
 // MARK: - Colour tokens
 //
-// The palette is built from the Union flag: Pantone 280 blue (#012169),
-// Pantone 186 red (#C8102E) and white. Neither flag colour survives a straight
-// lift into a dark interface, so the dark theme sits on a navy derived from the
-// blue and lifts the red just enough to clear contrast checks on it. The light
-// theme uses both flag colours as-is.
+// The Union flag, used with discipline rather than evenly. Navy (Pantone 280)
+// is the interface colour and does the work of every selected state. Red
+// (Pantone 186) is reserved for three things only: the logo, the primary
+// action, and "today". Reserving it is what stops the app looking like a wall
+// of buttons.
+//
+// Neither flag colour survives a straight lift into a dark interface, so the
+// dark theme sits on a navy derived from the blue and swaps the roles: near
+// white carries the selected states, and the red is lifted to read on navy.
 //
 // Every token is a flat colour. There are no gradients anywhere in the app.
 
@@ -26,22 +30,32 @@ extension Color {
 }
 
 enum Tok {
-    static let bg       = Color(dark: 0x0A1128, light: 0xF4F6FA)
-    static let panel    = Color(dark: 0x111D3D, light: 0xFFFFFF)
-    static let panel2   = Color(dark: 0x18264A, light: 0xE9EDF5)
-    static let hairline = Color(dark: 0x24365F, light: 0xD5DCE8)
-    static let text     = Color(dark: 0xEDF0F7, light: 0x0B1533)
-    static let muted    = Color(dark: 0x97A3C0, light: 0x56617D)
-    static let chip     = Color(dark: 0x18264A, light: 0xE9EDF5)
-    /// Flag red. Lifted on dark navy, where Pantone 186 itself is too close in
-    /// luminance to the background to read as a control.
-    static let accent   = Color(dark: 0xE23B4E, light: 0xC8102E)
-    /// Flag blue. Inverted on dark, where Pantone 280 disappears into the
-    /// background entirely.
-    static let accent2  = Color(dark: 0x7FA0E8, light: 0x012169)
-    /// Free events. Kept inside the flag palette rather than reaching for a
-    /// green that belongs to neither colour.
-    static let freeFg   = Color(dark: 0xE23B4E, light: 0xC8102E)
+    static let bg       = Color(dark: 0x080E1C, light: 0xF6F7FB)
+    static let panel    = Color(dark: 0x0F1730, light: 0xFFFFFF)
+    static let panel2   = Color(dark: 0x16203C, light: 0xEEF1F7)
+    static let hairline = Color(dark: 0x1D2846, light: 0xE3E7F0)
+
+    /// Three weights of text. Using all three, rather than just text and muted,
+    /// is most of what gives a list its hierarchy.
+    static let text     = Color(dark: 0xEEF1F8, light: 0x0B1633)
+    static let muted    = Color(dark: 0x9AA5C2, light: 0x59627B)
+    static let faint    = Color(dark: 0x6D7999, light: 0x8B93A8)
+
+    /// Flag red. Logo, primary action, and anything happening today.
+    static let accent   = Color(dark: 0xF04B5F, light: 0xC8102E)
+    /// Flag blue, for links and secondary emphasis.
+    static let link     = Color(dark: 0x8FADEA, light: 0x012169)
+
+    /// Selected state. Flag navy on light, near white on dark, with the
+    /// matching foreground so a filled chip is always legible.
+    static let activeBg = Color(dark: 0xEEF1F8, light: 0x012169)
+    static let activeFg = Color(dark: 0x0B1327, light: 0xFFFFFF)
+
+    /// Kept for the Free label, which uses the accent rather than reaching for
+    /// a green that belongs to neither flag colour.
+    static let freeFg   = accent
+    /// Older name for `muted`, kept so nothing has to be renamed twice.
+    static let chip     = panel2
 }
 
 // MARK: - Category palette
@@ -197,15 +211,25 @@ struct PulseLogoView: View {
 // MARK: - Date helpers
 
 enum Fmt {
-    static func badge(_ d: Date?) -> (m: String, day: String) {
-        guard let d else { return ("TBA", "·") }
-        let m = d.formatted(.dateTime.month(.abbreviated)).uppercased()
-        return (m, d.formatted(.dateTime.day()))
-    }
     static func time(_ d: Date?) -> String {
         guard let d else { return "Time TBA" }
         return d.formatted(.dateTime.hour().minute())
     }
+    /// The overline above a card title: "Today, 19:00", "Sat, 8 Aug, 19:00".
+    /// `soon` marks the next two days, which is the one place in a list where
+    /// colouring something actually helps.
+    static func when(_ d: Date?) -> (text: String, soon: Bool) {
+        guard let d else { return ("Date to be announced", false) }
+        let time = d.formatted(.dateTime.hour().minute())
+        let days = Calendar.current.dateComponents(
+            [.day], from: Calendar.current.startOfDay(for: .now),
+            to: Calendar.current.startOfDay(for: d)).day ?? 0
+        if days <= 0 { return ("Today, \(time)", true) }
+        if days == 1 { return ("Tomorrow, \(time)", true) }
+        let day = d.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
+        return ("\(day), \(time)", false)
+    }
+
     static func relDay(_ d: Date?) -> String {
         guard let d else { return "Date TBA" }
         let days = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: .now),

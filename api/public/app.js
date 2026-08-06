@@ -111,15 +111,24 @@ const state = {
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
-function dateBadge(iso) {
-  if (!iso) return { m: "TBA", d: "·" };
-  const x = new Date(iso);
-  return { m: x.toLocaleString("en-GB", { month: "short" }), d: x.getDate() };
-}
 function timeStr(iso) {
   if (!iso) return "Time TBA";
   return new Date(iso).toLocaleString("en-GB", { hour: "numeric", minute: "2-digit" });
 }
+/// The overline above each card title: "TODAY . 19:00", "FRI 8 AUG . 19:00".
+/// Returns the label plus whether it is imminent, which is the one place the
+/// brand red earns its keep in the list.
+function whenLabel(iso) {
+  if (!iso) return { text: "Date to be announced", soon: false };
+  const d = new Date(iso);
+  const days = Math.round((d - new Date()) / 86400000);
+  const time = d.toLocaleString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  if (days <= 0) return { text: `Today, ${time}`, soon: true };
+  if (days === 1) return { text: `Tomorrow, ${time}`, soon: true };
+  const day = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  return { text: `${day}, ${time}`, soon: false };
+}
+
 function relDay(iso) {
   if (!iso) return "Date TBA";
   const days = Math.round((new Date(iso) - new Date()) / 86400000);
@@ -141,12 +150,6 @@ function distStr(km, fallback = "n/a") {
   const v = distNum(km);
   return v == null ? fallback : `${v} mi`;
 }
-function kmStr(e) {
-  const v = distNum(e.distanceKm);
-  if (v == null) return `· <small>n/a</small>`;
-  return `${v} <small>mi</small>`;
-}
-
 /* Where this feed is for, in words. The API names the region it built the feed
    around; before the first response lands we say "the UK" rather than guessing
    at a town. */
@@ -228,41 +231,38 @@ function renderStatus() {
   $("#status").textContent = `${items.length} events ${rl} ${where}`;
   const mins = Math.round((Date.now() - state.lastLoad) / 60000);
   $("#updated").textContent = state.lastLoad ? `Updated ${mins === 0 ? "just now" : mins + "m ago"}` : "";
-  $("#locLabel").textContent = state.origin && state.inMarket ? "You" : placeName();
-  $("#sub").textContent = `in ${placeName()}, right now`;
+  $("#locLabel").textContent = state.origin && state.inMarket ? "Near you" : placeName();
+  $("#pageTitle").textContent = `What's on in ${placeName()}`;
 }
 
 function cardHTML(e) {
-  const b = dateBadge(e.start);
+  const cm = catMeta(e.category);
+  const w = whenLabel(e.start);
   const on = state.saved[e.id] ? "on" : "";
-  // The icon is always laid down first and the photo covers it. A URL that
-  // fails removes itself, so the icon shows through rather than leaving an
-  // empty box.
+  // The icon is laid down first and the photo covers it, so a URL that fails
+  // leaves the icon rather than an empty box.
   const img = `<span class="ph-glyph">${catIcon(e.category, 26)}</span>` +
     (e.image ? `<img src="${esc(e.image)}" loading="lazy" onerror="this.remove()"/>` : "");
+  const dist = distNum(e.distanceKm);
+  const bits = [];
+  if (dist != null) bits.push(`<span class="dot"></span><span>${dist} mi</span>`);
+  if (isFree(e)) bits.push(`<span class="dot"></span><span class="free">Free</span>`);
+  else if (e.price) bits.push(`<span class="dot"></span><span>${esc(e.price)}</span>`);
+  bits.push(`<span class="dot"></span><span>${esc(e.source)}</span>`);
+
   return `
   <button class="card" data-id="${esc(e.id)}">
-    <span class="thumb" style="background:${wash(e.category)}">
-      ${img}
-      <span class="datebadge"><span class="m">${b.m}</span><span class="d">${b.d}</span></span>
-    </span>
+    <span class="thumb" style="background:${wash(e.category)}">${img}</span>
     <span class="body">
+      <span class="when ${w.soon ? "soon" : ""}">${esc(w.text)}</span>
       <span class="title">${esc(e.title)}</span>
-      <span class="meta">${timeStr(e.start)} · ${esc(e.venue || placeName())}</span>
-      <span class="tags">
-        <span class="tag cat">${esc(e.category)}</span>
-        <span class="tag">${relDay(e.start)}</span>
-        ${freeTag(e)}
-        ${priceTag(e)}
+      <span class="venue">${esc(e.venue || placeName())}</span>
+      <span class="foot">
+        <span class="cat"><i style="background:${cm.c}"></i>${esc(e.category)}</span>
+        ${bits.join("")}
       </span>
     </span>
-    <span class="rail">
-      <span class="bookmark ${on}" data-bk="${esc(e.id)}">${bmIcon(!!state.saved[e.id])}</span>
-      <span>
-        <span class="km">${kmStr(e)}</span>
-        <span class="src">${esc(e.source)}</span>
-      </span>
-    </span>
+    <span class="bookmark ${on}" data-bk="${esc(e.id)}">${bmIcon(!!state.saved[e.id])}</span>
   </button>`;
 }
 
@@ -497,11 +497,11 @@ function renderMap() {
 }
 function renderCarousel(items) {
   $("#carousel").innerHTML = items.slice(0, 40).map((e) => {
-    const b = dateBadge(e.start);
+    const w = whenLabel(e.start);
     const banner = e.image ? `style="background-image:url('${esc(e.image)}');background-size:cover;background-position:center"` : `style="background:${wash(e.category)}"`;
     return `<div class="ccard" data-cid="${esc(e.id)}">
       <div class="cbanner" ${banner}>${e.image ? "" : catIcon(e.category, 30)}
-        <span class="cdate"><span class="m">${b.m}</span><span class="d">${b.d}</span></span>
+        <span class="cdate">${esc(w.text)}</span>
         <span class="ckm">${distStr(e.distanceKm, "n/a")}</span>
       </div>
       <div class="cb"><h4>${esc(e.title)}</h4><p>${timeStr(e.start)} · ${esc(e.venue || placeName())}</p>
@@ -530,7 +530,7 @@ function openDetail(id) {
   const on = state.saved[e.id];
   const hero = e.image ? `<img src="${esc(e.image)}" onerror="this.remove()"/>` : "";
   $("#detail").innerHTML = `
-    <div class="hero" style="background:${wash(e.category)}">${catIcon(e.category, 54)}${hero}<div class="scrim"></div>
+    <div class="hero" style="background:${wash(e.category)}">${catIcon(e.category, 54)}${hero}
       <button class="hbtn back" id="detailBack" aria-label="Back">${uiIcon("back", 20)}</button>
       <button class="hbtn fav" id="detailFav">${bmIcon(!!on)}</button>
     </div>
@@ -546,22 +546,24 @@ function openDetail(id) {
       <div class="venue-block">
         <div class="vn">${esc(e.venue || "Venue TBA")}</div>
         <div class="va">${esc(e.address || placeName())}</div>
-        ${e.lat != null ? `<div id="miniMap"></div>` : ""}
+        ${e.lat != null && typeof L !== "undefined" ? `<div id="miniMap"></div>` : ""}
         ${e.lat != null ? `<a class="dir" href="https://www.google.com/maps/dir/?api=1&destination=${e.lat},${e.lng}" target="_blank" rel="noopener">Directions ${uiIcon("external", 14)}</a>` : ""}
       </div>
       <div class="secondary-actions">
         <button class="sa" id="saShare">Share</button>
-        <button class="sa" id="saCal">Add to calendar</button>
+        <button class="sa" id="saCal">Calendar</button>
         <button class="sa" id="saSave">${on ? `Saved ${uiIcon("check", 14)}` : "Save"}</button>
       </div>
     </div>
     <div class="cta"><a href="${esc(e.url || "#")}" target="_blank" rel="noopener">Get tickets and details ${uiIcon("external", 15)}</a></div>`;
   $("#detail").classList.remove("hidden");
 
-  if (e.lat != null) {
+  // Same guard as initMap: Leaflet comes off a CDN, and losing the venue
+  // thumbnail must not take the rest of the detail sheet down with it.
+  if (e.lat != null && typeof L !== "undefined") {
     setTimeout(() => {
       miniMap = L.map("miniMap", { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false }).setView([e.lat, e.lng], 14);
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png").addTo(miniMap);
+      L.tileLayer(tileURL()).addTo(miniMap);
       L.marker([e.lat, e.lng], { icon: pinIcon(e, true) }).addTo(miniMap);
     }, 60);
   }

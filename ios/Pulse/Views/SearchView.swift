@@ -101,7 +101,7 @@ struct SearchView: View {
                          ? "Couldn't find that address in the UK."
                          : "Show events around this address instead")
                         .font(.system(size: 12))
-                        .foregroundStyle(addressMiss == query ? Tok.accent2 : Tok.muted)
+                        .foregroundStyle(addressMiss == query ? Tok.link : Tok.muted)
                         .lineLimit(1)
                 }
                 Spacer(minLength: 0)

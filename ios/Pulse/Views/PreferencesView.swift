@@ -38,7 +38,7 @@ struct PreferencesView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     if !app.preferredCategories.isEmpty {
                         Button("Clear") { app.clearPreferences() }
-                            .foregroundStyle(Tok.accent2)
+                            .foregroundStyle(Tok.link)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -148,28 +148,28 @@ struct PreferencesView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(label)
                     .font(.system(size: 14.5, weight: .semibold))
-                    .foregroundStyle(selected ? .white : Tok.text)
+                    .foregroundStyle(selected ? Tok.activeFg : Tok.text)
                 if let detail {
                     Text(detail)
                         .font(.system(size: 12))
-                        .foregroundStyle(selected ? .white.opacity(0.85) : Tok.muted)
+                        .foregroundStyle(selected ? Tok.activeFg.opacity(0.85) : Tok.muted)
                 }
             }
             Spacer(minLength: 0)
             if selected {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
+                    .font(.system(size: 12, weight: .bold)).foregroundStyle(Tok.activeFg)
             }
             if chevron {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(selected ? .white : Tok.muted)
+                    .foregroundStyle(selected ? Tok.activeFg : Tok.muted)
             }
         }
         .padding(.horizontal, 13).padding(.vertical, 11)
-        .background(selected ? Tok.accent : Tok.panel, in: RoundedRectangle(cornerRadius: 12))
+        .background(selected ? Tok.activeBg : Tok.panel, in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12)
-            .stroke(selected ? Tok.accent : Tok.hairline, lineWidth: 1))
+            .stroke(selected ? Tok.activeBg : Tok.hairline, lineWidth: 1))
     }
 
     private func chip(_ p: Preference) -> some View {
@@ -178,13 +178,13 @@ struct PreferencesView: View {
             HStack(spacing: 8) {
                 Text(p.emoji).font(.system(size: 18))
                 Text(p.label).font(.system(size: 13.5, weight: .semibold))
-                    .foregroundStyle(on ? .white : Tok.text).lineLimit(1).minimumScaleFactor(0.8)
+                    .foregroundStyle(on ? Tok.activeFg : Tok.text).lineLimit(1).minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
-                if on { Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)).foregroundStyle(.white) }
+                if on { Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)).foregroundStyle(Tok.activeFg) }
             }
             .padding(.horizontal, 12).padding(.vertical, 12)
-            .background(on ? Tok.accent : Tok.panel, in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(on ? Tok.accent : Tok.hairline, lineWidth: 1))
+            .background(on ? Tok.activeBg : Tok.panel, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(on ? Tok.activeBg : Tok.hairline, lineWidth: 1))
         }
         .buttonStyle(.plain)
     }

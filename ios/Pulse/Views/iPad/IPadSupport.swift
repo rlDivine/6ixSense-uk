@@ -84,11 +84,11 @@ struct SideRow: View {
                     CountBadge(count: count, active: active)
                 }
             }
-            .foregroundStyle(active ? Color.white : Tok.text)
+            .foregroundStyle(active ? Tok.activeFg : Tok.text)
             .padding(.horizontal, 12)
             .frame(height: 42)
             .frame(maxWidth: .infinity)
-            .background(active ? Tok.accent : Color.clear, in: RoundedRectangle(cornerRadius: 11))
+            .background(active ? Tok.activeBg : Color.clear, in: RoundedRectangle(cornerRadius: 11))
             .contentShape(RoundedRectangle(cornerRadius: 11))
             .padding(.vertical, 1)      // 42 + 2 gives the 44pt minimum target
         }
@@ -104,9 +104,9 @@ struct CountBadge: View {
         Text("\(count)")
             .font(.system(size: 12, weight: .bold))
             .monospacedDigit()
-            .foregroundStyle(active ? Color.white : Tok.muted)
+            .foregroundStyle(active ? Tok.activeFg : Tok.muted)
             .padding(.horizontal, 8).padding(.vertical, 3)
-            .background(active ? Color.white.opacity(0.24) : Tok.panel2, in: Capsule())
+            .background(active ? Tok.activeFg.opacity(0.24) : Tok.panel2, in: Capsule())
     }
 }
 
@@ -135,7 +135,7 @@ struct IPadEventCard: View {
             cover
             VStack(alignment: .leading, spacing: 6) {
                 Text(event.title)
-                    .font(.system(size: 17, weight: .bold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Tok.text)
                     // Always reserve both lines so a one-line title doesn't make
                     // its card shorter than its row neighbours.
@@ -166,7 +166,7 @@ struct IPadEventCard: View {
     }
 
     private var cover: some View {
-        let badge = Fmt.badge(event.startDate)
+        let when = Fmt.when(event.startDate)
         let glyph = CategoryGlyph(category: event.category, size: 36)
         // The flat wash has no intrinsic size, so it is what decides the media
         // box rather than the remote photo. The image sits in an overlay, which is sized by
@@ -190,17 +190,15 @@ struct IPadEventCard: View {
             // added, so the button can still overhang the bottom edge.
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(alignment: .topLeading) {
-            VStack(spacing: -1) {
-                Text(badge.m).font(.system(size: 10, weight: .heavy)).foregroundStyle(Tok.accent)
-                Text(badge.day).font(.system(size: 17, weight: .heavy)).foregroundStyle(.white)
-            }
-            .padding(.horizontal, 8).padding(.vertical, 5)
-            .background(Color.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 9))
-            .padding(10)
+            Text(when.text.uppercased())
+                .font(.system(size: 10, weight: .bold)).kerning(0.7).foregroundStyle(.white)
+                .padding(.horizontal, 9).padding(.vertical, 5)
+                .background(Color.black.opacity(0.72), in: Capsule())
+                .padding(10)
         }
         .overlay(alignment: .topTrailing) {
-            (Text(Fmt.km(event.distanceKm)).font(.system(size: 13, weight: .heavy))
-             + Text(" \(Fmt.distanceUnit)").font(.system(size: 9.5, weight: .semibold)))
+            Text(Fmt.distance(event.distanceKm))
+                .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(.white)
                 .padding(.horizontal, 9).padding(.vertical, 5)
                 .background(Color.black.opacity(0.72), in: Capsule())

@@ -1,107 +1,142 @@
 import SwiftUI
 
-/// The most-used component (HANDOFF.md §4.1): image thumbnail + date badge,
-/// body, and a right rail with bookmark · distance · source.
+/// The most-used component. A row rather than a poster: thumbnail on the left,
+/// then an overline saying when, the title, the venue, and a quiet footer of
+/// category, distance, price and source.
+///
+/// The date used to sit in a badge stuck on the corner of the thumbnail and the
+/// distance used to be a large number in its own column. Both competed with the
+/// title for attention while telling you less than the overline does.
 struct EventCard: View {
     let event: Event
     @EnvironmentObject var app: AppState
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: 13) {
             thumb
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
+                when
                 Text(event.title)
-                    .font(.system(size: 15.5, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
+                    .kerning(-0.15)
+                    .lineSpacing(1)
                     .lineLimit(2)
+                    .multilineTextAlignment(.leading)
                     .foregroundStyle(Tok.text)
-                Text("\(Fmt.time(event.startDate)) · \(event.venue ?? "Venue TBA")")
-                    .font(.system(size: 12.5))
+                Text(event.venue?.isEmpty == false ? event.venue! : app.placeName)
+                    .font(.system(size: 13))
                     .foregroundStyle(Tok.muted)
                     .lineLimit(1)
-                tags
+                footer
             }
-            Spacer(minLength: 4)
-            rail
+            Spacer(minLength: 0)
+            bookmark
         }
-        .padding(10)
-        .background(Tok.panel, in: RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Tok.hairline, lineWidth: 1))
+        .padding(12)
+        .background(Tok.panel, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Tok.hairline, lineWidth: 1))
+    }
+
+    /// "Today, 19:00" in the accent, "Sat, 8 Aug, 19:00" in the quiet grey.
+    /// Imminence is the one thing in a list worth colouring.
+    private var when: some View {
+        let w = Fmt.when(event.startDate)
+        return Text(w.text.uppercased())
+            .font(.system(size: 10.5, weight: .bold))
+            .kerning(0.8)
+            .foregroundStyle(w.soon ? Tok.accent : Tok.faint)
+            .lineLimit(1)
     }
 
     private var thumb: some View {
-        let badge = Fmt.badge(event.startDate)
-        // Centered glyph/image, with the date badge pinned to the top-left corner.
-        return ZStack {
+        ZStack {
             Categories.wash(event.category)
+            CategoryGlyph(category: event.category, size: 22).opacity(0.75)
+            // The photo sits on top of the mark, so a URL that fails to load
+            // leaves the mark showing rather than an empty square.
             if let img = event.image, let url = URL(string: img) {
                 AsyncImage(url: url) { phase in
                     if let image = phase.image { image.resizable().scaledToFill() }
-                    else { CategoryGlyph(category: event.category, size: 22) }
+                    else { Color.clear }
                 }
-            } else {
-                CategoryGlyph(category: event.category, size: 22)
             }
         }
-        .frame(width: 74, height: 74)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(alignment: .topLeading) {
-            VStack(spacing: 0) {
-                Text(badge.m).font(.system(size: 9, weight: .heavy)).foregroundStyle(Tok.accent)
-                Text(badge.day).font(.system(size: 14, weight: .heavy)).foregroundStyle(.white)
-            }
-            .padding(.horizontal, 5).padding(.vertical, 2)
-            .background(Color.black.opacity(0.78), in: RoundedRectangle(cornerRadius: 7))
-            .padding(4)
-        }
+        .frame(width: 78, height: 78)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    private var tags: some View {
-        HStack(spacing: 5) {
-            TagChip(text: event.category, kind: .category)
-            TagChip(text: Fmt.relDay(event.startDate), kind: .neutral)
-            if event.isFree && event.category != "Free" { TagChip(text: "Free", kind: .free) }
-            if let p = event.price, !p.isEmpty, !event.isFree { TagChip(text: p, kind: .neutral) }
+    /// Category, distance, price and source, separated by dots. Quiet by
+    /// design: it is reference detail, not something to scan.
+    private var footer: some View {
+        HStack(spacing: 6) {
+            HStack(spacing: 5) {
+                Circle()
+                    .fill(Categories.style(event.category).color)
+                    .frame(width: 6, height: 6)
+                Text(event.category)
+                    .font(.system(size: 11.5, weight: .semibold))
+                    .foregroundStyle(Tok.muted)
+            }
+            if event.distanceKm != nil {
+                separator
+                Text(Fmt.distance(event.distanceKm)).font(.system(size: 11.5)).foregroundStyle(Tok.faint)
+            }
+            if event.isFree {
+                separator
+                Text("Free").font(.system(size: 11.5, weight: .bold)).foregroundStyle(Tok.accent)
+            } else if let p = event.price, !p.isEmpty {
+                separator
+                Text(p).font(.system(size: 11.5)).foregroundStyle(Tok.faint)
+            }
+            separator
+            Text(event.source).font(.system(size: 11.5)).foregroundStyle(Tok.faint).lineLimit(1)
         }
+        .padding(.top, 4)
     }
 
-    private var rail: some View {
-        VStack(alignment: .trailing, spacing: 6) {
-            Button { app.toggleSave(event) } label: {
-                Image(systemName: app.isSaved(event) ? "bookmark.fill" : "bookmark")
-                    .font(.system(size: 17))
-                    .foregroundStyle(app.isSaved(event) ? Tok.accent : Tok.muted)
-            }
-            .buttonStyle(.plain)
-            Spacer(minLength: 0)
-            VStack(alignment: .trailing, spacing: 2) {
-                (Text(Fmt.km(event.distanceKm)).font(.system(size: 20, weight: .heavy))
-                 + Text(" \(Fmt.distanceUnit)").font(.system(size: 11, weight: .semibold)).foregroundColor(Tok.muted))
-                    .foregroundStyle(Tok.text)
-                Text(event.source).font(.system(size: 10.5)).foregroundStyle(Tok.muted)
-            }
+    private var separator: some View {
+        Circle().fill(Tok.faint).frame(width: 2, height: 2).opacity(0.7)
+    }
+
+    private var bookmark: some View {
+        Button { app.toggleSave(event) } label: {
+            Image(systemName: app.isSaved(event) ? "bookmark.fill" : "bookmark")
+                .font(.system(size: 16))
+                .foregroundStyle(app.isSaved(event) ? Tok.accent : Tok.faint)
         }
-        .frame(minWidth: 52)
+        .buttonStyle(.plain)
+        .accessibilityLabel(app.isSaved(event) ? "Remove from saved" : "Save event")
     }
 }
 
 enum TagKind { case category, neutral, free }
 
+/// Small outlined label, used on the detail sheet and the iPad grid. Outlined
+/// rather than filled, so several of them together stay quiet.
 struct TagChip: View {
     let text: String
     var kind: TagKind = .neutral
     var body: some View {
         Text(text)
             .font(.system(size: 11, weight: .semibold))
-            .padding(.horizontal, 7).padding(.vertical, 3)
+            .padding(.horizontal, 9).padding(.vertical, 4)
             .foregroundStyle(fg)
-            .background(bg, in: RoundedRectangle(cornerRadius: 6))
+            .background(bg, in: Capsule())
+            .overlay(Capsule().stroke(stroke, lineWidth: 1))
     }
-    private var fg: Color { switch kind { case .category: Tok.accent2; case .free: Tok.freeFg; case .neutral: Tok.muted } }
-    private var bg: Color {
+    private var fg: Color {
         switch kind {
-        case .category: Tok.accent2.opacity(0.14)
-        case .free: Tok.freeFg.opacity(0.16)
-        case .neutral: Tok.chip
+        case .category: Tok.text
+        case .free: Tok.accent
+        case .neutral: Tok.muted
+        }
+    }
+    private var bg: Color { kind == .neutral ? Tok.panel2 : .clear }
+    private var stroke: Color {
+        switch kind {
+        case .category: Tok.hairline
+        case .free: Tok.accent
+        case .neutral: .clear
         }
     }
 }

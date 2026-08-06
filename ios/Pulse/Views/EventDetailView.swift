@@ -107,7 +107,7 @@ struct EventDetailView: View {
                 VenueSnapshot(coordinate: coord)
                     .frame(height: 130).clipShape(RoundedRectangle(cornerRadius: 10))
                 if let url = URL(string: "http://maps.apple.com/?daddr=\(lat),\(lng)") {
-                    Link("Directions", destination: url).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Tok.accent2)
+                    Link("Directions", destination: url).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Tok.link)
                 }
             }
         }

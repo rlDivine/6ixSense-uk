@@ -20,64 +20,77 @@ struct DiscoverView: View {
     }
 
     // MARK: Header
+    //
+    // A small brand strip, then the place as a proper page title. The title is
+    // the thing worth reading, so it gets the size; the wordmark only has to
+    // say which app you are in.
     private var header: some View {
-        HStack(alignment: .center, spacing: 9) {
-            PulseLogoView(size: 26)
-            VStack(alignment: .leading, spacing: 1) {
-                Text("Pulse").font(.system(size: 21, weight: .heavy)).foregroundStyle(Tok.text)
-                Text("what's on in \(app.placeName), right now").font(.system(size: 11.5)).foregroundStyle(Tok.muted)
-            }
-            Spacer()
-            Button { showPrefs = true } label: {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 15, weight: .semibold)).foregroundStyle(Tok.text)
-                    .frame(width: 34, height: 34)
-                    .background(Tok.panel, in: Circle())
-                    .overlay(Circle().stroke(Tok.hairline, lineWidth: 1))
-                    .overlay(alignment: .topTrailing) {
-                        if app.isPreferenceFiltered {
-                            Circle().fill(Tok.accent).frame(width: 9, height: 9)
-                                .overlay(Circle().stroke(Tok.bg, lineWidth: 1.5))
-                                .offset(x: 1, y: -1)
-                        }
-                    }
-            }
-            Button {
-                // With a manual place set, the chip's job is to clear it rather
-                // than to re-ask for a permission we aren't using.
-                if app.placeOverride != nil { Task { await app.clearOverride() } }
-                else { app.tapLocationChip() }
-            } label: {
-                Label(app.locationChipLabel,
-                      systemImage: app.placeOverride == nil ? "location.fill" : "mappin.circle.fill")
-                    .lineLimit(1)
-                    .font(.system(size: 12, weight: .semibold))
-                    .padding(.horizontal, 10).padding(.vertical, 7)
-                    .background(Tok.panel, in: Capsule())
-                    .overlay(Capsule().stroke(Tok.hairline, lineWidth: 1))
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 7) {
+                PulseLogoView(size: 18)
+                Text("Pulse")
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(Tok.text)
+                Spacer(minLength: 8)
+                locationChip
+                Button { showPrefs = true } label: {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 14, weight: .semibold)).foregroundStyle(Tok.muted)
+                        .frame(width: 30, height: 30)
+                        .overlay(Circle().stroke(Tok.hairline, lineWidth: 1))
+                        .overlay(alignment: .topTrailing) {
+                            if app.isPreferenceFiltered {
+                                Circle().fill(Tok.accent).frame(width: 8, height: 8)
+                                    .overlay(Circle().stroke(Tok.bg, lineWidth: 1.5))
+                                    .offset(x: 1, y: -1)
+                            }
+                        }
+                }
             }
+            Text("What's on in \(app.placeName)")
+                .font(.system(size: 27, weight: .bold))
+                .kerning(-0.6)
+                .foregroundStyle(Tok.text)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 10)
         }
-        .padding(.horizontal, 14).padding(.top, 8).padding(.bottom, 10)
+        .padding(.horizontal, 16).padding(.top, 8).padding(.bottom, 12)
+    }
+
+    private var locationChip: some View {
+        Button {
+            // With a manual place set, the chip's job is to clear it rather
+            // than to re-ask for a permission we aren't using.
+            if app.placeOverride != nil { Task { await app.clearOverride() } }
+            else { app.tapLocationChip() }
+        } label: {
+            Label(app.locationChipLabel,
+                  systemImage: app.placeOverride == nil ? "location.fill" : "mappin.circle.fill")
+                .lineLimit(1)
+                .font(.system(size: 12, weight: .semibold))
+                .padding(.horizontal, 11).padding(.vertical, 6)
+                .overlay(Capsule().stroke(Tok.hairline, lineWidth: 1))
+                .foregroundStyle(Tok.muted)
+        }
     }
 
     // MARK: Controls
     private var controls: some View {
         VStack(spacing: 10) {
-            // Sort segmented
-            HStack(spacing: 3) {
+            // Sort: two words, with the live one underlined.
+            HStack(spacing: 18) {
                 segment("Nearest", .nearest)
                 segment("Soonest", .soonest)
+                Spacer(minLength: 0)
             }
-            .padding(4)
-            .background(Tok.panel, in: Capsule())
-            .overlay(Capsule().stroke(Tok.hairline, lineWidth: 1))
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(alignment: .bottom) { Rectangle().fill(Tok.hairline).frame(height: 1) }
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 7) {
                     ForEach(EventService.Range.allCases, id: \.self) { r in
-                        Pill(text: r.label, active: app.range == r, color: Tok.accent) {
+                        Pill(text: r.label, active: app.range == r) {
                             app.range = r; Task { await app.load() }
                         }
                     }
@@ -87,7 +100,7 @@ struct DiscoverView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 7) {
                     ForEach(app.categoryChips, id: \.self) { c in
-                        Pill(text: c, active: app.category == c, color: Tok.accent2, filledText: .white) {
+                        Pill(text: c, active: app.category == c, small: true) {
                             app.category = c
                         }
                     }
@@ -98,13 +111,13 @@ struct DiscoverView: View {
                 Text(statusText).font(.system(size: 12.5)).foregroundStyle(Tok.muted)
                 Spacer()
                 Button { Task { await app.load() } } label: {
-                    Text(updatedText).font(.system(size: 12, weight: .semibold)).foregroundStyle(Tok.accent2)
+                    Text(updatedText).font(.system(size: 11.5, weight: .semibold)).foregroundStyle(Tok.faint)
                 }
             }
 
             outOfMarketNotice
         }
-        .padding(.horizontal, 14).padding(.bottom, 8)
+        .padding(.horizontal, 16).padding(.bottom, 10)
     }
 
     /// Shown only when the device is outside the UK. Without it the feed looks
@@ -130,13 +143,17 @@ struct DiscoverView: View {
     }
 
     private func segment(_ label: String, _ value: EventService.Sort) -> some View {
-        Button { app.sort = value; Task { await app.load() } } label: {
-            Text(label).font(.system(size: 13.5, weight: .semibold))
-                .padding(.vertical, 9).padding(.horizontal, 18)
-                .foregroundStyle(app.sort == value ? .white : Tok.muted)
-                .background(app.sort == value ? Tok.accent : .clear, in: Capsule())
+        let on = app.sort == value
+        return Button { app.sort = value; Task { await app.load() } } label: {
+            Text(label).font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(on ? Tok.text : Tok.faint)
+                .padding(.bottom, 9)
+                .overlay(alignment: .bottom) {
+                    Rectangle().fill(on ? Tok.accent : .clear).frame(height: 2)
+                }
         }
         .buttonStyle(.plain)
+        .zIndex(1)
     }
 
     // MARK: Content
@@ -149,13 +166,13 @@ struct DiscoverView: View {
             EmptyState { app.category = "All"; app.range = .all; Task { await app.load() } }
         } else {
             ScrollView {
-                LazyVStack(spacing: 12) {
+                LazyVStack(spacing: 10) {
                     ForEach(app.visibleEvents) { e in
                         Button { selected = e } label: { EventCard(event: e) }
                             .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, 14).padding(.top, 6).padding(.bottom, 90)
+                .padding(.horizontal, 16).padding(.top, 10).padding(.bottom, 90)
             }
             .refreshable { await app.load() }
         }
@@ -184,19 +201,21 @@ struct DiscoverView: View {
     }
 }
 
+/// The one chip used by both filter rows. Outlined when off, filled with the
+/// selected colour when on, which is navy on light and near white on dark.
 struct Pill: View {
     let text: String
     let active: Bool
-    var color: Color
-    var filledText: Color = .white
+    var small: Bool = false
     let action: () -> Void
     var body: some View {
         Button(action: action) {
-            Text(text).font(.system(size: 12.5, weight: .semibold))
-                .padding(.horizontal, 13).padding(.vertical, 7)
-                .foregroundStyle(active ? filledText : Tok.muted)
-                .background(active ? color : Tok.panel, in: Capsule())
-                .overlay(Capsule().stroke(active ? color : Tok.hairline, lineWidth: 1))
+            Text(text)
+                .font(.system(size: small ? 12 : 12.5, weight: .semibold))
+                .padding(.horizontal, small ? 11 : 12).padding(.vertical, small ? 5 : 6)
+                .foregroundStyle(active ? Tok.activeFg : Tok.muted)
+                .background(active ? Tok.activeBg : .clear, in: Capsule())
+                .overlay(Capsule().stroke(active ? Tok.activeBg : Tok.hairline, lineWidth: 1))
         }
         .buttonStyle(.plain)
     }

@@ -203,7 +203,7 @@ struct IPadRootView: View {
                 .foregroundStyle(app.sort == s ? .white : Tok.muted)
                 .frame(maxWidth: .infinity)
                 .frame(height: 32)
-                .background(app.sort == s ? Tok.accent : .clear, in: RoundedRectangle(cornerRadius: 9))
+                .background(app.sort == s ? Tok.activeBg : .clear, in: RoundedRectangle(cornerRadius: 9))
         }
         .buttonStyle(.plain)
         .frame(height: 38)
@@ -386,7 +386,7 @@ struct IPadRootView: View {
             .foregroundStyle(located ? .white : Tok.muted)
             .padding(.horizontal, 14)
             .frame(height: 44)
-            .background(located ? Tok.accent : Tok.panel, in: Capsule())
+            .background(located ? Tok.activeBg : Tok.panel, in: Capsule())
             .overlay(Capsule().stroke(located ? Tok.accent : Tok.hairline, lineWidth: 1))
         }
         .buttonStyle(.plain)
@@ -709,7 +709,7 @@ struct IPadDetailBody: View {
                     .frame(height: 140).clipShape(RoundedRectangle(cornerRadius: 10))
                 if let url = URL(string: "http://maps.apple.com/?daddr=\(lat),\(lng)") {
                     Link("Directions", destination: url)
-                        .font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Tok.accent2)
+                        .font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Tok.link)
                         .frame(height: 44)
                 }
             }

@@ -90,11 +90,19 @@ Ticketmaster.
 
 ## Design
 
-**Palette.** The Union flag: Pantone 280 blue (`#012169`), Pantone 186 red
-(`#C8102E`) and white. Neither flag colour survives a straight lift into a dark
-interface, so the dark theme sits on a navy derived from the blue and lifts the
-red enough to clear contrast checks on it. The light theme uses both flag
-colours as they are.
+**Palette.** The Union flag, used with discipline rather than evenly. Navy
+(Pantone 280, `#012169`) is the interface colour and carries every selected
+state. Red (Pantone 186, `#C8102E`) is reserved for three things: the logo, the
+primary action, and anything happening today. Reserving it is what stops the
+app looking like a wall of buttons. The dark theme swaps the roles, since
+neither flag colour survives a straight lift into a dark interface: it sits on
+a navy derived from the blue, near white carries the selected states, and the
+red is lifted to read on navy.
+
+**Layout.** Editorial rather than boxy. The place is a page title rather than a
+caption, dates sit above each title as a letter-spaced overline instead of a
+sticker on the thumbnail, and distance is quiet reference detail in the footer
+rather than a large number competing with the event name.
 
 **No gradients.** Every fill in both clients is a flat colour. Category washes,
 hero scrims, the loading skeleton and the map overlay were all gradients and
