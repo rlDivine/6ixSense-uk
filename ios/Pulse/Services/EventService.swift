@@ -4,14 +4,14 @@ import CoreLocation
 /// Talks to the Express backend (`server.js`) that aggregates + sorts events.
 ///
 /// During development the simulator can reach your Mac at `localhost`.
-/// A physical device must use your Mac's LAN IP — `localhost` on the phone
+/// A physical device must use your Mac's LAN IP, because `localhost` on the phone
 /// means the phone itself. Find the IP with `ipconfig getifaddr en0`.
 /// If your Mac's IP changes (new Wi-Fi network), update `macLAN_IP` below.
 enum EventService {
     /// PRODUCTION: the deployed Pulse UK backend (see `api/render.yaml`, which
-    /// names the service `pulse-uk-api`). When set, every device — simulator,
-    /// your iPhone, any App Store user — uses this and your Mac is no longer
-    /// involved. Leave empty to use the local Mac during development.
+    /// names the service `pulse-uk-api`). When set, every device uses it:
+    /// simulator, your iPhone, any App Store user, and your Mac is no longer
+    /// involved. Leave it empty to use the local Mac during development.
     ///
     /// This must point at a Pulse deployment: the 6ix Sense backend serves
     /// Toronto and is a separate product.
@@ -57,8 +57,8 @@ enum EventService {
 
     /// The curated towns, for the Preferences location picker. Server-driven so
     /// adding a region on the backend shows up without shipping a build.
-    /// In practice this returns exactly one entry — the United Kingdom — but
-    /// the shape is a list, which is what lets the picker stay generic.
+    /// In practice this returns exactly one entry, the United Kingdom, but the
+    /// shape is a list, which is what lets the picker stay generic.
     private struct RegionsResponse: Codable { let countries: [RegionCountry] }
 
     static func regions() async throws -> [RegionCountry] {

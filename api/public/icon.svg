@@ -1,11 +1,13 @@
-<!-- Pulse mark: a pulse traced across a ring. Same geometry as the SwiftUI
-     PulseMark shape and the generated iOS app icon, so every surface matches. -->
+<!-- Pulse placeholder logo: a flat map pin with a knocked-out centre.
+     The geometry matches PulseLogoGeometry in ios/Pulse/Design/Theme.swift and
+     the rasteriser in ios/tools/make_icon.js. Change one, change all three.
+     Head centre (12, 8.8) r 5.6, point (12, 20.8), counter r 2.4, on a 24 grid,
+     drawn here scaled by 512/24 * 0.62 and centred. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#0E1116"/>
-  <circle cx="300" cy="170" r="230" fill="#FF6251" opacity="0.14"/>
-  <circle cx="256" cy="256" r="174.9" fill="none" stroke="#FF6251" stroke-width="41.8"/>
-  <path d="M149.2 256 H202.6 L232.9 181.2 L279.1 330.8 L309.4 256 H362.8"
-        fill="none" stroke="#FF6251" stroke-width="30.3"
-        stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="256" cy="60" r="12" fill="#4AA3FF"/>
+  <rect width="512" height="512" fill="#012169"/>
+  <g transform="translate(256 256) scale(13.2267) translate(-12 -12)">
+    <path fill="#FFFFFF" fill-rule="evenodd"
+          d="M7.047 11.413 A5.6 5.6 0 1 1 16.953 11.413 L12 20.8 Z
+             M12 6.4 a2.4 2.4 0 1 0 0 4.8 a2.4 2.4 0 1 0 0-4.8 Z"/>
+  </g>
 </svg>

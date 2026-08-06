@@ -32,14 +32,14 @@ struct EventCard: View {
         let badge = Fmt.badge(event.startDate)
         // Centered glyph/image, with the date badge pinned to the top-left corner.
         return ZStack {
-            Categories.gradient(event.category)
+            Categories.wash(event.category)
             if let img = event.image, let url = URL(string: img) {
                 AsyncImage(url: url) { phase in
                     if let image = phase.image { image.resizable().scaledToFill() }
-                    else { Text(Categories.style(event.category).glyph).font(.system(size: 28)) }
+                    else { CategoryGlyph(category: event.category, size: 22) }
                 }
             } else {
-                Text(Categories.style(event.category).glyph).font(.system(size: 28))
+                CategoryGlyph(category: event.category, size: 22)
             }
         }
         .frame(width: 74, height: 74)

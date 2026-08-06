@@ -1,24 +1,87 @@
 /* ============================================================
-   Pulse — what's on across the UK. PWA logic.
+   Pulse. What's on across the UK. PWA logic.
    ============================================================ */
 
-// Category palette + glyphs (§3.3). Keyed by lowercase; falls back to generic.
+// Category palette and icons.
+//
+// Colours are mid-tone hues that hold up against both the navy and the light
+// greys, and stay distinguishable as map pins. Anchored on the two flag
+// colours: red for festivals, blue for music.
+//
+// Icons are inline SVG, not emoji, so they inherit the category colour, stay
+// the same weight on every platform, and never depend on an emoji font.
 const CATS = {
-  "pop-up": { c: "#C77DFF", g: "🎁" },
-  "food & drink": { c: "#FF7A59", g: "🍔" },
-  festival: { c: "#FBBF24", g: "🎪" },
-  music: { c: "#4AA3FF", g: "🎵" },
-  "live music": { c: "#38BDF8", g: "🎸" },
-  market: { c: "#34D399", g: "🛍️" },
-  comedy: { c: "#F472B6", g: "🎤" },
-  arts: { c: "#A78BFA", g: "🎨" },
-  film: { c: "#FB7185", g: "🎬" },
-  tours: { c: "#22D3EE", g: "🚶" },
-  sports: { c: "#818CF8", g: "⚽" },
-  family: { c: "#FCA5A5", g: "🎡" },
+  "pop-up": { c: "#7A5BA6", i: "gift" },
+  "food & drink": { c: "#B5651D", i: "food" },
+  festival: { c: "#C8102E", i: "flag" },
+  music: { c: "#2E5AAC", i: "note" },
+  "live music": { c: "#4A7FD4", i: "note" },
+  market: { c: "#2E7D6B", i: "bag" },
+  comedy: { c: "#B03060", i: "mic" },
+  arts: { c: "#6B4FA0", i: "palette" },
+  film: { c: "#A03A5C", i: "film" },
+  tours: { c: "#3E7C8C", i: "signpost" },
+  sports: { c: "#1F5C3D", i: "ball" },
+  family: { c: "#C06A2E", i: "balloon" },
 };
+
+// Single-colour line icons on a 24 grid, stroked rather than filled so they
+// stay legible at 16px and at 48px without a second set of artwork.
+const ICON_PATHS = {
+  note: '<circle cx="7" cy="17.4" r="2.6"/><circle cx="18" cy="15.4" r="2.6"/><path d="M9.6 17.4V7l11-2v10.4"/>',
+  food: '<path d="M5 3v6.5a2 2 0 0 0 4 0V3M7 9.5V21"/><path d="M17.5 3c-1.6 1.6-2.2 3.2-2.2 5.2 0 1.7.8 3 2.2 3.6V21"/>',
+  flag: '<path d="M7 3v18"/><path d="M7 4.5h11l-3 3.75L18 12H7z"/>',
+  bag: '<path d="M4.5 8h15l-1.1 12.5h-12.8z"/><path d="M8.7 8V6.2a3.3 3.3 0 0 1 6.6 0V8"/>',
+  mic: '<rect x="9.2" y="3" width="5.6" height="10.5" rx="2.8"/><path d="M5.8 11.4a6.2 6.2 0 0 0 12.4 0M12 17.6V21"/>',
+  palette: '<path d="M12 3.2a8.8 8.8 0 1 0 0 17.6c1.4 0 2.1-.8 2.1-1.7 0-.7-.6-1.3-.6-2 0-.8.7-1.4 1.6-1.4h1.4a4.4 4.4 0 0 0 4.3-4.4C20.8 6.5 16.9 3.2 12 3.2z"/><circle cx="7.6" cy="10.6" r="1.2"/><circle cx="12" cy="7.6" r="1.2"/><circle cx="16.4" cy="10.6" r="1.2"/>',
+  film: '<rect x="3.2" y="5" width="17.6" height="14" rx="2"/><path d="M3.2 12h17.6M8 5v14M16 5v14"/>',
+  signpost: '<path d="M12 3v18"/><path d="M12 5.2h6.8l-2 2.4 2 2.4H12z"/><path d="M12 12.4H5.2l2 2.4-2 2.4H12z"/>',
+  ball: '<circle cx="12" cy="12" r="8.8"/><path d="M12 3.2v17.6M3.2 12h17.6"/>',
+  balloon: '<ellipse cx="12" cy="9.2" rx="5.6" ry="6.2"/><path d="M12 15.4v3.1M10.4 21h3.2"/>',
+  gift: '<rect x="3.4" y="8.4" width="17.2" height="12.2" rx="1.6"/><path d="M3.4 12.6h17.2M12 8.4v12.2"/><path d="M12 8.4S10.6 3.4 8.2 3.4a2.5 2.5 0 0 0 0 5zM12 8.4s1.4-5 3.8-5a2.5 2.5 0 0 1 0 5z"/>',
+  ticket: '<path d="M4 7.2h16v3a2 2 0 0 0 0 3.6v3H4v-3a2 2 0 0 0 0-3.6z"/><path d="M13.2 7.2v9.6"/>',
+};
+
+// Interface icons, same treatment as the category ones. Everything that used
+// to be an emoji is drawn here instead, so nothing in the interface depends on
+// the platform's emoji font or shifts weight between Android and iOS.
+const UI_ICONS = {
+  calendar: '<rect x="3.2" y="5" width="17.6" height="16" rx="2"/><path d="M3.2 10h17.6M8 3v4M16 3v4"/>',
+  offline: '<path d="M5 12.5a9.9 9.9 0 0 1 14 0M8.2 15.8a5.3 5.3 0 0 1 7.6 0"/><circle cx="12" cy="19.2" r="1.1"/><path d="M3 3l18 18"/>',
+  bookmark: '<path d="M6 3.6h12a.6.6 0 0 1 .6.6v16.2l-6.6-3.8-6.6 3.8V4.2a.6.6 0 0 1 .6-.6z"/>',
+  bell: '<path d="M18 9.4a6 6 0 1 0-12 0c0 5.1-2 6.4-2 6.4h16s-2-1.3-2-6.4z"/><path d="M13.7 19.4a2 2 0 0 1-3.4 0"/>',
+  search: '<circle cx="10.8" cy="10.8" r="6.8"/><path d="M15.7 15.7 21 21"/>',
+  home: '<path d="M3.6 10.4 12 3.4l8.4 7v9.2a1.4 1.4 0 0 1-1.4 1.4H5a1.4 1.4 0 0 1-1.4-1.4z"/><path d="M9.4 21v-8h5.2v8"/>',
+  map: '<path d="M9 3.4 3.4 6v14.6L9 18l6 2.6 5.6-2.6V3.4L15 6z"/><path d="M9 3.4V18M15 6v14.6"/>',
+  pin: '<path d="M12 21s7-6.9 7-11.4A7 7 0 0 0 5 9.6C5 14.1 12 21 12 21z"/><circle cx="12" cy="9.6" r="2.5"/>',
+  clock: '<circle cx="12" cy="12" r="8.8"/><path d="M12 6.8V12l3.6 2.2"/>',
+  refresh: '<path d="M20.4 12a8.4 8.4 0 1 1-2.5-6"/><path d="M20.4 4.2V10h-5.8"/>',
+  external: '<path d="M14 4h6v6M20 4l-8.4 8.4"/><path d="M18 14.4V19a1.6 1.6 0 0 1-1.6 1.6H5A1.6 1.6 0 0 1 3.4 19V7.6A1.6 1.6 0 0 1 5 6h4.6"/>',
+  check: '<path d="M4.8 12.6 9.8 17.6 19.2 6.8"/>',
+  tag: '<path d="M11.2 3.4h9.4v9.4l-8.8 8.8L2.4 12.2z"/><circle cx="16.4" cy="7.6" r="1.3"/>',
+  down: '<path d="M12 4.4v15.2"/><path d="m6.4 13.6 5.6 6 5.6-6"/>',
+  back: '<path d="M19.6 12H4.4"/><path d="m10.6 5.4-6.2 6.6 6.2 6.6"/>',
+  close: '<path d="M5.4 5.4 18.6 18.6M18.6 5.4 5.4 18.6"/>',
+};
+
+/// One interface icon, at `size` px, inheriting the current text colour unless
+/// a colour is given.
+function uiIcon(name, size = 18, color) {
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" aria-hidden="true"
+    stroke="${color || "currentColor"}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${
+    UI_ICONS[name] || ""}</svg>`;
+}
+
 function catMeta(cat) {
-  return CATS[(cat || "").toLowerCase()] || { c: "#7C8AA0", g: "✨" };
+  return CATS[(cat || "").toLowerCase()] || { c: "#5A6580", i: "ticket" };
+}
+
+/// One category icon, at `size` px, in `color` (defaults to the category's own).
+function catIcon(cat, size = 20, color) {
+  const m = catMeta(cat);
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" aria-hidden="true"
+    stroke="${color || m.c}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${
+    ICON_PATHS[m.i] || ICON_PATHS.ticket}</svg>`;
 }
 
 const $ = (s) => document.querySelector(s);
@@ -44,7 +107,7 @@ const state = {
   theme: store.get("theme", "dark"),
 };
 
-/* ───────── helpers ───────── */
+/* ---- helpers ---- */
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
@@ -65,9 +128,9 @@ function relDay(iso) {
   if (days < 7) return `In ${days} days`;
   return new Date(iso).toLocaleDateString("en-GB", { weekday: "short", month: "short", day: "numeric" });
 }
-/* ───────── distances ─────────
+/* --------- distances ---------
    The API always sends kilometres. Britain signs its roads in miles, so that
-   is what we show — `distNum` is the bare number and `distStr` adds the unit. */
+   is what we show. `distNum` is the bare number, `distStr` adds the unit. */
 function toMiles(km) { return km * 0.621371; }
 function distNum(km) {
   if (km == null) return null;
@@ -95,16 +158,17 @@ function isFree(e) { return (e.price || "").toLowerCase() === "free"; }
 function freeTag(e) { return isFree(e) && e.category !== "Free" ? `<span class="tag free">Free</span>` : ""; }
 // Neutral price chip on cards when a non-free price is known (e.g. "£39").
 function priceTag(e) { return e.price && !isFree(e) ? `<span class="tag">${esc(e.price)}</span>` : ""; }
-// Clean bookmark glyph — outline when unsaved, filled accent when saved.
+// Bookmark glyph: outline when unsaved, filled accent when saved.
 function bmIcon(on) {
   return `<svg viewBox="0 0 24 24" width="20" height="20" fill="${on ? "var(--accent)" : "none"}" stroke="${on ? "var(--accent)" : "currentColor"}" stroke-width="2" stroke-linejoin="round"><path d="M6 3.5h12a.5.5 0 0 1 .5.5v16.2l-6.5-3.8-6.5 3.8V4a.5.5 0 0 1 .5-.5z"/></svg>`;
 }
-function gradient(cat) {
-  const c = catMeta(cat).c;
-  return `linear-gradient(135deg, ${c}40, ${c}12)`;
+/// Flat tint behind a card image, used when an event has no photo of its own.
+/// This replaced a gradient: the category colour alone carries it.
+function wash(cat) {
+  return `${catMeta(cat).c}2E`;   // the category colour at ~18% alpha
 }
 
-/* ───────── data ───────── */
+/* ---- data ---- */
 async function load(showSkeleton = true) {
   if (showSkeleton) renderSkeleton();
   const params = new URLSearchParams({ sort: state.sort, range: state.range });
@@ -114,7 +178,7 @@ async function load(showSkeleton = true) {
     const data = await res.json();
     state.events = data.events || [];
     state.region = data.region || null;
-    // False when the browser reported a position outside the UK — Pulse serves
+    // False when the browser reported a position outside the UK. Pulse serves
     // the UK only, so we say so instead of pretending they're in London.
     state.inMarket = data.inMarket !== false;
     state.lastLoad = Date.now();
@@ -133,7 +197,7 @@ function visible() {
   return ev;
 }
 
-/* ───────── category chips ───────── */
+/* ---- category chips ---- */
 function buildCats() {
   const counts = {};
   state.events.forEach((e) => { if (e.category) counts[e.category] = (counts[e.category] || 0) + 1; });
@@ -148,7 +212,7 @@ function buildCats() {
   ).join("");
 }
 
-/* ───────── rendering ───────── */
+/* ---- rendering ---- */
 function renderAll() {
   renderStatus();
   renderList();
@@ -170,14 +234,15 @@ function renderStatus() {
 
 function cardHTML(e) {
   const b = dateBadge(e.start);
-  const cm = catMeta(e.category);
   const on = state.saved[e.id] ? "on" : "";
-  const img = e.image
-    ? `<img src="${esc(e.image)}" loading="lazy" onerror="this.remove()"/>`
-    : `<span class="ph-glyph">${cm.g}</span>`;
+  // The icon is always laid down first and the photo covers it. A URL that
+  // fails removes itself, so the icon shows through rather than leaving an
+  // empty box.
+  const img = `<span class="ph-glyph">${catIcon(e.category, 26)}</span>` +
+    (e.image ? `<img src="${esc(e.image)}" loading="lazy" onerror="this.remove()"/>` : "");
   return `
   <button class="card" data-id="${esc(e.id)}">
-    <span class="thumb" style="background:${gradient(e.category)}">
+    <span class="thumb" style="background:${wash(e.category)}">
       ${img}
       <span class="datebadge"><span class="m">${b.m}</span><span class="d">${b.d}</span></span>
     </span>
@@ -219,20 +284,20 @@ function renderSkeleton() {
 }
 function renderEmpty() {
   $("#list").innerHTML =
-    `<div class="state"><div class="em">🗓️</div><h3>No events match</h3><p>Try another category or widen the date range.</p><button id="resetBtn">Reset filters</button></div>`;
+    `<div class="state"><div class="em">${uiIcon("calendar", 38)}</div><h3>No events match</h3><p>Try another category or widen the date range.</p><button id="resetBtn">Reset filters</button></div>`;
   $("#endcap").textContent = "";
 }
 function renderError(msg) {
   $("#list").innerHTML =
-    `<div class="state"><div class="em">📡</div><h3>Couldn't reach events</h3><p>${esc(msg || "You may be offline.")}</p><button id="retryBtn">Retry</button></div>`;
+    `<div class="state"><div class="em">${uiIcon("offline", 38)}</div><h3>Couldn't reach events</h3><p>${esc(msg || "You may be offline.")}</p><button id="retryBtn">Retry</button></div>`;
 }
 
-/* ───────── Saved ───────── */
+/* ---- Saved ---- */
 function renderSaved() {
   const ids = Object.keys(state.saved);
   const el = $("#savedList");
   if (!ids.length) {
-    el.innerHTML = `<div class="state"><div class="em">🔖</div><h3>Nothing saved yet</h3><p>Tap the bookmark on any event to save it here.</p></div>`;
+    el.innerHTML = `<div class="state"><div class="em">${uiIcon("bookmark", 38)}</div><h3>Nothing saved yet</h3><p>Tap the bookmark on any event to save it here.</p></div>`;
     return;
   }
   const items = ids.map((id) => state.saved[id]).filter((e) => e.start === null || new Date(e.start) >= new Date() - 6 * 3.6e6);
@@ -245,12 +310,12 @@ function renderSaved() {
   el.innerHTML = Object.entries(groups).map(([day, evs]) =>
     `<div class="group-h">${esc(day)}</div>` +
     evs.map((e) => cardHTML(e) +
-      `<div class="remind"><span>🔔 Remind me 2h before</span><span class="switch ${state.reminders[e.id] ? "on" : ""}" data-rem="${esc(e.id)}"></span></div>`
+      `<div class="remind"><span class="remind-label">${uiIcon("bell", 16)} Remind me 2h before</span><span class="switch ${state.reminders[e.id] ? "on" : ""}" data-rem="${esc(e.id)}"></span></div>`
     ).join("")
   ).join("");
 }
 
-/* ───────── Search: date / date-range parsing ─────────
+/* --------- Search: date / date-range parsing ---------
    Pulls a date or date-range out of free text ("jazz this weekend", "july
    25-27", "next friday") so the search bar can filter by date on top of the
    usual title/venue/category match. */
@@ -263,7 +328,7 @@ function monthIndex(tok) {
 function startOfDay(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
 function endOfDay(d) { const x = new Date(d); x.setHours(23, 59, 59, 999); return x; }
 function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
-// Upcoming (or current) Sat+Sun — same convention as the server's range filter.
+// Upcoming (or current) Sat and Sun, the same convention as the server's range filter.
 function weekendRange(now, next) {
   const day = now.getDay();
   let sat = new Date(now);
@@ -285,7 +350,10 @@ function parseDateQuery(raw) {
     if (!isNaN(d)) return { range: { min: startOfDay(d), max: endOfDay(d) }, rest: strip(m[0]) };
   }
 
-  // Month-name range: "july 25-27", "jul 25th to 27th"
+  // Month-name range: "july 25-27", "jul 25th to 27th". The separator class
+  // accepts the dashes a person might actually type, including the ones a
+  // phone keyboard substitutes automatically. This is about reading input, not
+  // about how the app writes.
   m = raw.match(/\b([a-zA-Z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?\s*(?:-|to|–|—)\s*(\d{1,2})(?:st|nd|rd|th)?\b/i);
   if (m && monthIndex(m[1]) !== -1) {
     const mi = monthIndex(m[1]), y = now.getFullYear();
@@ -345,10 +413,10 @@ function parseDateQuery(raw) {
 function formatRangeLabel({ min, max }) {
   const opts = { weekday: "short", month: "short", day: "numeric" };
   const a = min.toLocaleDateString("en-GB", opts), b = max.toLocaleDateString("en-GB", opts);
-  return a === b ? a : `${a} – ${b}`;
+  return a === b ? a : `${a} to ${b}`;
 }
 
-/* ───────── Search ───────── */
+/* ---- Search ---- */
 function renderSearch() {
   const raw = state.search.trim();
   const sug = $("#searchSuggest");
@@ -368,18 +436,18 @@ function renderSearch() {
   if (q) hits = hits.filter((e) => [e.title, e.venue, e.category].some((f) => (f || "").toLowerCase().includes(q)));
 
   const chip = range
-    ? `<div class="search-date-chip">📅 ${esc(formatRangeLabel(range))}<button id="clearDateFilter" aria-label="Clear date filter">✕</button></div>`
+    ? `<div class="search-date-chip">${uiIcon("calendar", 15)} ${esc(formatRangeLabel(range))}<button id="clearDateFilter" aria-label="Clear date filter">${uiIcon("close", 15)}</button></div>`
     : "";
   const list = hits.length
     ? hits.map(cardHTML).join("")
-    : `<div class="state"><div class="em">🔍</div><h3>No matches${range ? " for that date" : ` for "${esc(state.search)}"`}</h3><p>Try a venue, artist, category, or a date like "this weekend".</p></div>`;
+    : `<div class="state"><div class="em">${uiIcon("search", 38)}</div><h3>No matches${range ? " for that date" : ` for "${esc(state.search)}"`}</h3><p>Try a venue, artist, category, or a date like "this weekend".</p></div>`;
   res.innerHTML = chip + list;
 
   const clearBtn = $("#clearDateFilter");
   if (clearBtn) clearBtn.onclick = () => { state.search = rest; $("#searchInput").value = rest; renderSearch(); };
 }
 
-/* ───────── Map ───────── */
+/* ---- Map ---- */
 let map, layer, tileLayer, youMarker, pins = {};
 const tileURL = () =>
   `https://{s}.basemaps.cartocdn.com/${state.theme === "light" ? "light_all" : "dark_all"}/{z}/{x}/{y}{r}.png`;
@@ -388,19 +456,22 @@ const tileURL = () =>
 const HOME_VIEW = [51.5074, -0.1278];
 function initMap() {
   // Leaflet comes off a CDN. If that request fails there is no map, but the
-  // feed, search and saved tabs are all perfectly usable — so swallow it here
+  // feed, search and saved tabs are all perfectly usable, so swallow it here
   // rather than letting the throw take the rest of init (and the event list)
   // down with it.
-  if (typeof L === "undefined") { console.warn("Leaflet unavailable — map disabled"); return; }
+  if (typeof L === "undefined") { console.warn("Leaflet unavailable, map disabled"); return; }
   map = L.map("map", { zoomControl: false, attributionControl: false }).setView(HOME_VIEW, 12);
   tileLayer = L.tileLayer(tileURL(), { maxZoom: 19 }).addTo(map);
   layer = L.layerGroup().addTo(map);
 }
 function pinIcon(e, sel) {
   const cm = catMeta(e.category);
+  // The pin is rotated 45 degrees to make its point, so the icon inside has to
+  // be rotated back the other way to sit upright.
   return L.divIcon({
     className: "", iconSize: sel ? [38, 38] : [30, 30], iconAnchor: sel ? [19, 38] : [15, 30],
-    html: `<div class="pin ${sel ? "sel" : ""}" style="background:${cm.c}"><span>${cm.g}</span></div>`,
+    html: `<div class="pin ${sel ? "sel" : ""}" style="background:${cm.c}"><span>${
+      catIcon(e.category, sel ? 19 : 15, "#fff")}</span></div>`,
   });
 }
 function renderMap() {
@@ -426,12 +497,12 @@ function renderMap() {
 }
 function renderCarousel(items) {
   $("#carousel").innerHTML = items.slice(0, 40).map((e) => {
-    const b = dateBadge(e.start); const cm = catMeta(e.category);
-    const banner = e.image ? `style="background-image:url('${esc(e.image)}');background-size:cover;background-position:center"` : `style="background:${gradient(e.category)}"`;
+    const b = dateBadge(e.start);
+    const banner = e.image ? `style="background-image:url('${esc(e.image)}');background-size:cover;background-position:center"` : `style="background:${wash(e.category)}"`;
     return `<div class="ccard" data-cid="${esc(e.id)}">
-      <div class="cbanner" ${banner}>${e.image ? "" : cm.g}
+      <div class="cbanner" ${banner}>${e.image ? "" : catIcon(e.category, 30)}
         <span class="cdate"><span class="m">${b.m}</span><span class="d">${b.d}</span></span>
-        <span class="ckm">${distStr(e.distanceKm, "—")}</span>
+        <span class="ckm">${distStr(e.distanceKm, "n/a")}</span>
       </div>
       <div class="cb"><h4>${esc(e.title)}</h4><p>${timeStr(e.start)} · ${esc(e.venue || placeName())}</p>
         <span class="tags"><span class="tag cat">${esc(e.category)}</span>${freeTag(e)}</span>
@@ -444,49 +515,47 @@ function selectMapEvent(id) {
   if (!e) return;
   Object.entries(pins).forEach(([pid, m]) => m.setIcon(pinIcon(state.events.find((x) => x.id === pid), pid === id)));
   map.flyTo([e.lat, e.lng], 15, { duration: 0.6 });
-  const cm = catMeta(e.category);
-  const img = e.image ? `style="background-image:url('${esc(e.image)}');background-size:cover;background-position:center"` : `style="background:${gradient(e.category)}"`;
+  const img = e.image ? `style="background-image:url('${esc(e.image)}');background-size:cover;background-position:center"` : `style="background:${wash(e.category)}"`;
   const pip = $("#pip");
-  pip.innerHTML = `<div class="pip-img" ${img}>${e.image ? "" : cm.g}</div><div class="pip-b"><h4>${esc(e.title)}</h4><p>${timeStr(e.start)} · ${esc(e.venue || placeName())} · ${relDay(e.start)}</p></div>`;
+  pip.innerHTML = `<div class="pip-img" ${img}>${e.image ? "" : catIcon(e.category, 24)}</div><div class="pip-b"><h4>${esc(e.title)}</h4><p>${timeStr(e.start)} · ${esc(e.venue || placeName())} · ${relDay(e.start)}</p></div>`;
   pip.classList.remove("hidden");
   pip.onclick = () => openDetail(id);
 }
 
-/* ───────── Detail ───────── */
+/* ---- Detail ---- */
 let miniMap;
 function openDetail(id) {
   const e = state.events.find((x) => x.id === id) || state.saved[id];
   if (!e) return;
-  const cm = catMeta(e.category);
   const on = state.saved[e.id];
   const hero = e.image ? `<img src="${esc(e.image)}" onerror="this.remove()"/>` : "";
   $("#detail").innerHTML = `
-    <div class="hero" style="background:${gradient(e.category)}">${hero}<div class="scrim"></div>${e.image ? "" : cm.g}
-      <button class="hbtn back" id="detailBack">←</button>
+    <div class="hero" style="background:${wash(e.category)}">${catIcon(e.category, 54)}${hero}<div class="scrim"></div>
+      <button class="hbtn back" id="detailBack" aria-label="Back">${uiIcon("back", 20)}</button>
       <button class="hbtn fav" id="detailFav">${bmIcon(!!on)}</button>
     </div>
     <div class="dscroll">
       <div class="badges"><span class="tag cat">${esc(e.category)}</span>${freeTag(e)}<span class="badge-src">via ${esc(e.source)}</span></div>
       <h2>${esc(e.title)}</h2>
-      <p class="desc">${esc(e.description || "Tap “Get tickets / Details” for the full description and tickets from the source.")}</p>
+      <p class="desc">${esc(e.description || "Tap “Get tickets and details” for the full description and tickets from the source.")}</p>
       <div class="facts">
-        <div class="fact"><div class="k">📅 When</div><div class="v">${e.start ? new Date(e.start).toLocaleDateString("en-GB", { month: "short", day: "numeric" }) + " · " + timeStr(e.start) : "TBA"}</div></div>
-        <div class="fact"><div class="k">📍 Distance</div><div class="v">${distStr(e.distanceKm)}</div></div>
-        <div class="fact"><div class="k">🏷️ Price</div><div class="v">${isFree(e) ? "Free" : esc(e.price || "—")}</div></div>
+        <div class="fact"><div class="k">When</div><div class="v">${e.start ? new Date(e.start).toLocaleDateString("en-GB", { month: "short", day: "numeric" }) + " · " + timeStr(e.start) : "TBA"}</div></div>
+        <div class="fact"><div class="k">Distance</div><div class="v">${distStr(e.distanceKm)}</div></div>
+        <div class="fact"><div class="k">Price</div><div class="v">${isFree(e) ? "Free" : esc(e.price || "Not listed")}</div></div>
       </div>
       <div class="venue-block">
         <div class="vn">${esc(e.venue || "Venue TBA")}</div>
         <div class="va">${esc(e.address || placeName())}</div>
         ${e.lat != null ? `<div id="miniMap"></div>` : ""}
-        ${e.lat != null ? `<a class="dir" href="https://www.google.com/maps/dir/?api=1&destination=${e.lat},${e.lng}" target="_blank" rel="noopener">Directions ↗</a>` : ""}
+        ${e.lat != null ? `<a class="dir" href="https://www.google.com/maps/dir/?api=1&destination=${e.lat},${e.lng}" target="_blank" rel="noopener">Directions ${uiIcon("external", 14)}</a>` : ""}
       </div>
       <div class="secondary-actions">
         <button class="sa" id="saShare">Share</button>
         <button class="sa" id="saCal">Add to calendar</button>
-        <button class="sa" id="saSave">${on ? "Saved ✓" : "Save"}</button>
+        <button class="sa" id="saSave">${on ? `Saved ${uiIcon("check", 14)}` : "Save"}</button>
       </div>
     </div>
-    <div class="cta"><a href="${esc(e.url || "#")}" target="_blank" rel="noopener">Get tickets / Details ↗</a></div>`;
+    <div class="cta"><a href="${esc(e.url || "#")}" target="_blank" rel="noopener">Get tickets and details ${uiIcon("external", 15)}</a></div>`;
   $("#detail").classList.remove("hidden");
 
   if (e.lat != null) {
@@ -508,7 +577,7 @@ function closeDetail() {
   $("#detail").innerHTML = "";
 }
 
-/* ───────── Save / reminders / share / calendar ───────── */
+/* ---- Save / reminders / share / calendar ---- */
 function toggleSave(e) {
   if (state.saved[e.id]) { delete state.saved[e.id]; delete state.reminders[e.id]; }
   else state.saved[e.id] = e;
@@ -541,7 +610,7 @@ function scheduleReminders() {
   });
 }
 async function shareEvent(e) {
-  const data = { title: e.title, text: `${e.title} — ${timeStr(e.start)} @ ${e.venue || placeName()}`, url: e.url || location.href };
+  const data = { title: e.title, text: `${e.title}, ${timeStr(e.start)} at ${e.venue || placeName()}`, url: e.url || location.href };
   if (navigator.share) { try { await navigator.share(data); } catch {} }
   else { await navigator.clipboard?.writeText(`${data.text} ${data.url}`); alert("Link copied"); }
 }
@@ -556,7 +625,7 @@ function addToCalendar(e) {
   a.click();
 }
 
-/* ───────── tabs ───────── */
+/* ---- tabs ---- */
 function switchTab(tab) {
   state.tab = tab;
   $$(".tab").forEach((t) => t.classList.add("hidden"));
@@ -567,7 +636,7 @@ function switchTab(tab) {
   if (tab === "saved") renderSaved();
 }
 
-/* ───────── geolocation ───────── */
+/* ---- geolocation ---- */
 function requestLocation() {
   if (!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition(
@@ -576,17 +645,17 @@ function requestLocation() {
     { timeout: 7000 }
   );
 }
-// Recenters the map on the user without refitting to every pin — for when
+// Recentres the map on the user without refitting to every pin, for when
 // you've panned/zoomed away and just want to find yourself again.
 function locateMe() {
   if (state.origin && map) {
     map.flyTo([state.origin.lat, state.origin.lng], Math.max(map.getZoom(), 14), { duration: 0.6 });
     return;
   }
-  requestLocation(); // no fix yet — ask, then the normal load()/renderMap() centers on it
+  requestLocation(); // no fix yet: ask, then the normal load()/renderMap() centres on it
 }
 
-/* ───────── theme ───────── */
+/* ---- theme ---- */
 function applyTheme() {
   document.documentElement.dataset.theme = state.theme;
   $("#themeBtn") && ($("#themeBtn").textContent = state.theme === "dark" ? "◐" : "◑");
@@ -595,7 +664,7 @@ function applyTheme() {
   if (tileLayer) tileLayer.setUrl(tileURL()); // swap map tiles to match theme
 }
 
-/* ───────── onboarding ───────── */
+/* ---- onboarding ---- */
 let obIdx = 0;
 function showOnboarding() {
   $("#onboarding").classList.remove("hidden");
@@ -616,7 +685,7 @@ function showOnboarding() {
 let askedLoc = false;
 function requestLocationOnce() { if (!askedLoc) { askedLoc = true; requestLocation(); } }
 
-/* ───────── boot ───────── */
+/* ---- boot ---- */
 function startApp() {
   $("#app").classList.remove("hidden");
   initMap();
@@ -685,7 +754,7 @@ function wireEvents() {
   });
 }
 
-/* ───────── init ───────── */
+/* ---- init ---- */
 applyTheme();
 wireEvents();
 if (store.get("onboarded", false)) {

@@ -25,8 +25,8 @@ struct Event: Identifiable, Codable, Hashable {
         return DateParse.iso(start)
     }
 
-    /// A usable map coordinate: present, finite, in range, and not (0,0) —
-    /// an invalid value makes MapKit hang, so we filter those out.
+    /// A usable map coordinate: present, finite, in range, and not (0,0).
+    /// An invalid value makes MapKit hang, so we filter those out.
     var hasCoordinate: Bool {
         guard let lat, let lng else { return false }
         return lat.isFinite && lng.isFinite
@@ -37,7 +37,7 @@ struct Event: Identifiable, Codable, Hashable {
 
 /// Tolerant date parsing. Handles full ISO-8601 (with/without fractional
 /// seconds) AND the timezone-less local strings some sources emit
-/// (Ticketmaster's `localTime`, date-only values) — ISO8601DateFormatter
+/// (Ticketmaster's `localTime`, date-only values). ISO8601DateFormatter
 /// rejects those, which used to make dated events look undated (the "·" badge)
 /// and slip past the date filters.
 enum DateParse {
@@ -48,8 +48,8 @@ enum DateParse {
         let f = ISO8601DateFormatter(); f.formatOptions = [.withInternetDateTime]; return f
     }()
     // Timezone-less fallbacks. These strings are venue-local ("7pm at the
-    // venue"), so we interpret them in the device's own timezone — which is
-    // the user's city, wherever in the world they opened the app.
+    // venue"), so we interpret them in the device's own timezone, which is the
+    // user's town wherever they opened the app.
     private static func local(_ format: String) -> DateFormatter {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
@@ -79,13 +79,13 @@ struct Region: Codable, Hashable {
     let label: String?      // "London", "Canterbury", …
     let area: String?       // county / council area / principal area
     let nation: String?     // England | Wales | Scotland | Northern Ireland
-    let country: String?    // ISO code — always "GB"
+    let country: String?    // ISO code, always "GB"
     let timeZone: String?   // IANA id, e.g. "Europe/London"
     let unit: String?       // "mi"
     let center: Center?
     let generic: Bool?      // legacy field, always false
 
-    /// "Canterbury, Kent" — the town with the county that disambiguates it.
+    /// "Canterbury, Kent": the town with the county that disambiguates it.
     var fullLabel: String {
         guard let label else { return "the UK" }
         guard let area, area != label else { return label }

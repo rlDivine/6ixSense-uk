@@ -62,11 +62,11 @@ struct SearchView: View {
         VStack(spacing: 0) {
             if let dq = outcome.dateQuery { dateChip(dq) }
             // Only offer the place interpretation when the text isn't already a
-            // pure date query — "this weekend" is not an address.
+            // pure date query, since "this weekend" is not an address.
             if outcome.dateQuery?.rest.isEmpty != true { addressRow }
             if hits.isEmpty {
                 VStack(spacing: 8) {
-                    Text("🔍").font(.system(size: 40))
+                    Image(systemName: "magnifyingglass").font(.system(size: 34)).foregroundStyle(Tok.muted)
                     Text("No matches").font(.system(size: 17, weight: .bold)).foregroundStyle(Tok.text)
                     Text(outcome.dateQuery != nil ? "No events on that date." : "Try a venue, artist, category, a date like \"this weekend\", or an address.")
                         .font(.system(size: 13.5)).foregroundStyle(Tok.muted)
@@ -127,7 +127,7 @@ struct SearchView: View {
     @ViewBuilder private var placeChip: some View {
         if let o = app.placeOverride {
             HStack(spacing: 6) {
-                Text("\(o.kind == .address ? "📍" : "🌍") \(o.label)")
+                Label(o.label, systemImage: o.kind == .address ? "mappin.and.ellipse" : "building.2")
                     .font(.system(size: 13, weight: .semibold)).foregroundStyle(Tok.text)
                     .lineLimit(1)
                 Button { Task { await app.clearOverride() } } label: {
@@ -160,7 +160,7 @@ struct SearchView: View {
 
     private func dateChip(_ dq: DateQuery) -> some View {
         HStack(spacing: 6) {
-            Text("📅 \(dq.label)").font(.system(size: 13, weight: .semibold)).foregroundStyle(Tok.text)
+            Label(dq.label, systemImage: "calendar").font(.system(size: 13, weight: .semibold)).foregroundStyle(Tok.text)
             Button { app.search = dq.rest } label: {
                 Image(systemName: "xmark").font(.system(size: 10, weight: .bold)).foregroundStyle(Tok.muted)
             }

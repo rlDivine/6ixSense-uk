@@ -4,6 +4,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { distanceKm } from "./sources/util.js";
 import { fetchTicketmaster } from "./sources/ticketmaster.js";
+import { fetchSkiddle } from "./sources/skiddle.js";
+import { fetchSportsFixtures } from "./sources/sportsfixtures.js";
 import { fetchCurated } from "./sources/curated.js";
 import { fetchEventbrite } from "./sources/eventbrite.js";
 import {
@@ -19,7 +21,7 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Load .env for local dev — dependency-free. Host-provided env (Render) wins,
+// Load .env for local dev, with no dependency. Host-provided env (Render) wins,
 // so existing process.env values are never overwritten. No-op if .env is absent.
 try {
   const envFile = fs.readFileSync(path.join(__dirname, ".env"), "utf8");
@@ -29,7 +31,7 @@ try {
       process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
     }
   }
-} catch { /* no .env file — fine in production */ }
+} catch { /* no .env file, which is fine in production */ }
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,12 +44,30 @@ const SOURCE_IMPL = {
     label: "Ticketmaster",
     run: (r) => fetchTicketmaster({ lat: r.lat, lng: r.lng, radiusKm: r.radiusKm }),
   },
+  skiddle: {
+    label: "Skiddle",
+    run: (r) => fetchSkiddle({ lat: r.lat, lng: r.lng, radiusKm: r.radiusKm }),
+  },
+  fixtures: {
+    label: "Football fixtures",
+    run: (r) => fetchSportsFixtures({ lat: r.lat, lng: r.lng, radiusKm: r.radiusKm }),
+  },
   eventbrite: { label: "Eventbrite", run: (r) => fetchEventbrite(r.eventbrite) },
   curated: {
     label: "Local guide",
     run: (r) => Promise.resolve(fetchCurated({ lat: r.lat, lng: r.lng, radiusKm: r.radiusKm })),
   },
 };
+
+/// Which optional keys are configured. Reported by /api/status and /api/diag,
+/// which is the quickest way to work out why a feed looks thin.
+function keyStatus() {
+  return {
+    TM_API_KEY: !!process.env.TM_API_KEY,
+    SKIDDLE_API_KEY: !!process.env.SKIDDLE_API_KEY,
+    THESPORTSDB_KEY: !!process.env.THESPORTSDB_KEY,
+  };
+}
 
 function sourcesFor(region) {
   return region.sources.map((id) => ({ id, ...SOURCE_IMPL[id] })).filter((s) => s.run);
@@ -63,7 +83,7 @@ const MAX_REGIONS = 24; // LRU cap, so a wandering user base can't grow this for
 const caches = new Map();   // regionId -> { at, used, events }
 const refreshing = new Map(); // regionId -> in-flight promise
 
-// Regions kept warm on boot and on the background timer — the towns busy
+// Regions kept warm on boot and on the background timer: the towns busy
 // enough that someone is almost always asking for them. Everywhere else warms
 // lazily on the first request from that area.
 //
@@ -130,7 +150,7 @@ function refreshEvents(region) {
     const entry = cacheFor(region);
     entry.at = Date.now();
     entry.events = [...seen.values()];
-    console.log(`[cache:${region.id}] refreshed → ${entry.events.length} events`);
+    console.log(`[cache:${region.id}] refreshed, ${entry.events.length} events`);
     return entry.events;
   })().finally(() => refreshing.delete(region.id));
 
@@ -150,7 +170,7 @@ async function gatherEvents(region) {
   return refreshEvents(region); // cold: nothing cached for this region yet
 }
 
-// Lightweight health check for the host (Render) — never triggers a scrape.
+// Lightweight health check for the host (Render). Never triggers a scrape.
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
 // The curated towns, grouped by country (only ever the UK). The app's settings
@@ -161,7 +181,7 @@ app.get("/api/regions", (_req, res) => {
   res.json({ countries: regionCatalogue() });
 });
 
-// Instant status — reads the in-memory caches only (no scrape).
+// Instant status, read from the in-memory caches only. No scrape.
 app.get("/api/status", (_req, res) => {
   const regions = {};
   for (const [id, entry] of caches) {
@@ -175,13 +195,13 @@ app.get("/api/status", (_req, res) => {
     };
   }
   res.json({
-    keys: { TM_API_KEY: !!process.env.TM_API_KEY },
+    keys: keyStatus(),
     cities: CITIES.map((c) => c.id),
     regions,
   });
 });
 
-// Per-source diagnostics for one region — runs every source independently
+// Per-source diagnostics for one region. Runs every source independently
 // (bypassing cache) and reports count / timing / error. Pass ?lat=&lng= to
 // diagnose a region other than London.
 app.get("/api/diag", async (req, res) => {
@@ -201,7 +221,7 @@ app.get("/api/diag", async (req, res) => {
   );
   res.json({
     region: publicRegion(region),
-    keys: { TM_API_KEY: !!process.env.TM_API_KEY },
+    keys: keyStatus(),
     total: results.reduce((n, r) => n + r.count, 0),
     sources: results,
   });
@@ -218,7 +238,7 @@ app.get("/api/events", async (req, res) => {
 
   // Rank from the user's own position when they are in the UK. Someone abroad
   // is served London, and ranking "nearest" from their actual position would
-  // just sort London by its distance from Madrid — so they get distances from
+  // just sort London by its distance from Madrid, so they get distances from
   // the city centre instead, which is the number they can act on.
   const inMarket = hasOrigin && isInMarket(lat, lng);
   const origin = inMarket ? { lat, lng } : { lat: region.lat, lng: region.lng };
@@ -260,7 +280,7 @@ app.get("/api/events", async (req, res) => {
       origin,
       region: publicRegion(region),
       // False when the caller sent a coordinate outside the UK. The app uses
-      // it to say "showing London — Pulse covers the UK" rather than silently
+      // it to say "showing London, Pulse covers the UK" rather than silently
       // pretending the user is in the capital.
       inMarket,
       sort,
@@ -291,11 +311,11 @@ function timeRank(a, b) {
 app.use(express.static(path.join(__dirname, "public")));
 
 app.listen(PORT, () => {
-  console.log(`\n  Pulse UK running →  http://localhost:${PORT}`);
+  console.log(`\n  Pulse UK running at http://localhost:${PORT}`);
   console.log(
     process.env.TM_API_KEY
       ? "  Ticketmaster: ON (live ticketed events enabled)"
-      : "  Ticketmaster: OFF — set TM_API_KEY for full live data (free key: developer.ticketmaster.com)\n"
+      : "  Ticketmaster: OFF. Set TM_API_KEY for full live data (free key: developer.ticketmaster.com)\n"
   );
   console.log(`  Warm regions: ${WARM.map((r) => r.id).join(", ")}`);
 

@@ -90,7 +90,7 @@ struct SideRow: View {
             .frame(maxWidth: .infinity)
             .background(active ? Tok.accent : Color.clear, in: RoundedRectangle(cornerRadius: 11))
             .contentShape(RoundedRectangle(cornerRadius: 11))
-            .padding(.vertical, 1)      // 42 + 2 → 44pt minimum target
+            .padding(.vertical, 1)      // 42 + 2 gives the 44pt minimum target
         }
         .buttonStyle(.plain)
         .accessibilityLabel(count == nil ? title : "\(title), \(count!) events")
@@ -123,7 +123,7 @@ struct SidebarSectionHeader: View {
     }
 }
 
-// MARK: - Grid card (HANDOFF.md §6.9 — "adaptive grid")
+// MARK: - Grid card (HANDOFF.md §6.9, "adaptive grid")
 
 struct IPadEventCard: View {
     let event: Event
@@ -167,13 +167,13 @@ struct IPadEventCard: View {
 
     private var cover: some View {
         let badge = Fmt.badge(event.startDate)
-        let glyph = Text(Categories.style(event.category).glyph).font(.system(size: 46))
-        // The gradient has no intrinsic size, so it — not the remote photo —
-        // decides the media box. The image sits in an overlay, which is sized by
+        let glyph = CategoryGlyph(category: event.category, size: 36)
+        // The flat wash has no intrinsic size, so it is what decides the media
+        // box rather than the remote photo. The image sits in an overlay, which is sized by
         // its parent, so a large `scaledToFill` photo can no longer widen the
         // card past its grid column (which made cards bleed into each other and
         // off the right edge in the two-column portrait layout).
-        return Categories.gradient(event.category)
+        return Categories.wash(event.category)
             .frame(maxWidth: .infinity)
             .frame(height: 150)
             .overlay {

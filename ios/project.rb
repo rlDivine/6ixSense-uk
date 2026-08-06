@@ -18,7 +18,7 @@ end
 # Info.plist reference (not compiled)
 group.new_reference(File.join(ROOT, 'Pulse', 'Info.plist'))
 
-# Asset catalog (app icon) — added as a resource so the xcassets is compiled.
+# Asset catalog (app icon), added as a resource so the xcassets is compiled.
 assets = group.new_reference(File.join(ROOT, 'Pulse', 'Assets.xcassets'))
 target.add_resources([assets])
 
@@ -36,11 +36,11 @@ target.build_configurations.each do |config|
   # iPhone + iPad. Must stay '1,2': shipping as iPhone-only ('1') makes iPadOS
   # run the app in scaled-iPhone compatibility mode, so the regular-width
   # sidebar layout in Views/iPad never activates. That is what got 6ix Sense
-  # build 1.0 (1) rejected under Guideline 4 — Design (reviewed on an iPad Air
+  # build 1.0 (1) rejected under Guideline 4, Design (reviewed on an iPad Air
   # 11-inch); Pulse inherits the same layout and the same requirement.
   s['TARGETED_DEVICE_FAMILY'] = '1,2'      # iPhone + iPad
   s['CODE_SIGN_STYLE'] = 'Automatic'
-  # NOTE: do NOT force CODE_SIGNING_ALLOWED=NO here — it breaks signing in the
+  # NOTE: do NOT force CODE_SIGNING_ALLOWED=NO here. It breaks signing in the
   # Xcode UI. For headless simulator builds pass it on the command line instead:
   #   xcodebuild ... CODE_SIGNING_ALLOWED=NO
   # Voice2Jobs team. Kept here so regenerating the project doesn't blank the

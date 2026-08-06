@@ -7,7 +7,7 @@ import MapKit
 struct IPadMapPane: View {
     @EnvironmentObject var app: AppState
 
-    /// Called when the user asks for the full detail — the shell presents it
+    /// Called when the user asks for the full detail. The shell presents it
     /// as a centred card so it never fights the map for space.
     let onOpen: (Event) -> Void
 
@@ -185,7 +185,7 @@ struct IPadMapPane: View {
 
             if mapped.isEmpty {
                 VStack(spacing: 8) {
-                    Text("🗺️").font(.system(size: 36))
+                    Image(systemName: "map").font(.system(size: 32)).foregroundStyle(Tok.muted)
                     Text("No mapped events").font(.system(size: 15, weight: .bold)).foregroundStyle(Tok.text)
                     Text("Widen the date range or clear the category filter.")
                         .font(.system(size: 13)).foregroundStyle(Tok.muted)
@@ -233,14 +233,14 @@ private struct RailRow: View {
     var body: some View {
         HStack(spacing: 11) {
             ZStack {
-                Categories.gradient(event.category)
+                Categories.wash(event.category)
                 if let img = event.image, let url = URL(string: img) {
                     AsyncImage(url: url) { phase in
                         if let image = phase.image { image.resizable().scaledToFill() }
-                        else { Text(Categories.style(event.category).glyph).font(.system(size: 20)) }
+                        else { CategoryGlyph(category: event.category, size: 16) }
                     }
                 } else {
-                    Text(Categories.style(event.category).glyph).font(.system(size: 20))
+                    CategoryGlyph(category: event.category, size: 16)
                 }
             }
             .frame(width: 58, height: 58)

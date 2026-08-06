@@ -10,7 +10,7 @@ self.addEventListener("activate", (e) => {
 });
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
-  // Never cache the live API or map tiles — always go to network.
+  // Never cache the live API or map tiles. Those always go to network.
   if (url.pathname.startsWith("/api/") || url.host.includes("basemaps") || url.host.includes("unpkg")) return;
   e.respondWith(caches.match(e.request).then((r) => r || fetch(e.request)));
 });

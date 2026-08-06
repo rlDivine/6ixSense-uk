@@ -1,7 +1,7 @@
 // Curated set of real UK venues with accurate coordinates and their regular
 // recurring programming. Dates are computed relative to "today" so the
 // "soonest" sort is always meaningful. This guarantees the app shows useful,
-// correctly-sorted local listings even with no API key and no live feed — and
+// correctly-sorted local listings even with no API key and no live feed, and
 // real ticketed events layer on top once a Ticketmaster key is configured.
 //
 // Unlike the live sources this one is national: the whole table lives in
@@ -11,8 +11,8 @@
 import { makeEvent, distanceKm } from "./util.js";
 
 // Real venue photos (Wikipedia/Wikimedia Commons) so curated listings show a
-// picture too, not just the category glyph. Keyed by venue name; any miss
-// falls back gracefully to the category-gradient placeholder.
+// picture too, not just the category mark. Keyed by venue name, and any miss
+// falls back to the flat category wash behind the mark.
 const VENUE_IMAGES = {
   "Royal Albert Hall": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Royal_Albert_Hall%2C_London_-_Nov_2012.jpg/330px-Royal_Albert_Hall%2C_London_-_Nov_2012.jpg",
   "Southbank Centre": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Royal_Festival_Hall_-_Sept_2007.jpg/330px-Royal_Festival_Hall_-_Sept_2007.jpg",
@@ -139,7 +139,7 @@ export function fetchCurated({ lat, lng, radiusKm = 50 } = {}) {
   return near.map((v, i) =>
     makeEvent({
       id: `curated-${v.venue.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${i}`,
-      title: `${v.title} — ${v.venue}`,
+      title: `${v.title} at ${v.venue}`,
       category: v.category,
       start: nextOccurrence(v.day, v.hour),
       venue: v.venue,

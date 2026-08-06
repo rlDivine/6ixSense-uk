@@ -1,6 +1,14 @@
 import SwiftUI
 
-// MARK: - Colour tokens (HANDOFF.md §3) — adapt automatically to light/dark.
+// MARK: - Colour tokens
+//
+// The palette is built from the Union flag: Pantone 280 blue (#012169),
+// Pantone 186 red (#C8102E) and white. Neither flag colour survives a straight
+// lift into a dark interface, so the dark theme sits on a navy derived from the
+// blue and lifts the red just enough to clear contrast checks on it. The light
+// theme uses both flag colours as-is.
+//
+// Every token is a flat colour. There are no gradients anywhere in the app.
 
 extension Color {
     init(hex: UInt32) {
@@ -18,45 +26,74 @@ extension Color {
 }
 
 enum Tok {
-    static let bg       = Color(dark: 0x0E1116, light: 0xF7F8FA)
-    static let panel    = Color(dark: 0x161B22, light: 0xFFFFFF)
-    static let panel2   = Color(dark: 0x1C2430, light: 0xEEF1F5)
-    static let hairline = Color(dark: 0x2A3340, light: 0xE2E6EC)
-    static let text     = Color(dark: 0xE8EDF3, light: 0x131720)
-    static let muted    = Color(dark: 0x9AA7B4, light: 0x5C6773)
-    static let chip     = Color(dark: 0x222C39, light: 0xEAEEF3)
-    static let accent   = Color(hex: 0xFF6251)   // brand red — same both themes
-    static let accent2  = Color(hex: 0x4AA3FF)   // blue
-    static let freeFg   = Color(hex: 0x2BB37C)
+    static let bg       = Color(dark: 0x0A1128, light: 0xF4F6FA)
+    static let panel    = Color(dark: 0x111D3D, light: 0xFFFFFF)
+    static let panel2   = Color(dark: 0x18264A, light: 0xE9EDF5)
+    static let hairline = Color(dark: 0x24365F, light: 0xD5DCE8)
+    static let text     = Color(dark: 0xEDF0F7, light: 0x0B1533)
+    static let muted    = Color(dark: 0x97A3C0, light: 0x56617D)
+    static let chip     = Color(dark: 0x18264A, light: 0xE9EDF5)
+    /// Flag red. Lifted on dark navy, where Pantone 186 itself is too close in
+    /// luminance to the background to read as a control.
+    static let accent   = Color(dark: 0xE23B4E, light: 0xC8102E)
+    /// Flag blue. Inverted on dark, where Pantone 280 disappears into the
+    /// background entirely.
+    static let accent2  = Color(dark: 0x7FA0E8, light: 0x012169)
+    /// Free events. Kept inside the flag palette rather than reaching for a
+    /// green that belongs to neither colour.
+    static let freeFg   = Color(dark: 0xE23B4E, light: 0xC8102E)
 }
 
-// MARK: - Category palette + glyphs (HANDOFF.md §3.3)
+// MARK: - Category palette
+//
+// Mid-tone hues that hold up against both the navy and the light greys, and
+// stay distinguishable as map pins. Anchored on the two flag colours: red for
+// festivals, blue for music, with muted supporting tones for the rest. No
+// glyphs live here. Categories are drawn with SF Symbols, so nothing in the
+// interface depends on an emoji font.
 
-struct CatStyle { let color: Color; let glyph: String }
+struct CatStyle { let color: Color }
 
 enum Categories {
     static let map: [String: CatStyle] = [
-        "pop-up": .init(color: Color(hex: 0xC77DFF), glyph: "🎁"),
-        "food & drink": .init(color: Color(hex: 0xFF7A59), glyph: "🍔"),
-        "festival": .init(color: Color(hex: 0xFBBF24), glyph: "🎪"),
-        "music": .init(color: Color(hex: 0x4AA3FF), glyph: "🎵"),
-        "live music": .init(color: Color(hex: 0x38BDF8), glyph: "🎸"),
-        "market": .init(color: Color(hex: 0x34D399), glyph: "🛍️"),
-        "comedy": .init(color: Color(hex: 0xF472B6), glyph: "🎤"),
-        "arts": .init(color: Color(hex: 0xA78BFA), glyph: "🎨"),
-        "film": .init(color: Color(hex: 0xFB7185), glyph: "🎬"),
-        "tours": .init(color: Color(hex: 0x22D3EE), glyph: "🚶"),
-        "sports": .init(color: Color(hex: 0x818CF8), glyph: "⚽"),
-        "family": .init(color: Color(hex: 0xFCA5A5), glyph: "🎡"),
+        "pop-up": .init(color: Color(hex: 0x7A5BA6)),
+        "food & drink": .init(color: Color(hex: 0xB5651D)),
+        "festival": .init(color: Color(hex: 0xC8102E)),
+        "music": .init(color: Color(hex: 0x2E5AAC)),
+        "live music": .init(color: Color(hex: 0x4A7FD4)),
+        "market": .init(color: Color(hex: 0x2E7D6B)),
+        "comedy": .init(color: Color(hex: 0xB03060)),
+        "arts": .init(color: Color(hex: 0x6B4FA0)),
+        "film": .init(color: Color(hex: 0xA03A5C)),
+        "tours": .init(color: Color(hex: 0x3E7C8C)),
+        "sports": .init(color: Color(hex: 0x1F5C3D)),
+        "family": .init(color: Color(hex: 0xC06A2E)),
     ]
     static func style(_ category: String) -> CatStyle {
-        map[category.lowercased()] ?? .init(color: Color(hex: 0x7C8AA0), glyph: "✨")
+        map[category.lowercased()] ?? .init(color: Color(hex: 0x5A6580))
     }
-    static func gradient(_ category: String) -> LinearGradient {
-        let c = style(category).color
-        return LinearGradient(colors: [c.opacity(0.42), c.opacity(0.10)],
-                              startPoint: .topLeading, endPoint: .bottomTrailing)
+    /// Flat wash behind a card image, used when an event has no photo of its
+    /// own. This replaced a gradient: the tint alone carries the category.
+    static func wash(_ category: String) -> Color {
+        style(category).color.opacity(0.22)
     }
+}
+
+/// The category's placeholder mark, drawn when an event has no photo of its
+/// own. An SF Symbol rather than an emoji, so it takes the category colour and
+/// keeps the same weight as the rest of the interface.
+struct CategoryGlyph: View {
+    let category: String
+    var size: CGFloat
+    var body: some View {
+        Image(systemName: Categories.symbol(category))
+            .font(.system(size: size, weight: .regular))
+            .foregroundStyle(Categories.style(category).color)
+            .accessibilityHidden(true)
+    }
+}
+
+extension Categories {
     /// SF Symbol for native map Markers (which can't render emoji).
     static func symbol(_ category: String) -> String {
         let c = category.lowercased()
@@ -82,75 +119,76 @@ enum Categories {
     }
 }
 
-// MARK: - Pulse brand mark
-// A pulse traced across a ring: the ring says "everything around you", the
-// trace says "right now". Drawn in a 24×24 space so it scales cleanly from a
-// 26pt header glyph to a 1024px app icon.
+// MARK: - Pulse logo (placeholder)
 //
-// `PulseMarkGeometry` is the single source of truth, shared by the in-app
-// glyph, the generated app icon (tools/make_icon.swift) and the web mark
-// (api/public/icon.svg), so every surface is the same drawing.
+// A flat map pin with a knocked-out centre. Deliberately plain: this is a
+// stand-in until a real identity exists, so it is built to be legible at 20pt
+// in a header and at 1024px on the home screen, and to be thrown away without
+// anything else needing to change.
+//
+// The geometry lives on a 24x24 grid and is mirrored in two other places:
+// ios/tools/make_icon.js (which generates the app icon PNGs) and
+// api/public/icon.svg (the web mark). The three must be kept in step, so the
+// numbers below are the reference.
+//
+//   head centre   (12, 8.8)   radius 5.6
+//   point         (12, 20.8)
+//   counter       (12, 8.8)   radius 2.4
+//
+// The tail is bounded by the two lines from the point that are tangent to the
+// head, which is what keeps the join between circle and tail smooth rather
+// than kinked. Those tangent points fall at (7.047, 11.413) and
+// (16.953, 11.413).
 
-enum PulseMarkGeometry {
-    /// The pulse trace, as points on the 24×24 grid: flat, up, down, flat.
-    static let trace: [CGPoint] = [
-        CGPoint(x: 6.0, y: 12.0),
-        CGPoint(x: 9.0, y: 12.0),
-        CGPoint(x: 10.7, y: 7.8),
-        CGPoint(x: 13.3, y: 16.2),
-        CGPoint(x: 15.0, y: 12.0),
-        CGPoint(x: 18.0, y: 12.0),
-    ]
-    static let outerRadius: CGFloat = 11.0
-    static let innerRadius: CGFloat = 8.6
-    static let traceWidth: CGFloat = 1.7
+enum PulseLogoGeometry {
+    static let headCentre = CGPoint(x: 12, y: 8.8)
+    static let headRadius: CGFloat = 5.6
+    static let point = CGPoint(x: 12, y: 20.8)
+    static let counterRadius: CGFloat = 2.4
 
-    /// Builds the mark inside `rect` (fit to a 24×24 grid, centred). The result
-    /// is a single fillable path — ring plus trace — so callers just fill it.
+    /// Angles of the two tangent points, measured in the view's own coordinate
+    /// space (y increasing downward), so they can be handed straight to addArc.
+    static let tangentStart = Angle(degrees: 152.18)   // left tangent point
+    static let tangentEnd = Angle(degrees: 387.82)     // right tangent point, gone the long way round the top
+
+    /// Builds the logo inside `rect`, fitted to a 24x24 grid and centred.
+    /// The result is one closed outline plus the counter, so it must be filled
+    /// even-odd for the counter to read as a hole.
     static func path(in rect: CGRect) -> Path {
         let s = min(rect.width / 24, rect.height / 24)
-        let cx = rect.midX, cy = rect.midY
-        func p(_ pt: CGPoint) -> CGPoint {
-            CGPoint(x: cx + (pt.x - 12) * s, y: cy + (pt.y - 12) * s)
-        }
-        func circle(_ r: CGFloat) -> CGRect {
-            CGRect(x: cx - r * s, y: cy - r * s, width: 2 * r * s, height: 2 * r * s)
-        }
+        let ox = rect.midX - 12 * s, oy = rect.midY - 12 * s
+        func p(_ pt: CGPoint) -> CGPoint { CGPoint(x: ox + pt.x * s, y: oy + pt.y * s) }
 
-        // Ring: outer circle with the inner one knocked out. Both are drawn in
-        // the same direction, so `.evenOdd` is what makes the hole a hole.
-        var ring = Path()
-        ring.addEllipse(in: circle(outerRadius))
-        ring.addEllipse(in: circle(innerRadius))
+        var path = Path()
+        // Head, entered at the left tangent point and swept over the top to the
+        // right one. clockwise: false traverses in the direction of increasing
+        // angle, which in this y-down space is visually clockwise.
+        path.addArc(center: p(headCentre), radius: headRadius * s,
+                    startAngle: tangentStart, endAngle: tangentEnd, clockwise: false)
+        path.addLine(to: p(point))
+        path.closeSubpath()
 
-        var trace = Path()
-        trace.move(to: p(Self.trace[0]))
-        for pt in Self.trace.dropFirst() { trace.addLine(to: p(pt)) }
-        let strokedTrace = trace.strokedPath(
-            StrokeStyle(lineWidth: traceWidth * s, lineCap: .round, lineJoin: .round)
-        )
-
-        var out = Path()
-        out.addPath(ring)
-        out.addPath(strokedTrace)
-        return out
+        // Counter.
+        let c = p(headCentre), r = counterRadius * s
+        path.addEllipse(in: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r))
+        return path
     }
 }
 
-struct PulseMark: Shape {
-    /// Even-odd is required: it is what turns the ring's inner circle into a
-    /// hole rather than a second filled disc.
+struct PulseLogo: Shape {
+    /// Even-odd is what turns the counter into a hole rather than a second
+    /// filled disc.
     static let fillStyle = FillStyle(eoFill: true)
-    func path(in rect: CGRect) -> Path { PulseMarkGeometry.path(in: rect) }
+    func path(in rect: CGRect) -> Path { PulseLogoGeometry.path(in: rect) }
 }
 
-/// The brand glyph as used in headers and on the onboarding splash.
-struct PulseMarkView: View {
+/// The logo as used in headers and on the onboarding screen.
+struct PulseLogoView: View {
     var size: CGFloat
     var color: Color = Tok.accent
     var body: some View {
-        PulseMark()
-            .fill(color, style: PulseMark.fillStyle)
+        PulseLogo()
+            .fill(color, style: PulseLogo.fillStyle)
             .frame(width: size, height: size)
             .accessibilityHidden(true)
     }

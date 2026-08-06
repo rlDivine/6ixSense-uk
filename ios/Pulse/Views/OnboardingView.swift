@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Mandatory first-run onboarding (no account, no skip): intro → location →
-/// preferences. Completing it sets `onboarded`, which the app gates on.
+/// Mandatory first-run onboarding (no account, no skip): intro, then location,
+/// then interests. Completing it sets `onboarded`, which the app gates on.
 struct OnboardingView: View {
     @EnvironmentObject var app: AppState
     @State private var step = 0
@@ -73,14 +73,14 @@ struct OnboardingView: View {
         VStack(spacing: 0) {
             Spacer()
             ZStack {
-                RoundedRectangle(cornerRadius: 40).fill(
-                    RadialGradient(colors: [Tok.accent.opacity(0.35), Tok.accent.opacity(0.06)],
-                                   center: .center, startRadius: 4, endRadius: 110))
-                PulseMarkView(size: 92)
+                RoundedRectangle(cornerRadius: 40)
+                    .fill(Tok.panel)
+                    .overlay(RoundedRectangle(cornerRadius: 40).stroke(Tok.hairline, lineWidth: 1))
+                PulseLogoView(size: 92)
             }
             .frame(width: 150, height: 150).padding(.bottom, 28)
             Text("Pulse").font(.system(size: 30, weight: .heavy)).foregroundStyle(Tok.text)
-            Text("Everything happening around you, anywhere in the UK: gigs, festivals, food, comedy, markets and free events — sorted by what's closest and soonest.")
+            Text("Everything happening around you, anywhere in the UK: gigs, festivals, food, comedy, markets and free events, sorted by what's closest and soonest.")
                 .font(.system(size: 15)).foregroundStyle(Tok.muted)
                 .multilineTextAlignment(.center).frame(maxWidth: 320).padding(.top, 10)
             Spacer()
@@ -98,7 +98,8 @@ struct OnboardingView: View {
                 .font(.system(size: 15)).foregroundStyle(Tok.muted)
                 .multilineTextAlignment(.center).frame(maxWidth: 320).padding(.top, 10)
             Button { app.requestLocation() } label: {
-                Label(app.locAuthorized ? "Location enabled ✓" : "Allow location", systemImage: "location.fill")
+                Label(app.locAuthorized ? "Location enabled" : "Allow location",
+                      systemImage: app.locAuthorized ? "checkmark.circle.fill" : "location.fill")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(app.locAuthorized ? Tok.freeFg : Tok.accent2)
                     .padding(.horizontal, 16).padding(.vertical, 10)
@@ -115,7 +116,7 @@ struct OnboardingView: View {
         VStack(spacing: 0) {
             Text("What are you into?").font(.system(size: 24, weight: .heavy)).foregroundStyle(Tok.text)
                 .padding(.top, 18)
-            Text("Pick a few — we'll tailor your feed to what you like. You can leave it blank to see everything.")
+            Text("Pick a few and we'll tailor your feed to what you like. Leave it blank to see everything.")
                 .font(.system(size: 14)).foregroundStyle(Tok.muted)
                 .multilineTextAlignment(.center).frame(maxWidth: 320).padding(.top, 8)
 
@@ -148,8 +149,8 @@ struct OnboardingView: View {
 
     private func artCircle(_ symbol: String, _ tint: Color) -> some View {
         ZStack {
-            Circle().fill(RadialGradient(colors: [tint.opacity(0.32), tint.opacity(0.05)],
-                                         center: .center, startRadius: 2, endRadius: 80))
+            Circle().fill(Tok.panel)
+                .overlay(Circle().stroke(Tok.hairline, lineWidth: 1))
             Image(systemName: symbol).font(.system(size: 46)).foregroundStyle(tint)
         }
         .frame(width: 130, height: 130)

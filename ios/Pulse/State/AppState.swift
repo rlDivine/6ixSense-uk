@@ -22,7 +22,7 @@ final class AppState: NSObject, ObservableObject {
     @Published var category: String = "All"
     @Published var search: String = ""
 
-    // Region — which UK town the backend built this feed for. Resolved
+    // Region: which UK town the backend built this feed for. Resolved
     // server-side from `origin`, so a user who opens the app in Leeds gets
     // Leeds events.
     @Published var region: Region?
@@ -38,7 +38,7 @@ final class AppState: NSObject, ObservableObject {
     @Published var locAuthorized = false
     private let locManager = CLLocationManager()
 
-    /// A place the user picked by hand — a country in Settings, or an address
+    /// A place the user picked by hand: a town in Preferences, or an address
     /// typed into the search bar. While this is set, GPS is ignored entirely.
     @Published private(set) var placeOverride: PlaceOverride?
 
@@ -57,7 +57,7 @@ final class AppState: NSObject, ObservableObject {
     // Onboarding gate (mandatory first-run).
     @AppStorage("onboarded") var onboarded = false
 
-    // Preferences — only events matching these are shown on Discover + Map.
+    // Preferences. Only events matching these are shown on Discover and Map.
     @Published var preferredCategories: Set<String> = []
 
     // Persistence
@@ -73,7 +73,7 @@ final class AppState: NSObject, ObservableObject {
 
     // MARK: Location
 
-    /// Explicit ask — prompts the system dialog when undetermined.
+    /// Explicit ask. Prompts the system dialog when undetermined.
     /// Triggered by onboarding slide 2 and the header location chip.
     /// Safe to call on launch: prompts the first time, fetches if allowed,
     /// does nothing if denied (so it won't yank the user to Settings on launch).
@@ -97,7 +97,7 @@ final class AppState: NSObject, ObservableObject {
     }
 
     /// Quiet path used when the feed appears: only use location if the user has
-    /// already granted it — never pop a system dialog over the feed.
+    /// already granted it, and never pop a system dialog over the feed.
 
     // MARK: Fetch
 
@@ -109,7 +109,7 @@ final class AppState: NSObject, ObservableObject {
             sourcesLoaded = resp.sources
             region = resp.region
             // A manual override is the user's own choice of UK town, so it is
-            // always in market — only the device's own position can be abroad.
+            // always in market. Only the device's own position can be abroad.
             inMarket = placeOverride != nil || (resp.inMarket ?? true)
             // The region stays the authority on units, even though every UK
             // region reports miles.
@@ -153,7 +153,7 @@ final class AppState: NSObject, ObservableObject {
         await setOverride(PlaceOverride(kind: .country, label: c.label, coordinate: city.coordinate))
     }
 
-    /// Browse one specific town out of the region browser — a county town in
+    /// Browse one specific town out of the region browser: a county town in
     /// Kent, say, rather than the whole of the United Kingdom.
     func selectCity(_ city: RegionCountry.City) async {
         await setOverride(PlaceOverride(kind: .city, label: city.label, coordinate: city.coordinate))
@@ -161,7 +161,7 @@ final class AppState: NSObject, ObservableObject {
 
     /// The box the address search geocodes inside: the whole of the UK, from
     /// the Isles of Scilly to Shetland. Without it, "Newport" or "Richmond"
-    /// can just as easily resolve to Rhode Island or Virginia — a real hazard
+    /// can just as easily resolve to Rhode Island or Virginia, a real hazard
     /// for British place names, most of which have an American namesake.
     ///
     /// CLCircularRegion is soft-deprecated (its replacement covers region
@@ -170,7 +170,7 @@ final class AppState: NSObject, ObservableObject {
     /// build time is expected.
     private static let ukSearchRegion = CLCircularRegion(
         center: CLLocationCoordinate2D(latitude: 54.5, longitude: -3.5),
-        radius: 800_000,          // metres — comfortably covers the UK
+        radius: 800_000,          // metres, comfortably covering the UK
         identifier: "uk"
     )
 
@@ -185,7 +185,7 @@ final class AppState: NSObject, ObservableObject {
             query, in: Self.ukSearchRegion, preferredLocale: Locale(identifier: "en_GB")
         )
         // Biasing to the UK is a hint, not a guarantee, so take the first hit
-        // that is genuinely in the country and reject the rest — a feed built
+        // that is genuinely in the country and reject the rest. A feed built
         // around Newport, Rhode Island would be empty and confusing.
         guard let mark = marks?.first(where: { $0.isoCountryCode == "GB" }),
               let loc = mark.location else { return false }
@@ -196,8 +196,8 @@ final class AppState: NSObject, ObservableObject {
     }
 
     /// Where this feed is for, in words, for headers and empty states.
-    /// Before the first feed lands — and if the backend ever declines to name a
-    /// region — this reads as "the UK" rather than inventing a town.
+    /// Before the first feed lands, and if the backend ever declines to name a
+    /// region, this reads as "the UK" rather than inventing a town.
     var placeName: String { placeOverride?.label ?? region?.label ?? "the UK" }
 
     /// What the header's location chip says: the place the user picked, "You"
@@ -208,7 +208,7 @@ final class AppState: NSObject, ObservableObject {
         return (deviceOrigin != nil && inMarket) ? "You" : placeName
     }
 
-    /// How to describe the feed's centre in a sentence — "near you", "near
+    /// How to describe the feed's centre in a sentence: "near you", "near
     /// Canterbury", or "in London" for someone abroad, where "near you" would
     /// be plainly untrue.
     var originPhrase: String {
@@ -233,7 +233,7 @@ final class AppState: NSObject, ObservableObject {
 
     func clearPreferences() { preferredCategories.removeAll(); persist() }
 
-    /// True only when preferences actually narrow the feed — i.e. some, but not
+    /// True only when preferences actually narrow the feed, that is some but not
     /// all, interests are selected. (All selected ≈ none selected ≈ show all.)
     var isPreferenceFiltered: Bool {
         !preferredCategories.isEmpty && preferredCategories.count < Preferences.all.count

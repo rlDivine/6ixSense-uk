@@ -1,12 +1,12 @@
 // Generates the AppIcon PNGs (1024×1024, opaque, no alpha channel) from the
-// same PulseMark geometry the app draws in SwiftUI.
+// same logo geometry the app draws in SwiftUI.
 //
 //   node tools/make_icon.js            # writes all three variants
 //   node tools/make_icon.js <out.png> <light|dark|tinted>
 //
 // This is the portable twin of tools/make_icon.swift: same drawing, but it
 // runs anywhere Node does rather than needing a Mac and CoreGraphics. It has
-// no dependencies — the rasteriser and the PNG encoder are both below, and
+// no dependencies: the rasteriser and the PNG encoder are both below, and
 // zlib comes from Node itself.
 import fs from "node:fs";
 import path from "node:path";
@@ -17,44 +17,54 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ICONSET = path.join(__dirname, "..", "Pulse", "Assets.xcassets", "AppIcon.appiconset");
 
 const SIZE = 1024;
-const SS = 4; // supersampling factor — 4× gives clean antialiased curves
+const SS = 4; // supersampling factor. 4x gives clean antialiased curves
 
-// Canvas and mark colours per variant, matching make_icon.swift.
+// Canvas and logo colours per variant, matching make_icon.swift.
+// Flag blue tile, white logo. The tinted variant has to be greyscale so iOS
+// can recolour it with whatever tint the user has chosen.
 const VARIANTS = {
-  light:  { bg: [0x14, 0x16, 0x1e], fg: [0xff, 0x62, 0x51], file: "icon_1024.png" },
-  dark:   { bg: [0x0a, 0x0c, 0x11], fg: [0xff, 0x62, 0x51], file: "icon_dark.png" },
+  light:  { bg: [0x01, 0x21, 0x69], fg: [0xff, 0xff, 0xff], file: "icon_1024.png" },
+  dark:   { bg: [0x00, 0x14, 0x40], fg: [0xff, 0xff, 0xff], file: "icon_dark.png" },
   tinted: { bg: [0x00, 0x00, 0x00], fg: [0xd8, 0xd8, 0xd8], file: "icon_tinted.png" },
 };
 
-// ---- the mark, on its 24×24 grid ------------------------------------------
-const RING_OUTER = 11.0;
-const RING_INNER = 8.6;
-const TRACE_WIDTH = 1.7;
-const TRACE = [
-  [6.0, 12.0], [9.0, 12.0], [10.7, 7.8], [13.3, 16.2], [15.0, 12.0], [18.0, 12.0],
-];
+// ---- the logo, on its 24x24 grid ------------------------------------------
+// These numbers are the reference geometry documented in
+// ios/Pulse/Design/Theme.swift (PulseLogoGeometry) and reproduced in
+// api/public/icon.svg. Change one, change all three.
+const HEAD = { x: 12, y: 8.8, r: 5.6 };
+const POINT = { x: 12, y: 20.8 };
+const COUNTER_R = 2.4;
 
-/// Signed distance from (x,y) to the segment a→b, in grid units.
-function distToSegment(x, y, a, b) {
-  const vx = b[0] - a[0], vy = b[1] - a[1];
-  const wx = x - a[0], wy = y - a[1];
-  const len2 = vx * vx + vy * vy;
-  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, (wx * vx + wy * vy) / len2));
-  const dx = wx - t * vx, dy = wy - t * vy;
-  return Math.hypot(dx, dy);
+// The tail is the triangle between the point and the two places where a line
+// from the point grazes the head. Because those lines are tangents, the
+// triangle meets the circle without a kink, and the union of the two is the
+// pin silhouette. Testing "inside circle or inside triangle" therefore gives
+// exactly the same shape as the arc-and-lines outline the other two
+// implementations draw, without any winding rules to get wrong.
+const TANGENT_L = { x: 7.047, y: 11.413 };
+const TANGENT_R = { x: 16.953, y: 11.413 };
+
+/// Which side of the line a->b the point (x,y) falls on. Sign only.
+function side(x, y, a, b) {
+  return (b.x - a.x) * (y - a.y) - (b.y - a.y) * (x - a.x);
 }
 
-/// True when the grid point (x,y) is inside the mark. Round caps and joins fall
-/// out of using distance-to-segment: every point within half the stroke width
-/// of the polyline is inside, which is exactly what a round-capped stroke is.
+function inTriangle(x, y, a, b, c) {
+  const d1 = side(x, y, a, b);
+  const d2 = side(x, y, b, c);
+  const d3 = side(x, y, c, a);
+  const neg = d1 < 0 || d2 < 0 || d3 < 0;
+  const pos = d1 > 0 || d2 > 0 || d3 > 0;
+  return !(neg && pos);
+}
+
+/// True when the grid point (x,y) is inside the logo.
 function inMark(x, y) {
-  const r = Math.hypot(x - 12, y - 12);
-  if (r <= RING_OUTER && r >= RING_INNER) return true;
-  const half = TRACE_WIDTH / 2;
-  for (let i = 0; i < TRACE.length - 1; i++) {
-    if (distToSegment(x, y, TRACE[i], TRACE[i + 1]) <= half) return true;
-  }
-  return false;
+  const dHead = Math.hypot(x - HEAD.x, y - HEAD.y);
+  if (dHead <= COUNTER_R) return false;          // the knocked-out counter
+  if (dHead <= HEAD.r) return true;              // the head
+  return inTriangle(x, y, TANGENT_L, POINT, TANGENT_R);   // the tail
 }
 
 /// Renders one variant to raw RGB bytes (3 per pixel, no alpha).
@@ -148,7 +158,7 @@ const jobs = argOut
 
 for (const [name, out] of jobs) {
   const variant = VARIANTS[name];
-  if (!variant) throw new Error(`unknown variant "${name}" — use light, dark or tinted`);
+  if (!variant) throw new Error(`unknown variant "${name}", use light, dark or tinted`);
   fs.writeFileSync(out, encodePNG(render(variant), SIZE));
   console.log(`wrote ${out} (${name})`);
 }

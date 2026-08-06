@@ -34,20 +34,20 @@ struct EventDetailView: View {
     }
 
     private var hero: some View {
-        // Size is driven by the gradient (a fixed-frame, flexible view). The image
+        // Size is driven by the wash (a fixed-frame, flexible view). The image
         // is a CLIPPED overlay, so a wide photo can never inflate the hero's width
         // and shove the rest of the page off-screen.
-        Categories.gradient(event.category)
+        Categories.wash(event.category)
             .frame(maxWidth: .infinity)
             .frame(height: 280)
             .overlay {
                 if let img = event.image, let url = URL(string: img) {
                     AsyncImage(url: url) { phase in
                         if let image = phase.image { image.resizable().scaledToFill() }
-                        else { Text(Categories.style(event.category).glyph).font(.system(size: 72)) }
+                        else { CategoryGlyph(category: event.category, size: 56) }
                     }
                 } else {
-                    Text(Categories.style(event.category).glyph).font(.system(size: 72))
+                    CategoryGlyph(category: event.category, size: 56)
                 }
             }
             .clipped()
@@ -78,11 +78,11 @@ struct EventDetailView: View {
 
     private var facts: some View {
         HStack(spacing: 8) {
-            fact("📅 When", event.startDate != nil
+            fact("When", event.startDate != nil
                  ? event.startDate!.formatted(.dateTime.month(.abbreviated).day()) + " · " + Fmt.time(event.startDate)
                  : "TBA")
-            fact("📍 Distance", Fmt.distance(event.distanceKm))
-            fact("🏷️ Price", event.isFree ? "Free" : (event.price?.isEmpty == false ? event.price! : "—"))
+            fact("Distance", Fmt.distance(event.distanceKm))
+            fact("Price", event.isFree ? "Free" : (event.price?.isEmpty == false ? event.price! : "Not listed"))
         }
     }
     private func fact(_ k: String, _ v: String) -> some View {
@@ -102,12 +102,12 @@ struct EventDetailView: View {
             Text(event.address ?? "Address TBA").font(.system(size: 13)).foregroundStyle(Tok.muted)
             if let lat = event.lat, let lng = event.lng {
                 let coord = CLLocationCoordinate2D(latitude: lat, longitude: lng)
-                // Static snapshot instead of a live Map — avoids a second MapKit
+                // Static snapshot instead of a live Map, which avoids a second MapKit
                 // instance over the main map (which froze the app on dismiss).
                 VenueSnapshot(coordinate: coord)
                     .frame(height: 130).clipShape(RoundedRectangle(cornerRadius: 10))
                 if let url = URL(string: "http://maps.apple.com/?daddr=\(lat),\(lng)") {
-                    Link("Directions ↗", destination: url).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Tok.accent2)
+                    Link("Directions", destination: url).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Tok.accent2)
                 }
             }
         }
@@ -121,7 +121,7 @@ struct EventDetailView: View {
             if let url = URL(string: event.url ?? "") {
                 ShareLink(item: url) { actionLabel("Share") }
             } else { actionLabel("Share") }
-            Button { app.toggleSave(event) } label: { actionLabel(app.isSaved(event) ? "Saved ✓" : "Save") }
+            Button { app.toggleSave(event) } label: { actionLabel(app.isSaved(event) ? "Saved" : "Save") }
         }
     }
     private func actionLabel(_ t: String) -> some View {
@@ -134,7 +134,7 @@ struct EventDetailView: View {
     @ViewBuilder private var cta: some View {
         if let url = URL(string: event.url ?? "") {
             Link(destination: url) {
-                Text("Get tickets / Details ↗").font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
+                Text("Get tickets and details").font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
                     .frame(maxWidth: .infinity).padding(15)
                     .background(Tok.accent, in: RoundedRectangle(cornerRadius: 14))
             }
@@ -143,7 +143,7 @@ struct EventDetailView: View {
     }
 }
 
-/// A still image of the venue location rendered once via MKMapSnapshotter —
+/// A still image of the venue location, rendered once via MKMapSnapshotter.
 /// far lighter than embedding a live `Map`, and safe to present over another map.
 struct VenueSnapshot: View {
     let coordinate: CLLocationCoordinate2D

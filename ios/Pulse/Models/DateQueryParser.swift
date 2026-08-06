@@ -13,7 +13,7 @@ struct DateQuery {
 /// "25/7", "2026-07-25"), ranges ("july 25-27"), and relative phrases
 /// ("today", "this weekend", "next week", "friday", "next friday").
 ///
-/// Numeric dates are read the British way round — day before month.
+/// Numeric dates are read the British way round: day before month.
 enum DateQueryParser {
     private static let months = ["january","february","march","april","may","june","july","august","september","october","november","december"]
     private static let weekdays = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"]
@@ -67,7 +67,7 @@ enum DateQueryParser {
     private static func label(_ min: Date, _ max: Date) -> String {
         let f = DateFormatter(); f.dateFormat = "EEE, MMM d"; f.timeZone = calendar.timeZone
         let a = f.string(from: min), b = f.string(from: max)
-        return a == b ? a : "\(a) – \(b)"
+        return a == b ? a : "\(a) to \(b)"
     }
 
     static func parse(_ raw: String, now: Date = .now) -> DateQuery? {
@@ -78,6 +78,9 @@ enum DateQueryParser {
             return DateQuery(range: mn...mx, label: label(mn, mx), rest: strip(raw, m[0]))
         }
 
+        // The separator class accepts the dashes a person might actually type,
+        // including the ones an iOS keyboard substitutes automatically. This is
+        // about reading input, not about how the app writes.
         if let m = firstMatch(#"\b([a-zA-Z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?\s*(?:-|to|–|—)\s*(\d{1,2})(?:st|nd|rd|th)?\b"#, in: raw),
            let mi = monthIndex(m[1]), let d1n = Int(m[2]), let d2n = Int(m[3]) {
             let y = calendar.component(.year, from: now)

@@ -22,7 +22,7 @@ struct DiscoverView: View {
     // MARK: Header
     private var header: some View {
         HStack(alignment: .center, spacing: 9) {
-            PulseMarkView(size: 26)
+            PulseLogoView(size: 26)
             VStack(alignment: .leading, spacing: 1) {
                 Text("Pulse").font(.system(size: 21, weight: .heavy)).foregroundStyle(Tok.text)
                 Text("what's on in \(app.placeName), right now").font(.system(size: 11.5)).foregroundStyle(Tok.muted)
@@ -108,7 +108,7 @@ struct DiscoverView: View {
     }
 
     /// Shown only when the device is outside the UK. Without it the feed looks
-    /// broken — London listings under a "near you" heading — when in fact it is
+    /// broken, showing London listings under a "near you" heading, when in fact it is
     /// working exactly as intended for a UK-only app.
     @ViewBuilder private var outOfMarketNotice: some View {
         if !app.inMarket && app.placeOverride == nil {
@@ -116,7 +116,7 @@ struct DiscoverView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "globe.europe.africa.fill")
                         .font(.system(size: 12, weight: .semibold)).foregroundStyle(Tok.accent)
-                    Text("Pulse covers the UK — showing \(app.placeName). Tap to pick a town.")
+                    Text("Pulse covers the UK. Showing \(app.placeName). Tap to pick a town.")
                         .font(.system(size: 12)).foregroundStyle(Tok.text)
                         .lineLimit(2).multilineTextAlignment(.leading)
                     Spacer(minLength: 0)
@@ -180,7 +180,7 @@ struct DiscoverView: View {
     private var updatedText: String {
         guard let t = app.lastLoad else { return "" }
         let m = Int(Date.now.timeIntervalSince(t) / 60)
-        return "Updated \(m == 0 ? "just now" : "\(m)m ago") ↻"
+        return "Updated \(m == 0 ? "just now" : "\(m)m ago")"
     }
 }
 

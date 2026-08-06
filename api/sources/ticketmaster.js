@@ -1,4 +1,4 @@
-// Ticketmaster Discovery API source — concerts, shows, festivals, sports.
+// Ticketmaster Discovery API source: concerts, shows, festivals, sport.
 // Free API key (instant signup): https://developer.ticketmaster.com/
 // Set it via the TM_API_KEY environment variable. Without a key this source
 // returns nothing and the app falls back to the other (no-key) sources.
@@ -59,7 +59,7 @@ export async function fetchTicketmaster({ lat = LONDON.lat, lng = LONDON.lng, ra
   });
 }
 
-// Ticketmaster GB quotes in pounds, so render "£12–£30" rather than bolting a
+// Ticketmaster GB quotes in pounds, so render "£12-£30" rather than bolting a
 // dollar sign onto a sterling figure. A non-GBP range (rare, but possible on a
 // cross-border listing) keeps its ISO code so nothing is mislabelled.
 function formatPrice(range) {
@@ -68,9 +68,9 @@ function formatPrice(range) {
   const max = round(range.max);
   const same = min === max;
   if (range.currency === "GBP" || !range.currency) {
-    return same ? `£${min}` : `£${min}–£${max}`;
+    return same ? `£${min}` : `£${min}-£${max}`;
   }
-  return same ? `${min} ${range.currency}` : `${min}–${max} ${range.currency}`;
+  return same ? `${min} ${range.currency}` : `${min}-${max} ${range.currency}`;
 }
 
 function round(v) {

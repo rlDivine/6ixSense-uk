@@ -9,7 +9,7 @@ struct SavedView: View {
             Tok.bg.ignoresSafeArea()
             if app.savedUpcoming.isEmpty {
                 VStack(spacing: 8) {
-                    Text("🔖").font(.system(size: 40))
+                    Image(systemName: "bookmark").font(.system(size: 34)).foregroundStyle(Tok.muted)
                     Text("Nothing saved yet").font(.system(size: 17, weight: .bold)).foregroundStyle(Tok.text)
                     Text("Tap the bookmark on any event to save it here.").font(.system(size: 13.5)).foregroundStyle(Tok.muted)
                 }.multilineTextAlignment(.center).padding(40)

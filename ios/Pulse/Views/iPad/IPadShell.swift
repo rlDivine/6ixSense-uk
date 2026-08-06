@@ -4,8 +4,8 @@ import MapKit
 // MARK: - Root
 
 /// The regular-width (iPad) shell. Replaces the compact bottom tab bar with a
-/// persistent sidebar, an adaptive card grid, and an inline detail pane —
-/// the structure specified in the iPad handoff.
+/// persistent sidebar, an adaptive card grid, and an inline detail pane, which
+/// is the structure specified in the iPad handoff.
 ///
 /// Everything keys off the *size class*, never the device model, so Split View,
 /// Slide Over and Stage Manager all fall back to the phone layout automatically
@@ -66,7 +66,7 @@ struct IPadRootView: View {
     }
 
     /// What the grid renders on Discover. Search, when active, overrides the
-    /// sidebar filters entirely — the toolbar field replaces the phone's
+    /// sidebar filters entirely, because the toolbar field replaces the phone's
     /// fourth tab, so a query has to be able to reach the whole catalogue.
     private var gridEvents: [Event] {
         if let outcome = searchOutcome {
@@ -173,7 +173,7 @@ struct IPadRootView: View {
 
     private var brand: some View {
         HStack(spacing: 10) {
-            PulseMarkView(size: 30)
+            PulseLogoView(size: 30)
             VStack(alignment: .leading, spacing: 0) {
                 Text("Pulse").font(.system(size: 18, weight: .heavy)).foregroundStyle(Tok.text)
                 Text("\(app.placeName), right now").font(.system(size: 11)).foregroundStyle(Tok.muted)
@@ -420,7 +420,7 @@ struct IPadRootView: View {
         }
     }
 
-    /// One card per ~300pt of *content* width — 3 columns on a detail-closed
+    /// One card per ~300pt of *content* width: 3 columns on a detail-closed
     /// landscape iPad, 2 with the pane open or in portrait, 1 in Slide Over.
     private func columnCount(for width: CGFloat) -> Int {
         max(1, min(4, Int((width / 300).rounded())))
@@ -470,7 +470,7 @@ struct IPadRootView: View {
         Group {
             if app.savedUpcoming.isEmpty {
                 VStack(spacing: 10) {
-                    Text("🔖").font(.system(size: 46))
+                    Image(systemName: "bookmark").font(.system(size: 40)).foregroundStyle(Tok.muted)
                     Text("Nothing saved yet").font(.system(size: 19, weight: .bold)).foregroundStyle(Tok.text)
                     Text("Tap the bookmark on any event and it lands here, grouped by day.")
                         .font(.system(size: 14)).foregroundStyle(Tok.muted)
@@ -640,17 +640,17 @@ struct IPadDetailBody: View {
     }
 
     private var hero: some View {
-        Categories.gradient(event.category)
+        Categories.wash(event.category)
             .frame(maxWidth: .infinity)
             .frame(height: heroHeight)
             .overlay {
                 if let img = event.image, let url = URL(string: img) {
                     AsyncImage(url: url) { phase in
                         if let image = phase.image { image.resizable().scaledToFill() }
-                        else { Text(Categories.style(event.category).glyph).font(.system(size: 64)) }
+                        else { CategoryGlyph(category: event.category, size: 50) }
                     }
                 } else {
-                    Text(Categories.style(event.category).glyph).font(.system(size: 64))
+                    CategoryGlyph(category: event.category, size: 50)
                 }
             }
             .clipped()
@@ -677,15 +677,15 @@ struct IPadDetailBody: View {
 
     private var facts: some View {
         HStack(spacing: 8) {
-            fact("📅 When", event.startDate != nil
+            fact("When", event.startDate != nil
                  ? event.startDate!.formatted(.dateTime.month(.abbreviated).day()) + " · " + Fmt.time(event.startDate)
                  : "TBA")
             // Fmt.distance carries the unit the region actually uses. Pasting a
             // literal "km" here labelled an already-converted miles figure as
-            // kilometres — very visible in a UK build, where every other
+            // kilometres, which is very visible in a UK build where every other
             // distance in the app reads in miles.
-            fact("📍 Distance", Fmt.distance(event.distanceKm))
-            fact("🏷️ Price", event.isFree ? "Free" : (event.price?.isEmpty == false ? event.price! : "—"))
+            fact("Distance", Fmt.distance(event.distanceKm))
+            fact("Price", event.isFree ? "Free" : (event.price?.isEmpty == false ? event.price! : "Not listed"))
         }
     }
 
@@ -708,7 +708,7 @@ struct IPadDetailBody: View {
                 VenueSnapshot(coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lng))
                     .frame(height: 140).clipShape(RoundedRectangle(cornerRadius: 10))
                 if let url = URL(string: "http://maps.apple.com/?daddr=\(lat),\(lng)") {
-                    Link("Directions ↗", destination: url)
+                    Link("Directions", destination: url)
                         .font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Tok.accent2)
                         .frame(height: 44)
                 }
@@ -729,7 +729,7 @@ struct IPadDetailBody: View {
                     secondary("Share").opacity(0.4)
                 }
                 Button { app.toggleSave(event) } label: {
-                    secondary(app.isSaved(event) ? "Saved ✓" : "Save")
+                    secondary(app.isSaved(event) ? "Saved" : "Save")
                 }
                 .buttonStyle(.plain)
             }
@@ -748,7 +748,7 @@ struct IPadDetailBody: View {
 
             if let url = URL(string: event.url ?? "") {
                 Link(destination: url) {
-                    Text("Get tickets ↗")
+                    Text("Get tickets")
                         .font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
                         .frame(maxWidth: .infinity).frame(height: 50)
                         .background(Tok.accent, in: RoundedRectangle(cornerRadius: 14))

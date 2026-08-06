@@ -3,10 +3,10 @@ import Combine
 
 struct LoadingState: View {
     /// Simulated cold-start progress. The backend runs on a free tier that can
-    /// take 30–50s to wake from idle, and gives no progress signal, so we ease a
+    /// take 30 to 50s to wake from idle, and gives no progress signal, so we ease a
     /// bar asymptotically toward ~95% over that window. It disappears the moment
     /// events arrive (this whole view is replaced by the feed), so it never has
-    /// to "reach" 100% — it just communicates that something is happening and
+    /// to "reach" 100%. It just communicates that something is happening and
     /// roughly how far along the wait is. Warm launches blow past it in a flash.
     @State private var progress: Double = 0
     @State private var elapsed: Double = 0
@@ -92,7 +92,7 @@ struct EmptyState: View {
     let reset: () -> Void
     var body: some View {
         VStack(spacing: 8) {
-            Text("🗓️").font(.system(size: 40))
+            Image(systemName: "calendar").font(.system(size: 34)).foregroundStyle(Tok.muted)
             Text("No events match").font(.system(size: 17, weight: .bold)).foregroundStyle(Tok.text)
             Text("Try another category or widen the date range.").font(.system(size: 13.5)).foregroundStyle(Tok.muted)
             Button("Reset filters", action: reset)
@@ -111,7 +111,7 @@ struct ErrorState: View {
     let retry: () -> Void
     var body: some View {
         VStack(spacing: 8) {
-            Text("📡").font(.system(size: 40))
+            Image(systemName: "wifi.slash").font(.system(size: 34)).foregroundStyle(Tok.muted)
             Text("Couldn't reach events").font(.system(size: 17, weight: .bold)).foregroundStyle(Tok.text)
             Text(message).font(.system(size: 13)).foregroundStyle(Tok.muted)
                 .font(.system(size: 12)).foregroundStyle(Tok.muted)

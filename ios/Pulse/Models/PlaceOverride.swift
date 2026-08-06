@@ -33,8 +33,8 @@ struct PlaceOverride: Codable, Equatable {
     }
 }
 
-/// The backend's curated catalogue (`GET /api/regions`) — in practice a
-/// single entry, the United Kingdom, holding every town Pulse covers.
+/// The backend's curated catalogue (`GET /api/regions`). In practice it is
+/// a single entry, the United Kingdom, holding every town Pulse covers.
 ///
 /// The list is fetched rather than hardcoded so that adding a town on the
 /// server makes it appear in the picker without shipping a new build.
@@ -45,7 +45,7 @@ struct RegionCountry: Codable, Identifiable, Hashable {
         /// The county, council area or principal area this town sits in.
         /// Optional so an older backend that doesn't send it still decodes.
         let area: String?
-        /// England, Wales, Scotland, Northern Ireland — the browser's sections.
+        /// England, Wales, Scotland, Northern Ireland: the browser's sections.
         let nation: String?
         let lat: Double
         let lng: Double
@@ -54,13 +54,13 @@ struct RegionCountry: Codable, Identifiable, Hashable {
             CLLocationCoordinate2D(latitude: lat, longitude: lng)
         }
 
-        /// "Canterbury, Kent" — what the browser rows and the search field match on.
+        /// "Canterbury, Kent", which is what the rows and the filter field match on.
         var searchText: String {
             [label, area, nation].compactMap { $0 }.joined(separator: " ")
         }
     }
 
-    let country: String   // ISO code — always "GB"
+    let country: String   // ISO code, always "GB"
     let label: String     // "United Kingdom"
     let cities: [City]
     /// The nations present, in the order the backend listed them. Optional for

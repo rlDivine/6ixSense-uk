@@ -11,13 +11,16 @@ import { distanceKm } from "./util.js";
 
 // Sources available per region. Keys map to SOURCE_IMPL in server.js.
 // - ticketmaster: queried by lat/lng, scoped to countryCode=GB
-// - eventbrite:   scraped per eventbrite.co.uk city slug
+// - skiddle:      UK listings service, queried by lat/lng (needs a free key)
+// - fixtures:     upcoming football fixtures (needs a free key)
+// - eventbrite:   scraped per eventbrite.co.uk town slug
 // - curated:      built-in guide of UK venues near the region
 //
-// Every UK region runs all three. Ticketmaster and the curated guide work
-// everywhere in the country; Eventbrite is a per-town scrape, and a town with
-// no Eventbrite page simply contributes nothing rather than failing.
-const UK_SOURCES = ["ticketmaster", "eventbrite", "curated"];
+// Every UK region runs all five. The keyed sources return nothing at all when
+// their key is unset, so the app still works with none configured. Eventbrite
+// is a per-town scrape, and a town with no Eventbrite page simply contributes
+// nothing rather than failing the request.
+const UK_SOURCES = ["ticketmaster", "skiddle", "fixtures", "eventbrite", "curated"];
 
 // A UK region. Every entry carries the county / council area / principal area
 // it sits in, and the nation, so the app's picker can group several hundred
@@ -534,8 +537,8 @@ export function nearestCity(lat, lng) {
 // How far from the nearest listed town a coordinate can be and still count as
 // "in the UK". The catalogue is dense enough that anywhere in the country is
 // well inside this; the allowance is for offshore waters and the far reaches of
-// the Northern Isles. Beyond it the user is abroad, and Pulse — a UK-only
-// product — shows them London rather than a market it does not cover.
+// the Northern Isles. Beyond it the user is abroad, and Pulse, being a UK-only
+// product, shows them London rather than a market it does not cover.
 const OUT_OF_MARKET_KM = 250;
 
 /// Resolve a coordinate to the region that should serve it. Always returns one
@@ -651,7 +654,7 @@ export function rangeWindow(range, now, offsetMin = 0) {
 const COUNTRY_LABELS = { GB: "United Kingdom" };
 
 /// The curated towns grouped by country, in a shape the client can render
-/// directly. There is only ever one country here — the UK — but the shape is
+/// directly. There is only ever one country here, the UK, but the shape is
 /// kept as a list so the app's picker code stays unchanged. Picking the country
 /// means "use its first town as my origin", so London is listed first.
 export function regionCatalogue() {

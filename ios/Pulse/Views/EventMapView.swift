@@ -35,7 +35,7 @@ struct EventMapView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            // UIKit MKMapView wrapper — SwiftUI's `Map` trips a Metal multisample
+            // UIKit MKMapView wrapper. SwiftUI's `Map` trips a Metal multisample
             // assertion that freezes/crashes the app on the current SDK.
             EventMapKit(events: mapped,
                         selectedID: $selectedID,
@@ -197,11 +197,15 @@ struct EventMapView: View {
         .accessibilityLabel("Recenter on my location")
     }
 
-    // Cheap edge-darkening for legibility — a radial gradient, NOT a blur.
+    // A flat scrim along the bottom edge, where the card carousel sits. It is
+    // there so the cards keep their contrast over a light patch of map, and it
+    // is a solid fill rather than the gradient it replaced.
     private var vignette: some View {
-        RadialGradient(colors: [.clear, .black.opacity(0.28)],
-                       center: .center, startRadius: 200, endRadius: 540)
-            .allowsHitTesting(false).ignoresSafeArea()
+        VStack(spacing: 0) {
+            Color.clear
+            Color.black.opacity(0.22).frame(height: 120)
+        }
+        .allowsHitTesting(false).ignoresSafeArea()
     }
 
     private var rangePills: some View {
@@ -357,7 +361,9 @@ struct EventMapKit: UIViewRepresentable {
             let v = mapView.dequeueReusableAnnotationView(withIdentifier: "ev", for: ev) as! MKMarkerAnnotationView
             let style = Categories.style(ev.event.category)
             v.markerTintColor = UIColor(style.color)
-            v.glyphText = style.glyph
+            // glyphImage, not glyphText: the marker carries an SF Symbol like
+            // the rest of the app rather than a character from the emoji font.
+            v.glyphImage = UIImage(systemName: Categories.symbol(ev.event.category))
             v.clusteringIdentifier = "ev"
             v.displayPriority = .defaultLow
             return v
@@ -366,7 +372,7 @@ struct EventMapKit: UIViewRepresentable {
         func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
             if programmatic { return }
 
-            // A cluster is literally "the events around this spot" — list them
+            // A cluster is literally "the events around this spot", so list them
             // in the tray rather than making the user zoom in and hunt.
             if let cluster = view.annotation as? MKClusterAnnotation {
                 let members = cluster.memberAnnotations.compactMap { ($0 as? EventAnnotation)?.event }
@@ -411,8 +417,8 @@ struct PiPCard: View {
     var body: some View {
         HStack(spacing: 10) {
             ZStack {
-                Categories.gradient(event.category)
-                Text(Categories.style(event.category).glyph).font(.system(size: 24))
+                Categories.wash(event.category)
+                CategoryGlyph(category: event.category, size: 19)
             }.frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
             VStack(alignment: .leading, spacing: 3) {
                 Text(event.title).font(.system(size: 14, weight: .bold)).foregroundStyle(Tok.text).lineLimit(1)
@@ -439,7 +445,7 @@ struct CarouselCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .topLeading) {
-                Categories.gradient(event.category)
+                Categories.wash(event.category)
                 if let img = event.image, let url = URL(string: img) {
                     AsyncImage(url: url) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
                 }

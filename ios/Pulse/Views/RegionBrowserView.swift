@@ -1,9 +1,9 @@
 import SwiftUI
 
 /// The full list of towns Pulse covers, for when "United Kingdom" is too
-/// blunt an instrument. The catalogue runs to several hundred entries — at
+/// blunt an instrument. The catalogue runs to several hundred entries: at
 /// least one per ceremonial county, principal area, council area and NI
-/// county, plus the bigger cities and towns — so this screen leads with a
+/// county, plus the bigger cities and towns. So this screen leads with a
 /// filter field and groups the rest by nation and county.
 struct RegionBrowserView: View {
     @EnvironmentObject var app: AppState
