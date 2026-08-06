@@ -1,0 +1,14 @@
+{
+  "name": "Pulse — what's on across the UK",
+  "short_name": "Pulse",
+  "description": "Discover gigs, festivals, markets, comedy and free events anywhere in the UK — sorted by what's closest and soonest.",
+  "lang": "en-GB",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0E1116",
+  "theme_color": "#0E1116",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

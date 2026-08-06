@@ -1,0 +1,15 @@
+# Render Blueprint — deploys the Pulse UK events API as a Docker web service.
+# In Render: New → Blueprint → connect this repo. Render reads this file.
+services:
+  - type: web
+    name: pulse-uk-api
+    runtime: docker
+    plan: free            # free spins down after ~15 min idle (cold start on first hit).
+                          # Change to `starter` (~$7/mo) for always-on once you ship.
+    region: frankfurt     # closest Render region to the UK — keeps latency down
+                          # for British users and for the .co.uk scrapes.
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    autoDeploy: true      # redeploys on every push to the connected branch
+    # $PORT is provided by Render automatically; no env vars needed to start.
+    # Set TM_API_KEY in the dashboard to turn on the Ticketmaster firehose.

@@ -1,0 +1,11 @@
+<!-- Pulse mark: a pulse traced across a ring. Same geometry as the SwiftUI
+     PulseMark shape and the generated iOS app icon, so every surface matches. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0E1116"/>
+  <circle cx="300" cy="170" r="230" fill="#FF6251" opacity="0.14"/>
+  <circle cx="256" cy="256" r="174.9" fill="none" stroke="#FF6251" stroke-width="41.8"/>
+  <path d="M149.2 256 H202.6 L232.9 181.2 L279.1 330.8 L309.4 256 H362.8"
+        fill="none" stroke="#FF6251" stroke-width="30.3"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="256" cy="60" r="12" fill="#4AA3FF"/>
+</svg>

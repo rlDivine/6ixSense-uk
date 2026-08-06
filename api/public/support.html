@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en-GB" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0E1116" />
+  <title>Support — Pulse</title>
+  <style>
+    :root{--bg:#0E1116;--card:#171B22;--fg:#E8EAED;--muted:#9AA3AF;--accent:#FF6251;--line:#242A33}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+    .wrap{max-width:720px;margin:0 auto;padding:48px 22px 80px}
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:36px}
+    .brand b{font-size:19px;letter-spacing:.2px}
+    h1{font-size:30px;line-height:1.2;margin:0 0 6px}
+    .sub{color:var(--muted);margin:0 0 32px}
+    h2{font-size:19px;margin:30px 0 8px}
+    p{color:#D4D8DE;margin:0 0 14px}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:20px 0}
+    details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:2px 18px;margin:10px 0}
+    summary{cursor:pointer;padding:14px 0;font-weight:600;list-style:none}
+    summary::-webkit-details-marker{display:none}
+    summary::after{content:"+";float:right;color:var(--accent);font-size:20px;line-height:1}
+    details[open] summary::after{content:"–"}
+    details p{padding-bottom:6px}
+    .cta{display:inline-block;background:var(--accent);color:#1a1206;font-weight:700;padding:12px 20px;border-radius:12px;margin-top:6px}
+    footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path fill="var(--accent)" fill-rule="evenodd" d="M12 1a11 11 0 1 0 0 22 11 11 0 0 0 0-22zm0 2.4a8.6 8.6 0 1 1 0 17.2 8.6 8.6 0 0 1 0-17.2z"/><path fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M6 12h3l1.7-4.2 2.6 8.4L15 12h3"/></svg>
+      <b>Pulse</b>
+    </div>
+
+    <h1>Support</h1>
+    <p class="sub">Help with Pulse — UK events, sorted by nearest and soonest.</p>
+
+    <div class="card">
+      <p style="margin:0 0 10px"><strong>Need a hand?</strong> The fastest way to reach us is email. We usually reply within a couple of business days.</p>
+      <a class="cta" href="mailto:contact@voice2jobs.com?subject=Pulse%20UK%20support">Email support</a>
+    </div>
+
+    <h2>Frequently asked</h2>
+
+    <details>
+      <summary>Why does the app ask for my location?</summary>
+      <p>Only to sort events by distance so the closest ones show first. Your coordinates are sent with each request to calculate distances and are not stored or linked to you. If you decline, the app shows London by default and you can pick any UK town yourself in Preferences. See our <a href="/privacy.html">Privacy Policy</a>.</p>
+    </details>
+
+    <details>
+      <summary>The event list is empty or slow to load.</summary>
+      <p>Events are pulled live from multiple sources. On a fresh start the very first load can take up to a minute while sources are gathered; pull down to refresh. If it stays empty, check your internet connection and try again.</p>
+    </details>
+
+    <details>
+      <summary>Where do the events come from?</summary>
+      <p>We aggregate public listings from Ticketmaster UK, Eventbrite UK, and a hand-curated guide to UK venues. Tapping an event opens the original source for tickets and full details.</p>
+    </details>
+
+    <details>
+      <summary>An event is wrong, out of date, or missing.</summary>
+      <p>Listings come from third-party sources and can occasionally be inaccurate. Email us the event name and what's off, and we'll look into it.</p>
+    </details>
+
+    <details>
+      <summary>Do I need an account?</summary>
+      <p>No. Pulse has no sign-up or login. Saved events live only on your device.</p>
+    </details>
+
+    <details>
+      <summary>Does Pulse work outside the UK?</summary>
+      <p>Pulse covers the United Kingdom only — England, Wales, Scotland and Northern Ireland. Open it abroad and it shows London, so you can still plan a trip home; pick any UK town from Preferences to browse somewhere else.</p>
+    </details>
+
+    <h2>Contact</h2>
+    <p>Anything else: <a href="mailto:contact@voice2jobs.com">contact@voice2jobs.com</a></p>
+
+    <footer>
+      Pulse · United Kingdom · <a href="/privacy.html">Privacy Policy</a>
+    </footer>
+  </div>
+</body>
+</html>

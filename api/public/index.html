@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1" />
+    <meta name="theme-color" content="#0E1116" />
+    <title>Pulse — What's on across the UK</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- ───────────── Onboarding (first launch) ───────────── -->
+    <div id="onboarding" class="onboarding hidden">
+      <button class="ob-skip" id="obSkip">Skip</button>
+      <div class="ob-track" id="obTrack">
+        <section class="ob-slide">
+          <div class="ob-art art-1"><svg viewBox="0 0 24 24" width="86" height="86" aria-hidden="true"><path fill="var(--accent)" fill-rule="evenodd" d="M12 1a11 11 0 1 0 0 22 11 11 0 0 0 0-22zm0 2.4a8.6 8.6 0 1 1 0 17.2 8.6 8.6 0 0 1 0-17.2z"/><path fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M6 12h3l1.7-4.2 2.6 8.4L15 12h3"/></svg></div>
+          <h2>What's on across the UK, right now</h2>
+          <p>Gigs, festivals, markets, comedy and free events, wherever you are in Britain — all in one feed, sorted by what's closest and soonest.</p>
+        </section>
+        <section class="ob-slide">
+          <div class="ob-art art-2"><span class="ob-glyph">📍</span></div>
+          <h2>Sorted by what's near you</h2>
+          <p>We use your location to rank events by distance and to pick your nearest UK town. It's used only to sort — we never store it.</p>
+          <button class="btn-ghost" id="obWhy">Why location?</button>
+        </section>
+        <section class="ob-slide">
+          <div class="ob-art art-3"><span class="ob-glyph">🔔</span></div>
+          <h2>Never miss the good ones</h2>
+          <p>Save events you like and get a reminder a couple of hours before they start.</p>
+        </section>
+      </div>
+      <div class="ob-dots" id="obDots"><i class="active"></i><i></i><i></i></div>
+      <div class="ob-actions">
+        <button class="btn-primary" id="obNext">Next</button>
+        <button class="btn-text" id="obLater">Maybe later</button>
+      </div>
+    </div>
+
+    <!-- ───────────── App ───────────── -->
+    <div id="app" class="app hidden">
+      <!-- DISCOVER -->
+      <section class="tab" id="tab-discover">
+        <header class="appbar">
+          <div class="brand">
+            <span class="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="var(--accent)" fill-rule="evenodd" d="M12 1a11 11 0 1 0 0 22 11 11 0 0 0 0-22zm0 2.4a8.6 8.6 0 1 1 0 17.2 8.6 8.6 0 0 1 0-17.2z"/><path fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M6 12h3l1.7-4.2 2.6 8.4L15 12h3"/></svg>
+            </span>
+            <div>
+              <h1>Pulse</h1>
+              <p class="sub" id="sub">in the UK, right now</p>
+            </div>
+          </div>
+          <button class="loc-chip" id="locChip">📍 <span id="locLabel">the UK</span></button>
+          <button class="theme-btn" id="themeBtn" title="Toggle theme">◐</button>
+        </header>
+
+        <div class="controls">
+          <div class="segmented" id="sortSeg">
+            <button data-sort="nearest" class="active">📍 Nearest</button>
+            <button data-sort="soonest">⏱️ Soonest</button>
+          </div>
+          <div class="pillrow" id="rangeRow">
+            <button data-range="all" class="active">All upcoming</button>
+            <button data-range="today">Today</button>
+            <button data-range="weekend">This weekend</button>
+            <button data-range="week">This week</button>
+          </div>
+          <div class="chiprow" id="catRow"></div>
+          <div class="statusbar">
+            <span id="status">Loading…</span>
+            <button class="refresh" id="refreshBtn"><span id="updated"></span> ↻</button>
+          </div>
+        </div>
+
+        <div class="scroll" id="discoverScroll">
+          <div class="pull-hint" id="pullHint">↓ Pull to refresh</div>
+          <div id="list" class="list"></div>
+          <div class="endcap" id="endcap"></div>
+        </div>
+
+        <button class="fab" id="mapFab">🗺️ Map</button>
+      </section>
+
+      <!-- MAP -->
+      <section class="tab hidden" id="tab-map">
+        <div id="map"></div>
+        <div class="map-vignette"></div>
+        <div class="map-pills pillrow" id="mapRangeRow">
+          <button data-range="all" class="active">All</button>
+          <button data-range="today">Today</button>
+          <button data-range="weekend">Weekend</button>
+          <button data-range="week">Week</button>
+        </div>
+        <button class="locate-btn" id="locateBtn" aria-label="Locate me">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        </button>
+        <div class="pip hidden" id="pip"></div>
+        <div class="sheet" id="mapSheet">
+          <div class="sheet-grip"></div>
+          <div class="carousel" id="carousel"></div>
+        </div>
+      </section>
+
+      <!-- SAVED -->
+      <section class="tab hidden" id="tab-saved">
+        <header class="appbar simple"><h1>Saved</h1></header>
+        <div class="scroll"><div id="savedList" class="list grouped"></div></div>
+      </section>
+
+      <!-- SEARCH -->
+      <section class="tab hidden" id="tab-search">
+        <header class="appbar simple">
+          <div class="searchfield">
+            <span>🔍</span>
+            <input id="searchInput" type="search" placeholder="Search events, venues, or a date…" autocomplete="off" />
+          </div>
+        </header>
+        <div class="scroll">
+          <div id="searchSuggest" class="suggest"></div>
+          <div id="searchResults" class="list"></div>
+        </div>
+      </section>
+
+      <!-- TAB BAR -->
+      <nav class="tabbar" id="tabbar">
+        <button data-tab="discover" class="active"><span>🏠</span>Discover</button>
+        <button data-tab="map"><span>🗺️</span>Map</button>
+        <button data-tab="saved"><span>🔖</span>Saved</button>
+        <button data-tab="search"><span>🔍</span>Search</button>
+      </nav>
+    </div>
+
+    <!-- ───────────── Event detail (overlay) ───────────── -->
+    <div id="detail" class="detail hidden"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

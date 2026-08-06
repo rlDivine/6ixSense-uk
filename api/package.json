@@ -1,0 +1,14 @@
+{
+  "name": "pulse-uk-api",
+  "version": "1.0.0",
+  "description": "Pulse — finds local events across the United Kingdom (gigs, festivals, markets, comedy, arts) and sorts them by distance to you and by soonest happening.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "express": "^4.19.2"
+  }
+}
