@@ -200,8 +200,10 @@ UK, a notice explaining that London is being shown.
 
 **Event card**, the most-used component. Thumbnail, overline saying when, title
 over two lines, venue, and a footer of category, distance, price and source. A
-bookmark control. The photo often fails to load, so the category mark sits
-underneath and shows through rather than leaving an empty box.
+bookmark control, which is a separate button sitting over the card rather than
+inside it. The photo often fails to load, so the category mark sits underneath
+and shows through rather than leaving an empty box. The map tray card and the
+iOS card do the same; anything new that shows a photo should too.
 
 **Map**, category-coloured pins with clustering, the user's position, a preview
 on tap, and a card tray along the bottom.
@@ -286,6 +288,19 @@ Four things to know before touching the code:
   theme, which is the single easiest contrast regression to introduce here.
 - Same rule for categories: `color` on the app's own surfaces, `pin` under the
   white symbol on a map marker.
+- **Anything tappable is a real `<button>`.** The card's bookmark, the reminder
+  switch and the map tray card were all styled `<span>`s with delegated click
+  handlers. They looked right and were unreachable by keyboard and unnamed to a
+  screen reader. If a new control needs a click handler, it needs to be a
+  button with an accessible name and, for a toggle, `aria-pressed` or
+  `role="switch"` with `aria-checked`.
+- A control cannot be nested inside another button, which is why the bookmark
+  is a sibling of the card positioned over it rather than a third grid column
+  inside it. Keep it that way.
+
+Focus is a designed state, not a browser default: `:focus-visible` draws a
+2px accent ring at a 2px offset. Several controls here have no border of their
+own, so without it a keyboard user cannot see where they are.
 
 If you change any colour, re-run the contrast numbers above rather than eyeballing
 them. Several of the pairs that fail are ones that look fine on a good monitor.

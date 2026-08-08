@@ -41,6 +41,20 @@ function queriesFor(site) {
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
+/// Normalise a JSON-LD startDate to an ISO instant, or null.
+///
+/// This has to not throw. `new Date("nonsense").toISOString()` raises a
+/// RangeError, and one bad date inside the map below used to take the whole
+/// vertical down with it, because the caller turns any rejection into an empty
+/// list. One malformed event should cost one event, not eleven pages of them.
+function parseStart(raw) {
+  if (!raw || typeof raw !== "string") return null;
+  // A date with no time is an all-day listing. Eventbrite's own pages show
+  // those as evening events, which is also when most of them actually start.
+  const d = new Date(raw.length <= 10 ? `${raw}T19:00:00` : raw);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 async function scrapeQuery(q) {
   const res = await fetchWithTimeout(
     q.url,
@@ -66,9 +80,7 @@ async function scrapeQuery(q) {
   return items.map((it) => {
     const geo = it.location?.geo || {};
     const addr = it.location?.address || {};
-    const start = it.startDate
-      ? new Date(it.startDate.length <= 10 ? it.startDate + "T19:00:00" : it.startDate).toISOString()
-      : null;
+    const start = parseStart(it.startDate);
     return makeEvent({
       id: `eb-${(it.url || "").split("-").pop() || it.name}`,
       title: it.name,

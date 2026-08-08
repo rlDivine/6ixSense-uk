@@ -263,20 +263,26 @@ function cardHTML(e) {
   else if (e.price) bits.push(`<span class="dot"></span><span>${esc(e.price)}</span>`);
   bits.push(`<span class="dot"></span><span>${esc(e.source)}</span>`);
 
+  // The bookmark is a sibling of the card, not a child of it. A control nested
+  // inside a button cannot be reached with a keyboard, which is how it used to
+  // be: a span with a click handler, focusable by nobody and named to nobody.
   return `
-  <button class="card" data-id="${esc(e.id)}">
-    <span class="thumb" style="background:${wash(e.category)}">${img}</span>
-    <span class="body">
-      <span class="when ${w.soon ? "soon" : ""}">${esc(w.text)}</span>
-      <span class="title">${esc(e.title)}</span>
-      <span class="venue">${esc(e.venue || placeName())}</span>
-      <span class="foot">
-        <span class="cat"><i style="background:${cm.c}"></i>${esc(e.category)}</span>
-        ${bits.join("")}
+  <div class="card-wrap">
+    <button class="card" data-id="${esc(e.id)}">
+      <span class="thumb" style="background:${wash(e.category)}">${img}</span>
+      <span class="body">
+        <span class="when ${w.soon ? "soon" : ""}">${esc(w.text)}</span>
+        <span class="title">${esc(e.title)}</span>
+        <span class="venue">${esc(e.venue || placeName())}</span>
+        <span class="foot">
+          <span class="cat"><i style="background:${cm.c}"></i>${esc(e.category)}</span>
+          ${bits.join("")}
+        </span>
       </span>
-    </span>
-    <span class="bookmark ${on}" data-bk="${esc(e.id)}">${bmIcon(!!state.saved[e.id])}</span>
-  </button>`;
+    </button>
+    <button class="bookmark ${on}" data-bk="${esc(e.id)}" aria-pressed="${on ? "true" : "false"}"
+      aria-label="Save ${esc(e.title)}">${bmIcon(!!state.saved[e.id])}</button>
+  </div>`;
 }
 
 function renderList() {
@@ -323,7 +329,7 @@ function renderSaved() {
   el.innerHTML = Object.entries(groups).map(([day, evs]) =>
     `<div class="group-h">${esc(day)}</div>` +
     evs.map((e) => cardHTML(e) +
-      `<div class="remind"><span class="remind-label">${uiIcon("bell", 16)} Remind me 2h before</span><span class="switch ${state.reminders[e.id] ? "on" : ""}" data-rem="${esc(e.id)}"></span></div>`
+      `<div class="remind"><span class="remind-label" id="remlbl-${esc(e.id)}">${uiIcon("bell", 16)} Remind me 2h before</span><button class="switch ${state.reminders[e.id] ? "on" : ""}" data-rem="${esc(e.id)}" role="switch" aria-checked="${state.reminders[e.id] ? "true" : "false"}" aria-labelledby="remlbl-${esc(e.id)}"></button></div>`
     ).join("")
   ).join("");
 }
@@ -511,16 +517,21 @@ function renderMap() {
 function renderCarousel(items) {
   $("#carousel").innerHTML = items.slice(0, 40).map((e) => {
     const w = whenLabel(e.start);
-    const banner = e.image ? `style="background-image:url('${esc(e.image)}');background-size:cover;background-position:center"` : `style="background:${wash(e.category)}"`;
-    return `<div class="ccard" data-cid="${esc(e.id)}">
-      <div class="cbanner" ${banner}>${e.image ? "" : catIcon(e.category, 30)}
+    // Same treatment as the list card: the wash and the category mark go down
+    // first and the photo covers them, so a URL that fails leaves the mark
+    // rather than an empty box. Event photos fail often enough that this is the
+    // common case, not the edge case.
+    const banner = `style="background:${wash(e.category)}"`;
+    const bimg = e.image ? `<img src="${esc(e.image)}" loading="lazy" onerror="this.remove()"/>` : "";
+    return `<button class="ccard" data-cid="${esc(e.id)}">
+      <span class="cbanner" ${banner}>${catIcon(e.category, 30)}${bimg}
         <span class="cdate">${esc(w.text)}</span>
         <span class="ckm">${distStr(e.distanceKm, "n/a")}</span>
-      </div>
-      <div class="cb"><h4>${esc(e.title)}</h4><p>${timeStr(e.start)} · ${esc(e.venue || placeName())}</p>
+      </span>
+      <span class="cb"><span class="ctitle">${esc(e.title)}</span><span class="cmeta">${timeStr(e.start)} · ${esc(e.venue || placeName())}</span>
         <span class="tags"><span class="tag cat">${esc(e.category)}</span>${freeTag(e)}</span>
-      </div>
-    </div>`;
+      </span>
+    </button>`;
   }).join("");
 }
 function selectMapEvent(id) {
@@ -545,7 +556,7 @@ function openDetail(id) {
   $("#detail").innerHTML = `
     <div class="hero" style="background:${wash(e.category)}">${catIcon(e.category, 54)}${hero}
       <button class="hbtn back" id="detailBack" aria-label="Back">${uiIcon("back", 20)}</button>
-      <button class="hbtn fav" id="detailFav">${bmIcon(!!on)}</button>
+      <button class="hbtn fav" id="detailFav" aria-pressed="${on ? "true" : "false"}" aria-label="Save ${esc(e.title)}">${bmIcon(!!on)}</button>
     </div>
     <div class="dscroll">
       <div class="badges"><span class="tag cat">${esc(e.category)}</span>${freeTag(e)}<span class="badge-src">via ${esc(e.source)}</span></div>

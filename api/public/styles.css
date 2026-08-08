@@ -60,6 +60,17 @@ body {
 .hidden { display: none !important; }
 button { font-family: inherit; cursor: pointer; }
 
+/* Keyboard focus. :focus-visible rather than :focus, so a tap never draws a
+   ring but Tab always does. The app previously relied on the browser default,
+   which several of these controls suppress by having no border of their own. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.card:focus-visible, .ccard:focus-visible { outline-offset: 3px; border-radius: 16px; }
+.bookmark:focus-visible { border-radius: 8px; }
+
 /* One typographic device used throughout: a small, letter-spaced, uppercase
    line that labels whatever sits under it. */
 .overline {
@@ -151,11 +162,15 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---- Event card ---- */
 .list { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; }
+.card-wrap { position: relative; }
 .card {
-  display: grid; grid-template-columns: 78px 1fr 26px; gap: 13px; align-items: start;
+  display: grid; grid-template-columns: 78px 1fr; gap: 13px; align-items: start;
+  width: 100%;
   background: var(--surface); color: var(--ink);
   border: 1px solid var(--hairline); border-radius: 16px;
-  padding: 12px; box-shadow: var(--shadow-sm);
+  /* Right padding leaves the bookmark, which is now a sibling sitting on top
+     of the card rather than a third column inside it, somewhere to go. */
+  padding: 12px 43px 12px 12px; box-shadow: var(--shadow-sm);
   position: relative; transition: transform 0.08s ease; text-align: left;
 }
 .card:active { transform: scale(0.985); }
@@ -178,7 +193,11 @@ button { font-family: inherit; cursor: pointer; }
 .card .cat i { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto; }
 .card .dot { width: 2px; height: 2px; border-radius: 50%; background: currentColor; opacity: 0.55; }
 .card .free { color: var(--accent); font-weight: 700; }
-.bookmark { background: none; border: 0; line-height: 0; color: var(--ink-3); padding: 2px; justify-self: end; }
+.bookmark {
+  position: absolute; top: 12px; right: 12px;
+  background: none; border: 0; line-height: 0; color: var(--ink-3);
+  padding: 5px; border-radius: 8px;
+}
 .bookmark.on { color: var(--accent); }
 
 /* grouped (Saved) */
@@ -245,8 +264,9 @@ button { font-family: inherit; cursor: pointer; }
 .sheet-grip { width: 36px; height: 4px; border-radius: 999px; background: var(--hairline); margin: 2px auto 10px; }
 .carousel { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 0 16px; scrollbar-width: none; }
 .carousel::-webkit-scrollbar { display: none; }
-.ccard { scroll-snap-align: center; flex: 0 0 78%; background: var(--surface-2); border: 1px solid var(--hairline); border-radius: 16px; overflow: hidden; }
-.ccard .cbanner { height: 92px; position: relative; display: grid; place-items: center; }
+.ccard { display: block; padding: 0; text-align: left; color: var(--ink); scroll-snap-align: center; flex: 0 0 78%; background: var(--surface-2); border: 1px solid var(--hairline); border-radius: 16px; overflow: hidden; }
+.ccard .cbanner { height: 92px; position: relative; display: grid; place-items: center; overflow: hidden; }
+.ccard .cbanner img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .ccard .cbanner .cdate,
 .ccard .cbanner .ckm {
   position: absolute; top: 8px; background: rgba(8,14,28,0.78); color: #fff;
@@ -255,9 +275,9 @@ button { font-family: inherit; cursor: pointer; }
 }
 .ccard .cbanner .cdate { left: 8px; }
 .ccard .cbanner .ckm { right: 8px; letter-spacing: 0; text-transform: none; }
-.ccard .cb { padding: 10px 12px 12px; }
-.ccard .cb h4 { margin: 0 0 3px; font-size: 14.5px; font-weight: 650; line-height: 1.2; }
-.ccard .cb p { margin: 0 0 7px; font-size: 12px; color: var(--ink-2); }
+.ccard .cb { display: block; padding: 10px 12px 12px; }
+.ccard .cb .ctitle { display: block; margin: 0 0 3px; font-size: 14.5px; font-weight: 650; line-height: 1.2; }
+.ccard .cb .cmeta { display: block; margin: 0 0 7px; font-size: 12px; color: var(--ink-2); }
 
 /* ---- Detail ---- */
 .detail { position: fixed; inset: 0; z-index: 1000; background: var(--bg); display: flex; flex-direction: column; }

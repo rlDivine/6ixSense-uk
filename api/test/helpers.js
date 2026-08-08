@@ -84,6 +84,20 @@ export function jsonResponse(body, { ok = true, status = 200 } = {}) {
   };
 }
 
+/// Minimal stand-in for an HTML fetch Response, for the scraped sources.
+export function htmlResponse(body, { ok = true, status = 200 } = {}) {
+  return {
+    ok,
+    status,
+    async json() {
+      throw new Error("not JSON");
+    },
+    async text() {
+      return body;
+    },
+  };
+}
+
 /// Replace globalThis.fetch for the duration of `run`, then always put the real
 /// one back. `handler(url, opts, index)` returns the response for each call;
 /// `run(calls)` receives the growing list of {url, opts} so a test can assert
