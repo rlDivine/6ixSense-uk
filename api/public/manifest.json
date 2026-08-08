@@ -5,10 +5,15 @@
   "lang": "en-GB",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#0E1116",
-  "theme_color": "#0E1116",
+  "background_color": "#080e1c",
+  "theme_color": "#080e1c",
   "orientation": "portrait",
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
   ]
 }

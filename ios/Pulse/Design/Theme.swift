@@ -39,10 +39,19 @@ enum Tok {
     /// is most of what gives a list its hierarchy.
     static let text     = Color(dark: 0xEEF1F8, light: 0x0B1633)
     static let muted    = Color(dark: 0x9AA5C2, light: 0x59627B)
-    static let faint    = Color(dark: 0x6D7999, light: 0x8B93A8)
+    /// Solved against the worst background each theme puts it on, which is
+    /// panel2 in both cases. The earlier values failed 4.5:1 on the card
+    /// overline and footer, which are real text, not decoration.
+    static let faint    = Color(dark: 0x7D88A4, light: 0x686E7E)
 
-    /// Flag red. Logo, primary action, and anything happening today.
-    static let accent   = Color(dark: 0xF04B5F, light: 0xC8102E)
+    /// Flag red, for text and indicators. On dark it has to be light enough to
+    /// read on navy.
+    static let accent   = Color(dark: 0xF44F63, light: 0xC8102E)
+    /// The same red as a filled background under a white label, which needs the
+    /// opposite of the above: dark enough for white to clear 4.5:1. One colour
+    /// cannot do both on a dark theme, so fills get their own token. On light,
+    /// Pantone 186 already carries white at 5.9:1 and no split is needed.
+    static let accentFill = Color(dark: 0xD21E3C, light: 0xC8102E)
     /// Flag blue, for links and secondary emphasis.
     static let link     = Color(dark: 0x8FADEA, light: 0x012169)
 
@@ -66,30 +75,64 @@ enum Tok {
 // glyphs live here. Categories are drawn with SF Symbols, so nothing in the
 // interface depends on an emoji font.
 
-struct CatStyle { let color: Color }
+struct CatStyle {
+    /// Theme-adaptive, for anything drawn on the app's own surface. The dark
+    /// variants are lifted so a 6px dot and a category label clear 4.5:1 on
+    /// navy; the mid-tones they came from are far too dark for that.
+    let color: Color
+    /// Fixed mid-tone, for the map marker fill. A white symbol sits on it, so
+    /// this one has to stay dark in both themes. The lifted hues above carry
+    /// white at 2:1 to 3:1, which is why the two cannot be the same colour.
+    let pin: Color
+
+    private let darkHex: UInt32
+    private let lightHex: UInt32
+
+    init(dark: UInt32, light: UInt32) {
+        self.color = Color(dark: dark, light: light)
+        self.pin = Color(hex: light)
+        self.darkHex = dark
+        self.lightHex = light
+    }
+
+    /// Flat tint behind a card image, used when an event has no photo of its
+    /// own. This replaced a gradient: the tint alone carries the category.
+    ///
+    /// The alpha differs by theme because the placeholder glyph is drawn in the
+    /// same hue on top of this. The light surfaces need the lighter tint for
+    /// the two to stay apart; on dark there is more room.
+    var wash: Color {
+        // Bound to locals first: the trait closure escapes, and capturing a
+        // struct's own properties in one is not something to leave implicit.
+        let (d, l) = (darkHex, lightHex)
+        return Color(UIColor { tc in
+            let dark = tc.userInterfaceStyle == .dark
+            return UIColor(Color(hex: dark ? d : l))
+                .withAlphaComponent(dark ? 0.18 : 0.12)
+        })
+    }
+}
 
 enum Categories {
     static let map: [String: CatStyle] = [
-        "pop-up": .init(color: Color(hex: 0x7A5BA6)),
-        "food & drink": .init(color: Color(hex: 0xB5651D)),
-        "festival": .init(color: Color(hex: 0xC8102E)),
-        "music": .init(color: Color(hex: 0x2E5AAC)),
-        "live music": .init(color: Color(hex: 0x4A7FD4)),
-        "market": .init(color: Color(hex: 0x2E7D6B)),
-        "comedy": .init(color: Color(hex: 0xB03060)),
-        "arts": .init(color: Color(hex: 0x6B4FA0)),
-        "film": .init(color: Color(hex: 0xA03A5C)),
-        "tours": .init(color: Color(hex: 0x3E7C8C)),
-        "sports": .init(color: Color(hex: 0x1F5C3D)),
-        "family": .init(color: Color(hex: 0xC06A2E)),
+        "pop-up": .init(dark: 0xC08CE8, light: 0x7A5BA6),
+        "food & drink": .init(dark: 0xE0913F, light: 0xB5651D),
+        "festival": .init(dark: 0xF44F63, light: 0xC8102E),
+        "music": .init(dark: 0x6E9BF0, light: 0x2E5AAC),
+        "live music": .init(dark: 0x8FBCF5, light: 0x4A7FD4),
+        "market": .init(dark: 0x45C4A5, light: 0x2E7D6B),
+        "comedy": .init(dark: 0xEE6E9C, light: 0xB03060),
+        "arts": .init(dark: 0x9B87EC, light: 0x6B4FA0),
+        "film": .init(dark: 0xEE7093, light: 0xA03A5C),
+        "tours": .init(dark: 0x5FC0D6, light: 0x3E7C8C),
+        "sports": .init(dark: 0x4FBE85, light: 0x1F5C3D),
+        "family": .init(dark: 0xEFA05C, light: 0xC06A2E),
     ]
     static func style(_ category: String) -> CatStyle {
-        map[category.lowercased()] ?? .init(color: Color(hex: 0x5A6580))
+        map[category.lowercased()] ?? .init(dark: 0x98A2BC, light: 0x5A6580)
     }
-    /// Flat wash behind a card image, used when an event has no photo of its
-    /// own. This replaced a gradient: the tint alone carries the category.
     static func wash(_ category: String) -> Color {
-        style(category).color.opacity(0.22)
+        style(category).wash
     }
 }
 

@@ -21,14 +21,14 @@
   --hairline: #1d2846;
   --ink: #eef1f8;          /* primary text */
   --ink-2: #9aa5c2;        /* secondary text */
-  --ink-3: #6d7999;        /* overlines, tertiary */
-  --accent: #f04b5f;       /* flag red, lifted to read on navy */
+  --ink-3: #7d88a4;        /* overlines, tertiary. 4.5:1 on surface-2, the worst case */
+  --accent: #f44f63;       /* flag red on navy, for text and indicators. 4.7:1 on surface-2 */
+  --accent-fill: #d21e3c;  /* same red darkened, so a white label on it clears 4.5:1 */
   --link: #8fadea;         /* flag blue, lightened for the same reason */
   --active-bg: #eef1f8;    /* selected state: near white on dark */
   --active-fg: #0b1327;
   --shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
   --shadow-sm: none;
-  --tint: 0.16;            /* category wash opacity */
 }
 [data-theme="light"] {
   --bg: #f6f7fb;
@@ -37,14 +37,14 @@
   --hairline: #e3e7f0;
   --ink: #0b1633;
   --ink-2: #59627b;
-  --ink-3: #8b93a8;
+  --ink-3: #686e7e;        /* 4.5:1 on surface-2, the worst case */
   --accent: #c8102e;       /* Pantone 186 */
+  --accent-fill: #c8102e;  /* white on Pantone 186 is already 5.9:1, so no split needed */
   --link: #012169;         /* Pantone 280 */
   --active-bg: #012169;    /* selected state: flag navy on light */
   --active-fg: #ffffff;
   --shadow: 0 12px 30px rgba(11, 22, 51, 0.14);
   --shadow-sm: 0 1px 2px rgba(11, 22, 51, 0.06);
-  --tint: 0.10;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -192,13 +192,13 @@ button { font-family: inherit; cursor: pointer; }
 .remind-label { display: inline-flex; align-items: center; gap: 7px; }
 .switch { width: 38px; height: 22px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--hairline); position: relative; flex: 0 0 auto; }
 .switch::after { content: ""; position: absolute; top: 1px; left: 1px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .15s; }
-.switch.on { background: var(--accent); border-color: var(--accent); }
+.switch.on { background: var(--accent-fill); border-color: var(--accent-fill); }
 .switch.on::after { transform: translateX(16px); }
 
 /* ---- FAB ---- */
 .fab {
   position: absolute; right: 16px; bottom: 76px;
-  background: var(--accent); color: #fff; border: 0; border-radius: 999px;
+  background: var(--accent-fill); color: #fff; border: 0; border-radius: 999px;
   padding: 12px 18px; font-weight: 650; font-size: 14px;
   display: inline-flex; align-items: center; gap: 7px; box-shadow: var(--shadow);
 }
@@ -291,7 +291,7 @@ button { font-family: inherit; cursor: pointer; }
 .secondary-actions { display: flex; gap: 8px; }
 .sa { flex: 1; background: none; border: 1px solid var(--hairline); color: var(--ink); border-radius: 12px; padding: 12px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .detail .cta { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(env(safe-area-inset-bottom,0) + 14px); background: var(--bg); border-top: 1px solid var(--hairline); }
-.detail .cta a { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: #fff; text-decoration: none; font-weight: 650; padding: 15px; border-radius: 14px; }
+.detail .cta a { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent-fill); color: #fff; text-decoration: none; font-weight: 650; padding: 15px; border-radius: 14px; }
 
 /* ---- Search ---- */
 .searchfield { flex: 1; display: flex; align-items: center; gap: 9px; background: var(--surface-2); border: 1px solid transparent; border-radius: 12px; padding: 0 12px; color: var(--ink-3); }
@@ -337,5 +337,5 @@ button { font-family: inherit; cursor: pointer; }
 .ob-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--hairline); }
 .ob-dots i.active { background: var(--accent); width: 20px; border-radius: 999px; }
 .ob-actions { display: flex; flex-direction: column; gap: 6px; }
-.btn-primary { background: var(--accent); color: #fff; border: 0; border-radius: 14px; padding: 16px; font-weight: 650; font-size: 15px; }
+.btn-primary { background: var(--accent-fill); color: #fff; border: 0; border-radius: 14px; padding: 16px; font-weight: 650; font-size: 15px; }
 .btn-text { background: none; border: 0; color: var(--ink-3); font-size: 14px; font-weight: 600; padding: 8px; }

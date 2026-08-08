@@ -183,9 +183,9 @@ struct DiscoverView: View {
             Label("Map", systemImage: "map.fill")
                 .font(.system(size: 14, weight: .bold))
                 .padding(.horizontal, 18).padding(.vertical, 12)
-                .background(Tok.accent, in: Capsule())
+                .background(Tok.accentFill, in: Capsule())
                 .foregroundStyle(.white)
-                .shadow(color: Tok.accent.opacity(0.4), radius: 10, y: 6)
+                .shadow(color: Tok.accentFill.opacity(0.4), radius: 10, y: 6)
         }
         .padding(.trailing, 16).padding(.bottom, 18)
     }

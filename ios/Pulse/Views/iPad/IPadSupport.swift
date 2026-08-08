@@ -210,7 +210,7 @@ struct IPadEventCard: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(app.isSaved(event) ? .white : Tok.text)
                     .frame(width: 44, height: 44)
-                    .background(app.isSaved(event) ? Tok.accent : Tok.panel, in: Circle())
+                    .background(app.isSaved(event) ? Tok.accentFill : Tok.panel, in: Circle())
                     .shadow(color: .black.opacity(0.22), radius: 5, y: 2)
             }
             .buttonStyle(.plain)

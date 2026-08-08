@@ -351,7 +351,8 @@ struct EventMapKit: UIViewRepresentable {
             if let cluster = annotation as? MKClusterAnnotation {
                 let v = mapView.dequeueReusableAnnotationView(
                     withIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier, for: cluster) as! MKMarkerAnnotationView
-                v.markerTintColor = UIColor(Tok.accent)
+                // The fill variant, because MapKit draws the count in white.
+                v.markerTintColor = UIColor(Tok.accentFill)
                 v.glyphText = "\(cluster.memberAnnotations.count)"
                 v.displayPriority = .required
                 return v
@@ -359,7 +360,9 @@ struct EventMapKit: UIViewRepresentable {
             guard let ev = annotation as? EventAnnotation else { return nil }
             let v = mapView.dequeueReusableAnnotationView(withIdentifier: "ev", for: ev) as! MKMarkerAnnotationView
             let style = Categories.style(ev.event.category)
-            v.markerTintColor = UIColor(style.color)
+            // The pin variant, not the adaptive one: a white glyph sits on this
+            // fill, so it has to stay dark in both themes.
+            v.markerTintColor = UIColor(style.pin)
             // glyphImage, not glyphText: the marker carries an SF Symbol like
             // the rest of the app rather than a character from the emoji font.
             v.glyphImage = UIImage(systemName: Categories.symbol(ev.event.category))

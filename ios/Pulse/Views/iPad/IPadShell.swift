@@ -751,7 +751,7 @@ struct IPadDetailBody: View {
                     Text("Get tickets")
                         .font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
                         .frame(maxWidth: .infinity).frame(height: 50)
-                        .background(Tok.accent, in: RoundedRectangle(cornerRadius: 14))
+                        .background(Tok.accentFill, in: RoundedRectangle(cornerRadius: 14))
                 }
             }
         }

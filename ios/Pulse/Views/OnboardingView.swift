@@ -62,7 +62,7 @@ struct OnboardingView: View {
             Text(step == lastStep ? "Start exploring" : "Continue")
                 .font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
                 .frame(maxWidth: .infinity).padding(15)
-                .background(Tok.accent, in: RoundedRectangle(cornerRadius: 14))
+                .background(Tok.accentFill, in: RoundedRectangle(cornerRadius: 14))
         }
         .padding(.horizontal, 24).padding(.bottom, 22)
     }

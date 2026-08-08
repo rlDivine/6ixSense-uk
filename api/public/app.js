@@ -4,26 +4,32 @@
 
 // Category palette and icons.
 //
-// Colours are mid-tone hues that hold up against both the navy and the light
-// greys, and stay distinguishable as map pins. Anchored on the two flag
-// colours: red for festivals, blue for music.
+// Two values per category, because the colour does two jobs with opposite
+// needs. As a dot or a wash it sits on the app surface, and the mid-tone hues
+// that read well on light greys drop to about 2.5:1 on navy, which is close to
+// invisible. As a map pin it is a fill with a white symbol on it, and the
+// lifted hues fail that instead. So `c` is the on-surface colour and switches
+// with the theme, and `p` is the pin fill and never does.
+//
+// Anchored on the two flag colours: red for festivals, blue for music.
 //
 // Icons are inline SVG, not emoji, so they inherit the category colour, stay
 // the same weight on every platform, and never depend on an emoji font.
 const CATS = {
-  "pop-up": { c: "#7A5BA6", i: "gift" },
-  "food & drink": { c: "#B5651D", i: "food" },
-  festival: { c: "#C8102E", i: "flag" },
-  music: { c: "#2E5AAC", i: "note" },
-  "live music": { c: "#4A7FD4", i: "note" },
-  market: { c: "#2E7D6B", i: "bag" },
-  comedy: { c: "#B03060", i: "mic" },
-  arts: { c: "#6B4FA0", i: "palette" },
-  film: { c: "#A03A5C", i: "film" },
-  tours: { c: "#3E7C8C", i: "signpost" },
-  sports: { c: "#1F5C3D", i: "ball" },
-  family: { c: "#C06A2E", i: "balloon" },
+  "pop-up": { c: "#7A5BA6", d: "#C08CE8", i: "gift" },
+  "food & drink": { c: "#B5651D", d: "#E0913F", i: "food" },
+  festival: { c: "#C8102E", d: "#F44F63", i: "flag" },
+  music: { c: "#2E5AAC", d: "#6E9BF0", i: "note" },
+  "live music": { c: "#4A7FD4", d: "#8FBCF5", i: "note" },
+  market: { c: "#2E7D6B", d: "#45C4A5", i: "bag" },
+  comedy: { c: "#B03060", d: "#EE6E9C", i: "mic" },
+  arts: { c: "#6B4FA0", d: "#9B87EC", i: "palette" },
+  film: { c: "#A03A5C", d: "#EE7093", i: "film" },
+  tours: { c: "#3E7C8C", d: "#5FC0D6", i: "signpost" },
+  sports: { c: "#1F5C3D", d: "#4FBE85", i: "ball" },
+  family: { c: "#C06A2E", d: "#EFA05C", i: "balloon" },
 };
+const CAT_FALLBACK = { c: "#5A6580", d: "#98A2BC", i: "ticket" };
 
 // Single-colour line icons on a 24 grid, stroked rather than filled so they
 // stay legible at 16px and at 48px without a second set of artwork.
@@ -72,8 +78,12 @@ function uiIcon(name, size = 18, color) {
     UI_ICONS[name] || ""}</svg>`;
 }
 
+/// The category's colours and icon. `c` is resolved for the current theme, so
+/// callers never have to think about it; `p` is the pin fill, which does not
+/// change with the theme because a white symbol sits on it either way.
 function catMeta(cat) {
-  return CATS[(cat || "").toLowerCase()] || { c: "#5A6580", i: "ticket" };
+  const m = CATS[(cat || "").toLowerCase()] || CAT_FALLBACK;
+  return { c: state.theme === "dark" ? m.d : m.c, p: m.c, i: m.i };
 }
 
 /// One category icon, at `size` px, in `color` (defaults to the category's own).
@@ -168,7 +178,11 @@ function bmIcon(on) {
 /// Flat tint behind a card image, used when an event has no photo of its own.
 /// This replaced a gradient: the category colour alone carries it.
 function wash(cat) {
-  return `${catMeta(cat).c}2E`;   // the category colour at ~18% alpha
+  // The alpha differs by theme because the placeholder glyph is drawn in the
+  // same hue on top of this. The light surfaces need the lighter tint for the
+  // two to stay apart; on dark there is more room.
+  const a = state.theme === "dark" ? "2E" : "1F";   // 0.18 and 0.12
+  return `${catMeta(cat).c}${a}`;
 }
 
 /* ---- data ---- */
@@ -470,7 +484,7 @@ function pinIcon(e, sel) {
   // be rotated back the other way to sit upright.
   return L.divIcon({
     className: "", iconSize: sel ? [38, 38] : [30, 30], iconAnchor: sel ? [19, 38] : [15, 30],
-    html: `<div class="pin ${sel ? "sel" : ""}" style="background:${cm.c}"><span>${
+    html: `<div class="pin ${sel ? "sel" : ""}" style="background:${cm.p}"><span>${
       catIcon(e.category, sel ? 19 : 15, "#fff")}</span></div>`,
   });
 }
@@ -662,8 +676,11 @@ function applyTheme() {
   document.documentElement.dataset.theme = state.theme;
   $("#themeBtn") && ($("#themeBtn").textContent = state.theme === "dark" ? "◐" : "◑");
   const mc = document.querySelector('meta[name="theme-color"]');
-  if (mc) mc.content = state.theme === "dark" ? "#0E1116" : "#F7F8FA";
+  if (mc) mc.content = state.theme === "dark" ? "#080e1c" : "#f6f7fb";
   if (tileLayer) tileLayer.setUrl(tileURL()); // swap map tiles to match theme
+  // Category colours are written into inline styles, so a theme change has to
+  // repaint the list rather than relying on the cascade.
+  if (state.events.length) renderAll();
 }
 
 /* ---- onboarding ---- */

@@ -141,7 +141,7 @@ struct IPadMapPane: View {
                 .foregroundStyle(.white)
                 .padding(.horizontal, 14)
                 .frame(height: 44)
-                .background(Tok.accent, in: Capsule())
+                .background(Tok.accentFill, in: Capsule())
                 .shadow(color: .black.opacity(0.25), radius: 10, y: 4)
 
             Spacer(minLength: 0)

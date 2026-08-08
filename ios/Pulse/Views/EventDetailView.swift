@@ -136,7 +136,7 @@ struct EventDetailView: View {
             Link(destination: url) {
                 Text("Get tickets and details").font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
                     .frame(maxWidth: .infinity).padding(15)
-                    .background(Tok.accent, in: RoundedRectangle(cornerRadius: 14))
+                    .background(Tok.accentFill, in: RoundedRectangle(cornerRadius: 14))
             }
             .padding(.horizontal, 16).padding(.bottom, 24)
         }
