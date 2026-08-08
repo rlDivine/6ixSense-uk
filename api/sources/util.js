@@ -14,6 +14,30 @@ export function decodeEntities(s) {
     .replace(/&nbsp;/g, " ");
 }
 
+/// Keep a link only if it is an absolute http(s) URL, otherwise drop it.
+///
+/// Every url and image in the feed comes from a third party, and one of them
+/// (Eventbrite) is a page anyone can publish to. A "javascript:" link reaching
+/// a client is script execution in the app's own origin the moment a user taps
+/// the primary action, so the scheme is checked here, at the point the event is
+/// built, rather than trusted and escaped later. Escaping does not help: it
+/// stops an attribute being broken out of, not a scheme being chosen.
+///
+/// Note that entities are decoded before this runs on titles, but url and image
+/// are deliberately not decoded, so "&#106;avascript:" cannot slip past by
+/// being un-escaped downstream.
+export function safeUrl(raw) {
+  if (!raw || typeof raw !== "string") return "";
+  const trimmed = raw.trim();
+  let parsed;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return ""; // relative or unparseable, and we have no base to resolve against
+  }
+  return parsed.protocol === "http:" || parsed.protocol === "https:" ? trimmed : "";
+}
+
 // Haversine distance in kilometres between two lat/lng points.
 export function distanceKm(lat1, lng1, lat2, lng2) {
   if ([lat1, lng1, lat2, lng2].some((v) => typeof v !== "number" || Number.isNaN(v))) {
@@ -53,8 +77,8 @@ export function makeEvent({
     address: decodeEntities(address),
     lat: typeof lat === "number" ? lat : lat ? Number(lat) : null,
     lng: typeof lng === "number" ? lng : lng ? Number(lng) : null,
-    url,
-    image,
+    url: safeUrl(url),
+    image: safeUrl(image),
     source,
     price,
   };

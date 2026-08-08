@@ -41,7 +41,7 @@ struct EventDetailView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 280)
             .overlay {
-                if let img = event.image, let url = URL(string: img) {
+                if let url = event.imageURL {
                     AsyncImage(url: url) { phase in
                         if let image = phase.image { image.resizable().scaledToFill() }
                         else { CategoryGlyph(category: event.category, size: 56) }
@@ -118,7 +118,7 @@ struct EventDetailView: View {
 
     private var secondaryActions: some View {
         HStack(spacing: 8) {
-            if let url = URL(string: event.url ?? "") {
+            if let url = event.webURL {
                 ShareLink(item: url) { actionLabel("Share") }
             } else { actionLabel("Share") }
             Button { app.toggleSave(event) } label: { actionLabel(app.isSaved(event) ? "Saved" : "Save") }
@@ -132,7 +132,7 @@ struct EventDetailView: View {
     }
 
     @ViewBuilder private var cta: some View {
-        if let url = URL(string: event.url ?? "") {
+        if let url = event.webURL {
             Link(destination: url) {
                 Text("Get tickets and details").font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
                     .frame(maxWidth: .infinity).padding(15)

@@ -118,6 +118,22 @@ const state = {
 };
 
 /* ---- helpers ---- */
+/// Only http(s) links are allowed to reach an href or an img src.
+///
+/// The backend already drops anything else when it builds the event, but saved
+/// events are persisted in localStorage and outlive a backend deploy, so a
+/// listing saved before that fix would still be sitting on the device. Escaping
+/// is no help here: it stops an attribute being broken out of, not a
+/// "javascript:" scheme being chosen.
+function safeHref(raw) {
+  if (!raw || typeof raw !== "string") return "";
+  try {
+    const u = new URL(raw.trim());
+    return u.protocol === "http:" || u.protocol === "https:" ? raw.trim() : "";
+  } catch {
+    return "";
+  }
+}
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
@@ -255,7 +271,7 @@ function cardHTML(e) {
   // The icon is laid down first and the photo covers it, so a URL that fails
   // leaves the icon rather than an empty box.
   const img = `<span class="ph-glyph">${catIcon(e.category, 26)}</span>` +
-    (e.image ? `<img src="${esc(e.image)}" loading="lazy" onerror="this.remove()"/>` : "");
+    (e.image ? `<img src="${esc(safeHref(e.image))}" loading="lazy" onerror="this.remove()"/>` : "");
   const dist = distNum(e.distanceKm);
   const bits = [];
   if (dist != null) bits.push(`<span class="dot"></span><span>${dist} mi</span>`);
@@ -522,7 +538,7 @@ function renderCarousel(items) {
     // rather than an empty box. Event photos fail often enough that this is the
     // common case, not the edge case.
     const banner = `style="background:${wash(e.category)}"`;
-    const bimg = e.image ? `<img src="${esc(e.image)}" loading="lazy" onerror="this.remove()"/>` : "";
+    const bimg = e.image ? `<img src="${esc(safeHref(e.image))}" loading="lazy" onerror="this.remove()"/>` : "";
     return `<button class="ccard" data-cid="${esc(e.id)}">
       <span class="cbanner" ${banner}>${catIcon(e.category, 30)}${bimg}
         <span class="cdate">${esc(w.text)}</span>
@@ -539,9 +555,14 @@ function selectMapEvent(id) {
   if (!e) return;
   Object.entries(pins).forEach(([pid, m]) => m.setIcon(pinIcon(state.events.find((x) => x.id === pid), pid === id)));
   map.flyTo([e.lat, e.lng], 15, { duration: 0.6 });
-  const img = e.image ? `style="background-image:url('${esc(e.image)}');background-size:cover;background-position:center"` : `style="background:${wash(e.category)}"`;
+  // The photo goes in an <img>, not a background-image. A url() inside a style
+  // attribute is a CSS context, and esc() cannot protect one: the HTML parser
+  // turns &#39; back into a quote before the CSS parser ever sees it, so an
+  // image URL could close the url() and set properties of its own. The mark
+  // underneath also matches the card and the tray now.
+  const pimg = e.image ? `<img src="${esc(safeHref(e.image))}" loading="lazy" onerror="this.remove()"/>` : "";
   const pip = $("#pip");
-  pip.innerHTML = `<div class="pip-img" ${img}>${e.image ? "" : catIcon(e.category, 24)}</div><div class="pip-b"><h4>${esc(e.title)}</h4><p>${timeStr(e.start)} · ${esc(e.venue || placeName())} · ${relDay(e.start)}</p></div>`;
+  pip.innerHTML = `<div class="pip-img" style="background:${wash(e.category)}">${catIcon(e.category, 24)}${pimg}</div><div class="pip-b"><h4>${esc(e.title)}</h4><p>${timeStr(e.start)} · ${esc(e.venue || placeName())} · ${relDay(e.start)}</p></div>`;
   pip.classList.remove("hidden");
   pip.onclick = () => openDetail(id);
 }
@@ -552,7 +573,7 @@ function openDetail(id) {
   const e = state.events.find((x) => x.id === id) || state.saved[id];
   if (!e) return;
   const on = state.saved[e.id];
-  const hero = e.image ? `<img src="${esc(e.image)}" onerror="this.remove()"/>` : "";
+  const hero = e.image ? `<img src="${esc(safeHref(e.image))}" onerror="this.remove()"/>` : "";
   $("#detail").innerHTML = `
     <div class="hero" style="background:${wash(e.category)}">${catIcon(e.category, 54)}${hero}
       <button class="hbtn back" id="detailBack" aria-label="Back">${uiIcon("back", 20)}</button>
@@ -579,7 +600,7 @@ function openDetail(id) {
         <button class="sa" id="saSave">${on ? `Saved ${uiIcon("check", 14)}` : "Save"}</button>
       </div>
     </div>
-    <div class="cta"><a href="${esc(e.url || "#")}" target="_blank" rel="noopener">Get tickets and details ${uiIcon("external", 15)}</a></div>`;
+    <div class="cta"><a href="${esc(safeHref(e.url) || "#")}" target="_blank" rel="noopener">Get tickets and details ${uiIcon("external", 15)}</a></div>`;
   $("#detail").classList.remove("hidden");
 
   // Same guard as initMap: Leaflet comes off a CDN, and losing the venue

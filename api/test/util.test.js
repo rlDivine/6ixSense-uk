@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { decodeEntities, distanceKm, makeEvent } from "../sources/util.js";
+import { decodeEntities, distanceKm, makeEvent, safeUrl } from "../sources/util.js";
 import { greatCircleKm } from "./helpers.js";
 
 const LONDON = [51.5074, -0.1278];
@@ -148,4 +148,60 @@ test("makeEvent coerces coordinates and keeps zero", () => {
 test("makeEvent stringifies the id so sources cannot collide on type", () => {
   assert.strictEqual(makeEvent({ id: 7 }).id, "7");
   assert.strictEqual(makeEvent({ id: "7" }).id, "7");
+});
+
+// Every url and image in the feed comes from a third party, and one source
+// (Eventbrite) is a page anyone can publish to. A "javascript:" link reaching a
+// client is script execution in the app's own origin the moment the user taps
+// the primary action, so the scheme is checked when the event is built.
+test("safeUrl keeps ordinary http and https links untouched", () => {
+  for (const u of [
+    "https://www.eventbrite.co.uk/e/gig-tickets-123",
+    "http://example.com/a?b=c&d=e#f",
+    "https://img.evbuc.com/x.jpg",
+  ]) {
+    assert.equal(safeUrl(u), u);
+  }
+});
+
+test("safeUrl drops every scheme that is not http or https", () => {
+  for (const u of [
+    "javascript:alert(1)",
+    "JavaScript:alert(1)",
+    "  javascript:alert(1)  ",
+    "data:text/html,<script>alert(1)</script>",
+    "vbscript:msgbox(1)",
+    "file:///etc/passwd",
+    "blob:https://example.com/uuid",
+  ]) {
+    assert.equal(safeUrl(u), "", `expected to be dropped: ${u}`);
+  }
+});
+
+test("safeUrl drops anything it cannot parse, rather than passing it on", () => {
+  for (const u of ["/relative/path", "not a url", "//protocol-relative", "", null, undefined, 42, {}]) {
+    assert.equal(safeUrl(u), "");
+  }
+});
+
+test("makeEvent sanitises both url and image, not just url", () => {
+  const e = makeEvent({
+    id: "1",
+    title: "Gig",
+    url: "javascript:window.x=1",
+    image: "x');background:url('https://evil.example/beacon.png",
+  });
+  assert.equal(e.url, "");
+  assert.equal(e.image, "");
+});
+
+test("makeEvent leaves a legitimate listing's links alone", () => {
+  const e = makeEvent({
+    id: "1",
+    title: "Gig",
+    url: "https://www.skiddle.com/e/123",
+    image: "https://cdn.skiddle.com/large.jpg",
+  });
+  assert.equal(e.url, "https://www.skiddle.com/e/123");
+  assert.equal(e.image, "https://cdn.skiddle.com/large.jpg");
 });

@@ -177,7 +177,7 @@ struct IPadEventCard: View {
             .frame(maxWidth: .infinity)
             .frame(height: 150)
             .overlay {
-                if let img = event.image, let url = URL(string: img) {
+                if let url = event.imageURL {
                     AsyncImage(url: url) { phase in
                         if let image = phase.image { image.resizable().aspectRatio(contentMode: .fill) }
                         else { glyph }

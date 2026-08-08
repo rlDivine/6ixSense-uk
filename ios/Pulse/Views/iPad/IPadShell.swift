@@ -644,7 +644,7 @@ struct IPadDetailBody: View {
             .frame(maxWidth: .infinity)
             .frame(height: heroHeight)
             .overlay {
-                if let img = event.image, let url = URL(string: img) {
+                if let url = event.imageURL {
                     AsyncImage(url: url) { phase in
                         if let image = phase.image { image.resizable().scaledToFill() }
                         else { CategoryGlyph(category: event.category, size: 50) }
@@ -723,7 +723,7 @@ struct IPadDetailBody: View {
     private var actions: some View {
         VStack(spacing: 10) {
             HStack(spacing: 8) {
-                if let url = URL(string: event.url ?? "") {
+                if let url = event.webURL {
                     ShareLink(item: url) { secondary("Share") }
                 } else {
                     secondary("Share").opacity(0.4)
@@ -746,7 +746,7 @@ struct IPadDetailBody: View {
             .background(Tok.panel, in: RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Tok.hairline, lineWidth: 1))
 
-            if let url = URL(string: event.url ?? "") {
+            if let url = event.webURL {
                 Link(destination: url) {
                     Text("Get tickets")
                         .font(.system(size: 16, weight: .bold)).foregroundStyle(.white)

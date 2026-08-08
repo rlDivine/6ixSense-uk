@@ -234,7 +234,7 @@ private struct RailRow: View {
         HStack(spacing: 11) {
             ZStack {
                 Categories.wash(event.category)
-                if let img = event.image, let url = URL(string: img) {
+                if let url = event.imageURL {
                     AsyncImage(url: url) { phase in
                         if let image = phase.image { image.resizable().scaledToFill() }
                         else { CategoryGlyph(category: event.category, size: 16) }

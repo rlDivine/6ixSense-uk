@@ -255,7 +255,8 @@ button { font-family: inherit; cursor: pointer; }
 @keyframes radar { 0% { box-shadow: 0 0 0 0 rgba(143,173,234,0.5);} 100% { box-shadow: 0 0 0 16px rgba(143,173,234,0);} }
 
 .pip { position: absolute; z-index: 650; left: 50%; transform: translateX(-50%); bottom: 150px; width: 250px; background: var(--surface); border: 1px solid var(--hairline); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
-.pip .pip-img { height: 88px; display: grid; place-items: center; }
+.pip .pip-img { height: 88px; display: grid; place-items: center; position: relative; overflow: hidden; }
+.pip .pip-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .pip .pip-b { padding: 10px 12px; }
 .pip .pip-b h4 { margin: 0 0 3px; font-size: 14px; font-weight: 650; line-height: 1.2; }
 .pip .pip-b p { margin: 0; font-size: 12px; color: var(--ink-2); }

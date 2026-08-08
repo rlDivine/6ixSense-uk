@@ -54,7 +54,7 @@ struct EventCard: View {
             CategoryGlyph(category: event.category, size: 22).opacity(0.75)
             // The photo sits on top of the mark, so a URL that fails to load
             // leaves the mark showing rather than an empty square.
-            if let img = event.image, let url = URL(string: img) {
+            if let url = event.imageURL {
                 AsyncImage(url: url) { phase in
                     if let image = phase.image { image.resizable().scaledToFill() }
                     else { Color.clear }

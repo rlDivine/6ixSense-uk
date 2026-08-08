@@ -448,7 +448,7 @@ struct CarouselCard: View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .topLeading) {
                 Categories.wash(event.category)
-                if let img = event.image, let url = URL(string: img) {
+                if let url = event.imageURL {
                     AsyncImage(url: url) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
                 }
                 HStack {

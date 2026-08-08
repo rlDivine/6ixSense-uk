@@ -25,6 +25,30 @@ struct Event: Identifiable, Codable, Hashable {
         return DateParse.iso(start)
     }
 
+    /// The ticket link, but only if it is an ordinary web address.
+    ///
+    /// The backend drops anything that is not http(s) when it builds the event,
+    /// so a live feed never carries one. Saved events are a different matter:
+    /// they are persisted in UserDefaults and outlive a backend deploy, so a
+    /// listing saved before that fix is still on the device. Handing an
+    /// arbitrary scheme to the system opener is how a third-party listing gets
+    /// to launch another app, so it is checked here too.
+    var webURL: URL? { Event.web(url) }
+
+    /// Same rule for the photo. AsyncImage would simply fail on an odd scheme,
+    /// but there is no reason to hand it one.
+    var imageURL: URL? { Event.web(image) }
+
+    static func web(_ raw: String?) -> URL? {
+        guard let raw = raw?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !raw.isEmpty,
+              let url = URL(string: raw),
+              let scheme = url.scheme?.lowercased(),
+              scheme == "http" || scheme == "https"
+        else { return nil }
+        return url
+    }
+
     /// A usable map coordinate: present, finite, in range, and not (0,0).
     /// An invalid value makes MapKit hang, so we filter those out.
     var hasCoordinate: Bool {
