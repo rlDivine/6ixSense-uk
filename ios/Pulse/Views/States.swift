@@ -71,16 +71,16 @@ struct LoadingState: View {
 private struct SkeletonCard: View {
     @State private var phase: CGFloat = -1
     var body: some View {
-        HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 10).fill(Tok.panel2).frame(width: 74, height: 74)
+        HStack(spacing: 13) {
+            RoundedRectangle(cornerRadius: 12).fill(Tok.panel2).frame(width: 78, height: 78)
             VStack(alignment: .leading, spacing: 8) {
                 bar(0.7); bar(0.4); bar(1.0)
             }
             Spacer()
         }
-        .padding(10)
-        .background(Tok.panel, in: RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Tok.hairline, lineWidth: 1))
+        .padding(12)
+        .background(Tok.panel, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Tok.hairline, lineWidth: 1))
     }
     private func bar(_ w: CGFloat) -> some View {
         RoundedRectangle(cornerRadius: 5).fill(Tok.panel2).frame(height: 12)
@@ -96,7 +96,7 @@ struct EmptyState: View {
             Text("No events match").font(.system(size: 17, weight: .bold)).foregroundStyle(Tok.text)
             Text("Try another category or widen the date range.").font(.system(size: 13.5)).foregroundStyle(Tok.muted)
             Button("Reset filters", action: reset)
-                .font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
+                .font(.system(size: 14, weight: .bold)).foregroundStyle(Tok.activeFg)
                 .padding(.horizontal, 20).padding(.vertical, 11)
                 .background(Tok.activeBg, in: RoundedRectangle(cornerRadius: 12))
                 .padding(.top, 6)
@@ -114,9 +114,8 @@ struct ErrorState: View {
             Image(systemName: "wifi.slash").font(.system(size: 34)).foregroundStyle(Tok.muted)
             Text("Couldn't reach events").font(.system(size: 17, weight: .bold)).foregroundStyle(Tok.text)
             Text(message).font(.system(size: 13)).foregroundStyle(Tok.muted)
-                .font(.system(size: 12)).foregroundStyle(Tok.muted)
             Button("Retry", action: retry)
-                .font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
+                .font(.system(size: 14, weight: .bold)).foregroundStyle(Tok.activeFg)
                 .padding(.horizontal, 20).padding(.vertical, 11)
                 .background(Tok.activeBg, in: RoundedRectangle(cornerRadius: 12))
                 .padding(.top, 6)

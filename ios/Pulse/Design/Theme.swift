@@ -54,7 +54,7 @@ enum Tok {
     /// Kept for the Free label, which uses the accent rather than reaching for
     /// a green that belongs to neither flag colour.
     static let freeFg   = accent
-    /// Older name for `muted`, kept so nothing has to be renamed twice.
+    /// Older name for `panel2`, kept so nothing has to be renamed twice.
     static let chip     = panel2
 }
 

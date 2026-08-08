@@ -17,7 +17,7 @@ struct EventDetailView: View {
                         badges
                         Text(event.title).font(.system(size: 25, weight: .heavy)).foregroundStyle(Tok.text)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text("Tap “Get tickets / Details” for the full description and tickets from \(event.source).")
+                        Text("Tap “Get tickets and details” for the full description and tickets from \(event.source).")
                             .font(.system(size: 14)).foregroundStyle(Tok.muted)
                             .fixedSize(horizontal: false, vertical: true)
                         facts

@@ -615,9 +615,24 @@ export function regionOffsetMinutes(region, date = new Date()) {
 // Render runs in UTC, so everything below works in the region's offset (minutes
 // ahead of UTC) rather than in server-local time.
 
-export function localDayStartMs(ms, offsetMin, addDays = 0) {
-  const d = new Date(ms + offsetMin * 60000);
-  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + addDays) - offsetMin * 60000;
+/// Start of the local day that `ms` falls in, plus `addDays`, as epoch ms.
+///
+/// `offsetMin` is the region's UTC offset at the moment we started from. That
+/// is not necessarily the offset at the boundary we are computing: the UK
+/// changes clocks on the last Sunday of March and October, so a window that
+/// spans the change would land an hour out and, for the weekend range, push
+/// the end of Sunday into Monday. When a timeZone is supplied we recompute the
+/// offset at the candidate instant and correct once, which is enough because
+/// the shift is a single hour.
+export function localDayStartMs(ms, offsetMin, addDays = 0, timeZone = null) {
+  const dayStart = (off) => {
+    const d = new Date(ms + off * 60000);
+    return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + addDays) - off * 60000;
+  };
+  const first = dayStart(offsetMin);
+  if (!timeZone) return first;
+  const atBoundary = tzOffsetMinutes(timeZone, new Date(first));
+  return atBoundary === offsetMin ? first : dayStart(atBoundary);
 }
 
 export function localWeekday(ms, offsetMin) {
@@ -625,25 +640,28 @@ export function localWeekday(ms, offsetMin) {
 }
 
 /// Returns {min,max} epoch-ms bounds for a named range, or null for "all".
-export function rangeWindow(range, now, offsetMin = 0) {
+/// Pass the region's timeZone so windows that span a clock change stay on the
+/// right days.
+export function rangeWindow(range, now, offsetMin = 0, timeZone = null) {
   if (range === "all") return null;
   const t = now.getTime();
   const min = t;
+  const dayStart = (add) => localDayStartMs(t, offsetMin, add, timeZone);
 
   if (range === "today") {
-    return { min, max: localDayStartMs(t, offsetMin, 1) - 1 };
+    return { min, max: dayStart(1) - 1 };
   }
 
   if (range === "week") {
-    return { min, max: localDayStartMs(t, offsetMin, 8) - 1 };
+    return { min, max: dayStart(8) - 1 };
   }
 
-  // "weekend": the upcoming (or current) Saturday + Sunday, in local terms.
+  // "weekend": the upcoming (or current) Saturday and Sunday, in local terms.
   const day = localWeekday(t, offsetMin);
   const untilSat = day === 0 ? 0 : (6 - day + 7) % 7; // Sunday: the weekend is today
-  const satStart = localDayStartMs(t, offsetMin, untilSat);
-  const sunEnd = localDayStartMs(t, offsetMin, untilSat + (day === 0 ? 1 : 2)) - 1;
-  // Start at Saturday, unless it's already the weekend (then start at now).
+  const satStart = dayStart(untilSat);
+  const sunEnd = dayStart(untilSat + (day === 0 ? 1 : 2)) - 1;
+  // Start at Saturday, unless it is already the weekend, in which case start now.
   return { min: Math.max(min, satStart), max: sunEnd };
 }
 

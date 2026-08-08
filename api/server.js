@@ -251,7 +251,7 @@ app.get("/api/events", async (req, res) => {
   try {
     const events = await gatherEvents(region);
     const now = Date.now();
-    const window = rangeWindow(range, new Date(), regionOffsetMinutes(region));
+    const window = rangeWindow(range, new Date(), regionOffsetMinutes(region), region.timeZone);
 
     const enriched = events
       .map((e) => ({

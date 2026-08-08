@@ -20,8 +20,12 @@ and dark themes.
 Add free keys for the full live feed:
 
 ```bash
-TM_API_KEY=... SKIDDLE_API_KEY=... npm start
+TM_API_KEY=... SKIDDLE_API_KEY=... THESPORTSDB_KEY=... npm start
 ```
+
+`server.js` also reads an `api/.env` file if one is present, so the keys can go
+there instead. Host-provided environment variables win over it. See
+`.env.example`.
 
 ## API
 
@@ -30,7 +34,7 @@ TM_API_KEY=... SKIDDLE_API_KEY=... npm start
 | `GET /healthz` | Liveness for the host. Never scrapes. |
 | `GET /api/events?lat=&lng=&sort=&range=` | The feed. `sort` is `nearest` or `soonest`, `range` is `all`, `today`, `weekend` or `week`. |
 | `GET /api/regions` | The town catalogue, grouped by nation and county. This is what the app's location picker renders. |
-| `GET /api/status` | Cache state per region, and which optional keys are configured. |
+| `GET /api/status` | Which optional keys are configured, the id of every curated town, and the cache state of the regions currently held. |
 | `GET /api/diag?lat=&lng=` | Runs every source independently, bypassing cache. Count, timing and error per source. |
 
 `/api/events` returns:
@@ -40,13 +44,22 @@ TM_API_KEY=... SKIDDLE_API_KEY=... npm start
   "origin":   { "lat": 53.48, "lng": -2.24 },
   "region":   { "id": "manchester", "label": "Manchester", "area": "Greater Manchester",
                 "nation": "England", "country": "GB", "timeZone": "Europe/London",
-                "unit": "mi", "center": { } },
+                "unit": "mi", "center": { }, "generic": false },
   "inMarket": true,     // false when the caller's coordinate is outside the UK
+  "sort":     "nearest",
+  "range":    "all",
   "count":    128,
-  "sources":  ["Ticketmaster", "Skiddle", "Eventbrite", "Local guide"],
+  "sources":  ["Ticketmaster", "Skiddle", "Football fixtures", "Eventbrite", "Local guide"],
   "events":   [ ]
 }
 ```
+
+`sort` and `range` echo back what the server actually applied, which is not
+always what was asked for: an unrecognised value falls back to `nearest` and
+`all`. `sources` is not the configured source list. It is the distinct `source`
+values of the events in this particular response, so it shrinks when a key is
+unset or when the date range filters a source out entirely. `region.generic` is
+a legacy field kept so older builds still decode, and is always `false`.
 
 Distances (`distanceKm`) are always sent in kilometres and the clients convert.
 Every UK region reports `"unit": "mi"`, so both clients display miles.
@@ -57,16 +70,18 @@ Every UK region reports `"unit": "mi"`, so both clients display miles.
 |---|---|---|---|
 | **Ticketmaster Discovery** | Free key (`TM_API_KEY`) | REST, pinned to `countryCode=GB` | Concerts, theatre, comedy, arena sport |
 | **Skiddle** | Free key (`SKIDDLE_API_KEY`) | REST, queried by lat/lng | UK-only listings: gigs, club nights, festivals, comedy, food |
-| **Football fixtures** | Free key (`THESPORTSDB_KEY`) | TheSportsDB REST | English leagues and the Scottish Premiership |
-| **Eventbrite UK** | No | `eventbrite.co.uk` discovery pages, embedded JSON-LD, 11 verticals | Music, food, comedy, arts, film, sport, family, festivals, pop-ups, free events |
+| **Football fixtures** | Free key (`THESPORTSDB_KEY`) | TheSportsDB REST | Premier League, Championship, League One, League Two and the Scottish Premiership |
+| **Eventbrite UK** | No | `eventbrite.co.uk` discovery pages, embedded JSON-LD, 11 pages per town | Music, food, comedy, arts, film, sport, family, festivals, pop-ups, free events |
 | **Local guide** | No | Built in | Real UK venues with regular programming |
 
 Ticketmaster is pinned to GB so a radius search from the Kent coast or Northern
 Ireland cannot pull in French or Irish listings. Skiddle takes its radius in
-miles rather than kilometres, which the source converts. Eventbrite is a
-per-town scrape, and a town with no Eventbrite page contributes nothing rather
-than failing the request. The guide is national, and each region takes the
-slice inside its own radius.
+miles rather than kilometres, which the source converts and then caps at 30
+miles, because the API rejects very large radii. Eventbrite is a per-town
+scrape of eleven discovery pages, ten verticals plus the general feed, and a
+town with no Eventbrite page contributes nothing rather than failing the
+request. The guide is national, and each region takes the slice inside its own
+radius.
 
 Every keyed source returns nothing when its key is unset, so the whole thing
 works with none configured. `GET /api/status` reports which keys are present,
@@ -101,19 +116,27 @@ picker on the next launch, with no new build.
 
 ## Caching
 
-One cache entry per region, 12-minute TTL, stale-while-revalidate: a request is
-always answered from cache while the refresh happens behind it, so nobody waits
-on a live scrape. At most 24 regions are held (LRU), with `WARM_REGIONS`
-(default `london,manchester,birmingham,glasgow`) kept warm on boot and on the
-refresh timer, and exempt from eviction.
+One cache entry per region, 12-minute TTL, stale-while-revalidate: once a region
+has anything cached, every request is answered from that cache and the refresh
+runs behind it, so nobody waits on a live scrape. The exception is a region
+nobody has asked for yet, which has nothing to serve, so the first request to it
+does wait for the scrape. That is why the iOS client allows a long timeout on
+its first load.
+
+At most 24 regions are held (LRU), with `WARM_REGIONS` (default
+`london,manchester,birmingham,glasgow`) kept warm on boot and on the refresh
+timer, and exempt from eviction.
 
 ## How sorting works
 
 - **Nearest**: straight-line (haversine) distance from your location,
   ascending, with ties broken by soonest start.
 - **Soonest**: earliest start first, with ties broken by distance.
-- Past events are filtered out. Events with no fixed date sort to the end and
-  only appear under "All upcoming".
+- An event whose start time is more than six hours in the past is dropped, so a
+  gig that began an hour ago is still listed.
+- Events with no fixed date sort last under "Soonest", and only survive the
+  "All upcoming" range. Under "Nearest" they sort on distance like anything
+  else.
 - "Today" and "this weekend" are bucketed in `Europe/London`, not in the
   server's UTC, so they mean what someone in Britain means by them.
 
@@ -129,12 +152,27 @@ sources/
   eventbrite.js         Eventbrite UK via discovery-page JSON-LD
   curated.js            Built-in guide to real UK venues
   util.js               Distance, entity decoding and event normalisation helpers
-public/                 PWA (index.html, app.js, styles.css): list and Leaflet map
+public/                 The PWA, served from the same origin
+  index.html            Onboarding, the four tabs, the detail sheet
+  app.js                Client logic, the inline SVG icon set, the Leaflet map
+  styles.css            Theme tokens and layout
+  manifest.json         Web app manifest, so the page installs
+  sw.js                 Service worker: app-shell cache, never the API
+  icon.svg              The web and PWA mark
+  privacy.html          Privacy policy
+  support.html          Support page
+.env.example            The optional keys, with the signup URL for each
+Dockerfile              Node 20 image, the one Render builds
+render.yaml             Render blueprint (see DEPLOY.md)
 ```
+
+Leaflet itself is loaded from a CDN by `index.html`, not bundled, and `sw.js`
+deliberately does not cache it, so the map needs a network connection.
 
 ## Design
 
-The palette is the Union flag: Pantone 280 blue, Pantone 186 red and white.
+The palette is the Union flag: Pantone 280 blue (`#012169`), Pantone 186 red
+(`#C8102E`) and white.
 Neither flag colour survives a straight lift into a dark interface, so the dark
 theme sits on a navy derived from the blue and lifts the red enough to read on
 it. Every value in `public/styles.css` is a flat colour, and there are no

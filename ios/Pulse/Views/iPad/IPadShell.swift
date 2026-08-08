@@ -200,7 +200,7 @@ struct IPadRootView: View {
         Button { app.sort = s } label: {
             Text(label)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(app.sort == s ? .white : Tok.muted)
+                .foregroundStyle(app.sort == s ? Tok.activeFg : Tok.muted)
                 .frame(maxWidth: .infinity)
                 .frame(height: 32)
                 .background(app.sort == s ? Tok.activeBg : .clear, in: RoundedRectangle(cornerRadius: 9))
@@ -383,7 +383,7 @@ struct IPadRootView: View {
                     .font(.system(size: 13.5, weight: .semibold))
                     .lineLimit(1)
             }
-            .foregroundStyle(located ? .white : Tok.muted)
+            .foregroundStyle(located ? Tok.activeFg : Tok.muted)
             .padding(.horizontal, 14)
             .frame(height: 44)
             .background(located ? Tok.activeBg : Tok.panel, in: Capsule())

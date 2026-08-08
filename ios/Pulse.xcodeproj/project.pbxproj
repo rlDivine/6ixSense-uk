@@ -7,131 +7,131 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		087A39DB30C32ED8B5CD37B1 /* RegionBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BE1EC30A0D8EC29A4BE099 /* RegionBrowserView.swift */; };
-		13B038939C1839849F55337E /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03ED2EE810A3791B9E5E808E /* PreferencesView.swift */; };
-		199384A6ADBA1492CE74B7B6 /* EventService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2708B9325E4D80A7F2A85EB7 /* EventService.swift */; };
-		27507215546B504F16506C5B /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9F62E33D9FAE0150CF529E4 /* Theme.swift */; };
-		34A9BC8AC76A663E973F9856 /* IPadSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 315AA0AD536C82227FC5C7E4 /* IPadSupport.swift */; };
-		35D3D03E7BE89396844502A3 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 780C8896155377E02BFF161E /* AppState.swift */; };
-		3B6CBDB7EC5AC4CDA3A0C138 /* SavedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F5AC22772AB205EB1389CB1 /* SavedView.swift */; };
-		4466C1EB9F8BAD0FE019D0B1 /* DiscoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A316EDA64F04074D81E9D29 /* DiscoverView.swift */; };
-		4A966DE03C4A8524B6EF613E /* PlaceOverride.swift in Sources */ = {isa = PBXBuildFile; fileRef = 332B96CDCF41A76DEFECC844 /* PlaceOverride.swift */; };
-		64C66135833D8B8BA6BBF9D3 /* Preference.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B9DFC1311DAE1A73BA249EE /* Preference.swift */; };
-		72BC2000F6B21437CB583E3B /* States.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9284E04EF9DB1B489AE08BB /* States.swift */; };
-		794E0A8FF4543A3378ABCDAD /* EventMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33EF09E84ACB8C135F4DF9A6 /* EventMapView.swift */; };
-		84CB807B2878F375B742BAF2 /* IPadMapPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF2582FC525B8D1336AEDF87 /* IPadMapPane.swift */; };
-		9E4BB00650F4CA0F2409683C /* EventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE3FFAF9029BEB23A16B646B /* EventCard.swift */; };
-		A2A8206281F1C58F66053C26 /* EventDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8318D4025A1E7BD6FC938412 /* EventDetailView.swift */; };
-		AB851D92C8D2B44201D8BA45 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 063D0EE9A7A2AF273AC8146A /* OnboardingView.swift */; };
-		B9F4D7DD41D43EEA526D9915 /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FCB1FB9FDFFD691E6831BC2 /* Event.swift */; };
-		C0F5B789BF85B6E8A885FE25 /* IPadShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98420999B3ED555EEF301D7A /* IPadShell.swift */; };
-		C1E2FFA923387745DA4405E6 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD6FD1E9C8A485C694AD1F06 /* SearchView.swift */; };
-		DD266598B118C31B9825C4F0 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D21BCCF5B7C1200CAAA63B8B /* Foundation.framework */; };
-		F1B02BE0128D29188FA22F38 /* PulseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C66E9C08DCEB7DB3DFEB003D /* PulseApp.swift */; };
-		F3B7E15C4315B499E39F7782 /* DateQueryParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0908F3966F2C14B05CB9E9AB /* DateQueryParser.swift */; };
-		F6F5DA11A90DC2C54575B473 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 096049113DE624A0C0AA9AB1 /* Assets.xcassets */; };
+		02D674482FC16DEB6870B4C5 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 939ED01B68DAB9932ED35824 /* OnboardingView.swift */; };
+		197AB47346E43AD87177F117 /* SavedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87CCA540E881A2DBC542D36A /* SavedView.swift */; };
+		28EAAE985367567C7EFBDDD4 /* IPadSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C24C208E0626224E16E3864 /* IPadSupport.swift */; };
+		444549FD1D95DD5761555973 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85449492250C0D93C7CECA16 /* PreferencesView.swift */; };
+		48939CE8024BD701C1EE4014 /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FE37F8422B350574D67B208 /* Event.swift */; };
+		5932E4BD992C048DC2806DBA /* DateQueryParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A72715E933488512A4281946 /* DateQueryParser.swift */; };
+		5AC6FAEC94A70953529664BB /* EventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133F0064BAB9EFE90D562C3C /* EventCard.swift */; };
+		739B40C45A069518236D3E53 /* RegionBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 821F16FC32A7B50E681623F5 /* RegionBrowserView.swift */; };
+		7AE6CF3A9F6FE61F0DBADC9A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 053B634020738778CB200626 /* Theme.swift */; };
+		97DEF4E27DD1CEF11D66D1B4 /* States.swift in Sources */ = {isa = PBXBuildFile; fileRef = 462C86ADE5407C3620908F1D /* States.swift */; };
+		9D77E93192244DCE77642F82 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F8D74481E2A47006B748CEA3 /* Assets.xcassets */; };
+		AC532FA7A10455FB11C5BAB5 /* PulseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76724D4C76C6B031ABD265E2 /* PulseApp.swift */; };
+		AF72AF309326825BCC3B6611 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5D4C592C41BC61CB35B3BE /* SearchView.swift */; };
+		B14C7050E7B9FCE44B16A96F /* IPadMapPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 264E60BD5C3AEEC2C960D91E /* IPadMapPane.swift */; };
+		BB1C87AD7FAD0302FA1143D9 /* EventMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 692ED94CDEA00BFD384DCBB4 /* EventMapView.swift */; };
+		BC69E31D3869B63E2C3F3B4E /* EventService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F5BFB1A4E40B3E6E4E5ABFE /* EventService.swift */; };
+		CAC7CA2286F452CB04DB7479 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5131635B4C0104EF9EC90591 /* AppState.swift */; };
+		D2343095A3FCB3D9BFF7EBF2 /* Preference.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F36DCC1E714A823CC061FC6 /* Preference.swift */; };
+		DB3CF832880F29A6497E1655 /* IPadShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8692009CB16A35D87C3681B4 /* IPadShell.swift */; };
+		E8578ECE8F5E009C170CF808 /* PlaceOverride.swift in Sources */ = {isa = PBXBuildFile; fileRef = F012F94E668A7F96D72FDE81 /* PlaceOverride.swift */; };
+		F4E9426949F361B34AED91FC /* EventDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78CAFB68FF36F473363ED957 /* EventDetailView.swift */; };
+		F560F1B349518D7328D2C0EB /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0CCF817B96AFA3BFF4EEAFE7 /* Foundation.framework */; };
+		FB2AF4A3B31B558B27BB6982 /* DiscoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69A594781A5A9F3BD950B19 /* DiscoverView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		03ED2EE810A3791B9E5E808E /* PreferencesView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PreferencesView.swift; path = Views/PreferencesView.swift; sourceTree = "<group>"; };
-		063D0EE9A7A2AF273AC8146A /* OnboardingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OnboardingView.swift; path = Views/OnboardingView.swift; sourceTree = "<group>"; };
-		0908F3966F2C14B05CB9E9AB /* DateQueryParser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DateQueryParser.swift; path = Models/DateQueryParser.swift; sourceTree = "<group>"; };
-		096049113DE624A0C0AA9AB1 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		1F5AC22772AB205EB1389CB1 /* SavedView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SavedView.swift; path = Views/SavedView.swift; sourceTree = "<group>"; };
-		2708B9325E4D80A7F2A85EB7 /* EventService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventService.swift; path = Services/EventService.swift; sourceTree = "<group>"; };
-		315AA0AD536C82227FC5C7E4 /* IPadSupport.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IPadSupport.swift; path = Views/iPad/IPadSupport.swift; sourceTree = "<group>"; };
-		332B96CDCF41A76DEFECC844 /* PlaceOverride.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PlaceOverride.swift; path = Models/PlaceOverride.swift; sourceTree = "<group>"; };
-		33EF09E84ACB8C135F4DF9A6 /* EventMapView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventMapView.swift; path = Views/EventMapView.swift; sourceTree = "<group>"; };
-		4381CDA49F0716B34071F572 /* Pulse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pulse.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		4A316EDA64F04074D81E9D29 /* DiscoverView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DiscoverView.swift; path = Views/DiscoverView.swift; sourceTree = "<group>"; };
-		4FCB1FB9FDFFD691E6831BC2 /* Event.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Event.swift; path = Models/Event.swift; sourceTree = "<group>"; };
-		57BE1EC30A0D8EC29A4BE099 /* RegionBrowserView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RegionBrowserView.swift; path = Views/RegionBrowserView.swift; sourceTree = "<group>"; };
-		780C8896155377E02BFF161E /* AppState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppState.swift; path = State/AppState.swift; sourceTree = "<group>"; };
-		8318D4025A1E7BD6FC938412 /* EventDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventDetailView.swift; path = Views/EventDetailView.swift; sourceTree = "<group>"; };
-		8B9DFC1311DAE1A73BA249EE /* Preference.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Preference.swift; path = Models/Preference.swift; sourceTree = "<group>"; };
-		98420999B3ED555EEF301D7A /* IPadShell.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IPadShell.swift; path = Views/iPad/IPadShell.swift; sourceTree = "<group>"; };
-		9DFCC8779C7BDFB5BA57B1BF /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		AD6FD1E9C8A485C694AD1F06 /* SearchView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SearchView.swift; path = Views/SearchView.swift; sourceTree = "<group>"; };
-		AE3FFAF9029BEB23A16B646B /* EventCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventCard.swift; path = Views/EventCard.swift; sourceTree = "<group>"; };
-		C66E9C08DCEB7DB3DFEB003D /* PulseApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PulseApp.swift; path = Views/PulseApp.swift; sourceTree = "<group>"; };
-		C9284E04EF9DB1B489AE08BB /* States.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = States.swift; path = Views/States.swift; sourceTree = "<group>"; };
-		C9F62E33D9FAE0150CF529E4 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Theme.swift; path = Design/Theme.swift; sourceTree = "<group>"; };
-		D21BCCF5B7C1200CAAA63B8B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		DF2582FC525B8D1336AEDF87 /* IPadMapPane.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IPadMapPane.swift; path = Views/iPad/IPadMapPane.swift; sourceTree = "<group>"; };
+		053B634020738778CB200626 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Theme.swift; path = Design/Theme.swift; sourceTree = "<group>"; };
+		0CCF817B96AFA3BFF4EEAFE7 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		0FE37F8422B350574D67B208 /* Event.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Event.swift; path = Models/Event.swift; sourceTree = "<group>"; };
+		1009552907F8F021E2A776CC /* Pulse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pulse.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		133F0064BAB9EFE90D562C3C /* EventCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventCard.swift; path = Views/EventCard.swift; sourceTree = "<group>"; };
+		1C24C208E0626224E16E3864 /* IPadSupport.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IPadSupport.swift; path = Views/iPad/IPadSupport.swift; sourceTree = "<group>"; };
+		264E60BD5C3AEEC2C960D91E /* IPadMapPane.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IPadMapPane.swift; path = Views/iPad/IPadMapPane.swift; sourceTree = "<group>"; };
+		3F36DCC1E714A823CC061FC6 /* Preference.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Preference.swift; path = Models/Preference.swift; sourceTree = "<group>"; };
+		462C86ADE5407C3620908F1D /* States.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = States.swift; path = Views/States.swift; sourceTree = "<group>"; };
+		5131635B4C0104EF9EC90591 /* AppState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppState.swift; path = State/AppState.swift; sourceTree = "<group>"; };
+		692ED94CDEA00BFD384DCBB4 /* EventMapView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventMapView.swift; path = Views/EventMapView.swift; sourceTree = "<group>"; };
+		76724D4C76C6B031ABD265E2 /* PulseApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PulseApp.swift; path = Views/PulseApp.swift; sourceTree = "<group>"; };
+		78CAFB68FF36F473363ED957 /* EventDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventDetailView.swift; path = Views/EventDetailView.swift; sourceTree = "<group>"; };
+		821F16FC32A7B50E681623F5 /* RegionBrowserView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RegionBrowserView.swift; path = Views/RegionBrowserView.swift; sourceTree = "<group>"; };
+		85449492250C0D93C7CECA16 /* PreferencesView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PreferencesView.swift; path = Views/PreferencesView.swift; sourceTree = "<group>"; };
+		8692009CB16A35D87C3681B4 /* IPadShell.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IPadShell.swift; path = Views/iPad/IPadShell.swift; sourceTree = "<group>"; };
+		87CCA540E881A2DBC542D36A /* SavedView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SavedView.swift; path = Views/SavedView.swift; sourceTree = "<group>"; };
+		939ED01B68DAB9932ED35824 /* OnboardingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OnboardingView.swift; path = Views/OnboardingView.swift; sourceTree = "<group>"; };
+		9F5BFB1A4E40B3E6E4E5ABFE /* EventService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventService.swift; path = Services/EventService.swift; sourceTree = "<group>"; };
+		A69A594781A5A9F3BD950B19 /* DiscoverView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DiscoverView.swift; path = Views/DiscoverView.swift; sourceTree = "<group>"; };
+		A72715E933488512A4281946 /* DateQueryParser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DateQueryParser.swift; path = Models/DateQueryParser.swift; sourceTree = "<group>"; };
+		EB420F487E2271B276FC95FB /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F012F94E668A7F96D72FDE81 /* PlaceOverride.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PlaceOverride.swift; path = Models/PlaceOverride.swift; sourceTree = "<group>"; };
+		F8D74481E2A47006B748CEA3 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FA5D4C592C41BC61CB35B3BE /* SearchView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SearchView.swift; path = Views/SearchView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		533297CD8D3BC19D6377384F /* Frameworks */ = {
+		E66B4CD61AB0315108354A45 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DD266598B118C31B9825C4F0 /* Foundation.framework in Frameworks */,
+				F560F1B349518D7328D2C0EB /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		1AAE04C7D8D04A26597C9EEA /* iOS */ = {
+		575C98208E1B0C7D6AA0B44E /* Pulse */ = {
 			isa = PBXGroup;
 			children = (
-				D21BCCF5B7C1200CAAA63B8B /* Foundation.framework */,
-			);
-			name = iOS;
-			sourceTree = "<group>";
-		};
-		30178F730983B0028AEDBDBD /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				4381CDA49F0716B34071F572 /* Pulse.app */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		3404C728FB280BCBE42DA273 = {
-			isa = PBXGroup;
-			children = (
-				30178F730983B0028AEDBDBD /* Products */,
-				636B741692641C2CD48EC14F /* Frameworks */,
-				3AD802693A4D94B7EF0C4D30 /* Pulse */,
-			);
-			sourceTree = "<group>";
-		};
-		3AD802693A4D94B7EF0C4D30 /* Pulse */ = {
-			isa = PBXGroup;
-			children = (
-				C9F62E33D9FAE0150CF529E4 /* Theme.swift */,
-				0908F3966F2C14B05CB9E9AB /* DateQueryParser.swift */,
-				4FCB1FB9FDFFD691E6831BC2 /* Event.swift */,
-				332B96CDCF41A76DEFECC844 /* PlaceOverride.swift */,
-				8B9DFC1311DAE1A73BA249EE /* Preference.swift */,
-				2708B9325E4D80A7F2A85EB7 /* EventService.swift */,
-				780C8896155377E02BFF161E /* AppState.swift */,
-				4A316EDA64F04074D81E9D29 /* DiscoverView.swift */,
-				AE3FFAF9029BEB23A16B646B /* EventCard.swift */,
-				8318D4025A1E7BD6FC938412 /* EventDetailView.swift */,
-				33EF09E84ACB8C135F4DF9A6 /* EventMapView.swift */,
-				063D0EE9A7A2AF273AC8146A /* OnboardingView.swift */,
-				03ED2EE810A3791B9E5E808E /* PreferencesView.swift */,
-				C66E9C08DCEB7DB3DFEB003D /* PulseApp.swift */,
-				57BE1EC30A0D8EC29A4BE099 /* RegionBrowserView.swift */,
-				1F5AC22772AB205EB1389CB1 /* SavedView.swift */,
-				AD6FD1E9C8A485C694AD1F06 /* SearchView.swift */,
-				C9284E04EF9DB1B489AE08BB /* States.swift */,
-				DF2582FC525B8D1336AEDF87 /* IPadMapPane.swift */,
-				98420999B3ED555EEF301D7A /* IPadShell.swift */,
-				315AA0AD536C82227FC5C7E4 /* IPadSupport.swift */,
-				9DFCC8779C7BDFB5BA57B1BF /* Info.plist */,
-				096049113DE624A0C0AA9AB1 /* Assets.xcassets */,
+				053B634020738778CB200626 /* Theme.swift */,
+				A72715E933488512A4281946 /* DateQueryParser.swift */,
+				0FE37F8422B350574D67B208 /* Event.swift */,
+				F012F94E668A7F96D72FDE81 /* PlaceOverride.swift */,
+				3F36DCC1E714A823CC061FC6 /* Preference.swift */,
+				9F5BFB1A4E40B3E6E4E5ABFE /* EventService.swift */,
+				5131635B4C0104EF9EC90591 /* AppState.swift */,
+				A69A594781A5A9F3BD950B19 /* DiscoverView.swift */,
+				133F0064BAB9EFE90D562C3C /* EventCard.swift */,
+				78CAFB68FF36F473363ED957 /* EventDetailView.swift */,
+				692ED94CDEA00BFD384DCBB4 /* EventMapView.swift */,
+				939ED01B68DAB9932ED35824 /* OnboardingView.swift */,
+				85449492250C0D93C7CECA16 /* PreferencesView.swift */,
+				76724D4C76C6B031ABD265E2 /* PulseApp.swift */,
+				821F16FC32A7B50E681623F5 /* RegionBrowserView.swift */,
+				87CCA540E881A2DBC542D36A /* SavedView.swift */,
+				FA5D4C592C41BC61CB35B3BE /* SearchView.swift */,
+				462C86ADE5407C3620908F1D /* States.swift */,
+				264E60BD5C3AEEC2C960D91E /* IPadMapPane.swift */,
+				8692009CB16A35D87C3681B4 /* IPadShell.swift */,
+				1C24C208E0626224E16E3864 /* IPadSupport.swift */,
+				EB420F487E2271B276FC95FB /* Info.plist */,
+				F8D74481E2A47006B748CEA3 /* Assets.xcassets */,
 			);
 			name = Pulse;
 			path = Pulse;
 			sourceTree = "<group>";
 		};
-		636B741692641C2CD48EC14F /* Frameworks */ = {
+		7243CC2B3F6154FDD77F5CEB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1AAE04C7D8D04A26597C9EEA /* iOS */,
+				1009552907F8F021E2A776CC /* Pulse.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		87AF74EB617B95C23E02CC39 = {
+			isa = PBXGroup;
+			children = (
+				7243CC2B3F6154FDD77F5CEB /* Products */,
+				9FBD04F943EE113D641F5400 /* Frameworks */,
+				575C98208E1B0C7D6AA0B44E /* Pulse */,
+			);
+			sourceTree = "<group>";
+		};
+		89B3726BA5598DF7BA92E8B7 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				0CCF817B96AFA3BFF4EEAFE7 /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		9FBD04F943EE113D641F5400 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				89B3726BA5598DF7BA92E8B7 /* iOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -139,13 +139,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		4CCC1B3D60D8E19829C25C21 /* Pulse */ = {
+		87EB86D6D53DC70B5DBE1E96 /* Pulse */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = D6FA78B01F41FC9AF6CC657C /* Build configuration list for PBXNativeTarget "Pulse" */;
+			buildConfigurationList = 8D9B4BABA7444CE0011CB553 /* Build configuration list for PBXNativeTarget "Pulse" */;
 			buildPhases = (
-				3ECC8074C4EAABA821C55F45 /* Sources */,
-				533297CD8D3BC19D6377384F /* Frameworks */,
-				82CC3CAC86824D77C81AAC47 /* Resources */,
+				31C07CF3DE96EEC51832E2D3 /* Sources */,
+				E66B4CD61AB0315108354A45 /* Frameworks */,
+				1C4B43FCDF5FDC852FF20D4F /* Resources */,
 			);
 			buildRules = (
 			);
@@ -153,19 +153,19 @@
 			);
 			name = Pulse;
 			productName = Pulse;
-			productReference = 4381CDA49F0716B34071F572 /* Pulse.app */;
+			productReference = 1009552907F8F021E2A776CC /* Pulse.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		7A5896DBB58A7A14D7803CC6 /* Project object */ = {
+		0C1695169D1E930928F0B57F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 1600;
 			};
-			buildConfigurationList = 8F9FE45B2962B52E9C205959 /* Build configuration list for PBXProject "Pulse" */;
+			buildConfigurationList = C22DE97FE8BC2C041351E3A5 /* Build configuration list for PBXProject "Pulse" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -173,62 +173,107 @@
 				en,
 				Base,
 			);
-			mainGroup = 3404C728FB280BCBE42DA273;
+			mainGroup = 87AF74EB617B95C23E02CC39;
 			minimizedProjectReferenceProxies = 0;
 			preferredProjectObjectVersion = 100;
-			productRefGroup = 30178F730983B0028AEDBDBD /* Products */;
+			productRefGroup = 7243CC2B3F6154FDD77F5CEB /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				4CCC1B3D60D8E19829C25C21 /* Pulse */,
+				87EB86D6D53DC70B5DBE1E96 /* Pulse */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		82CC3CAC86824D77C81AAC47 /* Resources */ = {
+		1C4B43FCDF5FDC852FF20D4F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F6F5DA11A90DC2C54575B473 /* Assets.xcassets in Resources */,
+				9D77E93192244DCE77642F82 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		3ECC8074C4EAABA821C55F45 /* Sources */ = {
+		31C07CF3DE96EEC51832E2D3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				27507215546B504F16506C5B /* Theme.swift in Sources */,
-				F3B7E15C4315B499E39F7782 /* DateQueryParser.swift in Sources */,
-				B9F4D7DD41D43EEA526D9915 /* Event.swift in Sources */,
-				4A966DE03C4A8524B6EF613E /* PlaceOverride.swift in Sources */,
-				64C66135833D8B8BA6BBF9D3 /* Preference.swift in Sources */,
-				199384A6ADBA1492CE74B7B6 /* EventService.swift in Sources */,
-				35D3D03E7BE89396844502A3 /* AppState.swift in Sources */,
-				4466C1EB9F8BAD0FE019D0B1 /* DiscoverView.swift in Sources */,
-				9E4BB00650F4CA0F2409683C /* EventCard.swift in Sources */,
-				A2A8206281F1C58F66053C26 /* EventDetailView.swift in Sources */,
-				794E0A8FF4543A3378ABCDAD /* EventMapView.swift in Sources */,
-				AB851D92C8D2B44201D8BA45 /* OnboardingView.swift in Sources */,
-				13B038939C1839849F55337E /* PreferencesView.swift in Sources */,
-				F1B02BE0128D29188FA22F38 /* PulseApp.swift in Sources */,
-				087A39DB30C32ED8B5CD37B1 /* RegionBrowserView.swift in Sources */,
-				3B6CBDB7EC5AC4CDA3A0C138 /* SavedView.swift in Sources */,
-				C1E2FFA923387745DA4405E6 /* SearchView.swift in Sources */,
-				72BC2000F6B21437CB583E3B /* States.swift in Sources */,
-				84CB807B2878F375B742BAF2 /* IPadMapPane.swift in Sources */,
-				C0F5B789BF85B6E8A885FE25 /* IPadShell.swift in Sources */,
-				34A9BC8AC76A663E973F9856 /* IPadSupport.swift in Sources */,
+				7AE6CF3A9F6FE61F0DBADC9A /* Theme.swift in Sources */,
+				5932E4BD992C048DC2806DBA /* DateQueryParser.swift in Sources */,
+				48939CE8024BD701C1EE4014 /* Event.swift in Sources */,
+				E8578ECE8F5E009C170CF808 /* PlaceOverride.swift in Sources */,
+				D2343095A3FCB3D9BFF7EBF2 /* Preference.swift in Sources */,
+				BC69E31D3869B63E2C3F3B4E /* EventService.swift in Sources */,
+				CAC7CA2286F452CB04DB7479 /* AppState.swift in Sources */,
+				FB2AF4A3B31B558B27BB6982 /* DiscoverView.swift in Sources */,
+				5AC6FAEC94A70953529664BB /* EventCard.swift in Sources */,
+				F4E9426949F361B34AED91FC /* EventDetailView.swift in Sources */,
+				BB1C87AD7FAD0302FA1143D9 /* EventMapView.swift in Sources */,
+				02D674482FC16DEB6870B4C5 /* OnboardingView.swift in Sources */,
+				444549FD1D95DD5761555973 /* PreferencesView.swift in Sources */,
+				AC532FA7A10455FB11C5BAB5 /* PulseApp.swift in Sources */,
+				739B40C45A069518236D3E53 /* RegionBrowserView.swift in Sources */,
+				197AB47346E43AD87177F117 /* SavedView.swift in Sources */,
+				AF72AF309326825BCC3B6611 /* SearchView.swift in Sources */,
+				97DEF4E27DD1CEF11D66D1B4 /* States.swift in Sources */,
+				B14C7050E7B9FCE44B16A96F /* IPadMapPane.swift in Sources */,
+				DB3CF832880F29A6497E1655 /* IPadShell.swift in Sources */,
+				28EAAE985367567C7EFBDDD4 /* IPadSupport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		21429AA4F0BFC99447630B65 /* Release */ = {
+		2999B8596151D9D1F1202F7B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_LANGUAGE = "en-GB";
+				DEVELOPMENT_TEAM = CRLGA87MAF;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Pulse/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.voice2jobs.pulseuk;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		6199087BC9005D0732D85DF6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_LANGUAGE = "en-GB";
+				DEVELOPMENT_TEAM = CRLGA87MAF;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Pulse/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.voice2jobs.pulseuk;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A4ECD1CBFE3AEACF06C9A9ED /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -282,29 +327,7 @@
 			};
 			name = Release;
 		};
-		23E041D4563BEBBEC1C449A5 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
-				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_LANGUAGE = "en-GB";
-				DEVELOPMENT_TEAM = CRLGA87MAF;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Pulse/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.voice2jobs.pulseuk;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		ACFDD509E2206F6C9860CCCF /* Debug */ = {
+		F65A2940AED5E1881A3C0455 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -365,51 +388,28 @@
 			};
 			name = Debug;
 		};
-		C1B588C62EFB3272588DB3F1 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
-				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_LANGUAGE = "en-GB";
-				DEVELOPMENT_TEAM = CRLGA87MAF;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Pulse/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.voice2jobs.pulseuk;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		8F9FE45B2962B52E9C205959 /* Build configuration list for PBXProject "Pulse" */ = {
+		8D9B4BABA7444CE0011CB553 /* Build configuration list for PBXNativeTarget "Pulse" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				ACFDD509E2206F6C9860CCCF /* Debug */,
-				21429AA4F0BFC99447630B65 /* Release */,
+				6199087BC9005D0732D85DF6 /* Release */,
+				2999B8596151D9D1F1202F7B /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		D6FA78B01F41FC9AF6CC657C /* Build configuration list for PBXNativeTarget "Pulse" */ = {
+		C22DE97FE8BC2C041351E3A5 /* Build configuration list for PBXProject "Pulse" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C1B588C62EFB3272588DB3F1 /* Release */,
-				23E041D4563BEBBEC1C449A5 /* Debug */,
+				F65A2940AED5E1881A3C0455 /* Debug */,
+				A4ECD1CBFE3AEACF06C9A9ED /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 7A5896DBB58A7A14D7803CC6 /* Project object */;
+	rootObject = 0C1695169D1E930928F0B57F /* Project object */;
 }

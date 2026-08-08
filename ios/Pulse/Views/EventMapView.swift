@@ -230,7 +230,6 @@ struct EventMapView: View {
                 ForEach(trayEvents) { e in
                     CarouselCard(event: e) { select(e); detail = e }
                         .frame(width: 260)
-                        .onTapGesture { select(e) }
                 }
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
@@ -467,7 +466,9 @@ struct CarouselCard: View {
                     .font(.system(size: 12)).foregroundStyle(Tok.muted).lineLimit(1)
             }.padding(10)
         }
-        .background(Tok.panel2, in: RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Tok.hairline, lineWidth: 1))
+        .background(Tok.panel2, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Tok.hairline, lineWidth: 1))
+        .contentShape(RoundedRectangle(cornerRadius: 16))
+        .onTapGesture(perform: onOpen)
     }
 }

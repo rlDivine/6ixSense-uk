@@ -46,8 +46,8 @@ serves Toronto and is a different product.
 |---|---|
 | **Onboarding** | Three mandatory steps: value prop, location priming, interests |
 | **Discover** | Nearest/Soonest, date-range pills, category chips, image-led cards, pull-to-refresh, Map FAB |
-| **Map** | `MapKit` with category-coloured symbol markers, clustering, user location, preview, bottom card carousel |
-| **Event detail** | Hero, key facts, venue mini-map and Apple Maps directions, Share, Save, "Get tickets" |
+| **Map** | `MKMapView` wrapped in `UIViewRepresentable`, with category-coloured SF Symbol markers, clustering, user location and a bottom card carousel |
+| **Event detail** | Hero, key facts, a still venue map from `MKMapSnapshotter` with an Apple Maps directions link, Share, Save, "Get tickets and details" |
 | **Saved** | Grouped by date, per-event reminder as a local notification 2h before |
 | **Search** | Live filter over title, venue and category, plus date phrases ("this weekend", "25/7") and UK address lookup |
 | **Preferences** | Interests, and a location picker over all 454 UK towns, grouped by nation and county |
@@ -84,8 +84,13 @@ node tools/make_icon.js        # writes all three variants into Assets.xcassets
 ```
 
 `tools/make_icon.swift` is the CoreGraphics equivalent, for regenerating them
-from Swift on a Mac. Both produce opaque 1024 by 1024 PNGs with no alpha,
-as the App Store requires.
+from Swift on a Mac. It writes one variant per run rather than all three:
+
+```bash
+swift tools/make_icon.swift out.png light      # or dark, or tinted
+```
+
+Both produce opaque 1024 by 1024 PNGs with no alpha, as the App Store requires.
 
 ## Structure
 
@@ -102,14 +107,17 @@ Pulse/
                                 EventMapView, SavedView, SearchView, EventDetailView,
                                 PreferencesView, RegionBrowserView, States
   Views/iPad/                   Regular-width shell, map pane, sidebar primitives
-  Info.plist                    Location usage string and the localhost ATS exception
+  Assets.xcassets/              AppIcon: the three 1024px PNGs and their Contents.json
+  Info.plist                    Location usage string and the local-network ATS exceptions
 project.rb                      Regenerates Pulse.xcodeproj
 tools/make_icon.js|.swift       Generates the AppIcon PNGs from PulseLogoGeometry
 ```
 
 ## Notes
 
-- Deployment target **iOS 17** (uses the iOS 17 MapKit SwiftUI APIs).
+- Deployment target **iOS 17**, set in `project.rb`. The map is UIKit's
+  `MKMapView` behind a `UIViewRepresentable`, not the SwiftUI `Map` view, so
+  the clustering and per-annotation styling go through `MKMapViewDelegate`.
 - `TARGETED_DEVICE_FAMILY` must stay `1,2`. Shipping iPhone-only makes iPadOS
   run the app in scaled-compatibility mode, so the `Views/iPad` layout never
   activates, which is what got the 6ix Sense 1.0 (1) build rejected under

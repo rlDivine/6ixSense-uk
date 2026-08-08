@@ -85,12 +85,6 @@ struct Region: Codable, Hashable {
     let center: Center?
     let generic: Bool?      // legacy field, always false
 
-    /// "Canterbury, Kent": the town with the county that disambiguates it.
-    var fullLabel: String {
-        guard let label else { return "the UK" }
-        guard let area, area != label else { return label }
-        return "\(label), \(area)"
-    }
 }
 
 /// API envelope: { origin, region, inMarket, sort, range, count, sources, events }

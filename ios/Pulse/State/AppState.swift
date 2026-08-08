@@ -11,7 +11,6 @@ final class AppState: NSObject, ObservableObject {
     @Published var loading = false
     @Published var errorMessage: String?
     @Published var lastLoad: Date?
-    @Published var sourcesLoaded: [String] = []
 
     // Navigation
     @Published var tab = 0
@@ -55,7 +54,15 @@ final class AppState: NSObject, ObservableObject {
     var hasOrigin: Bool { origin != nil }
 
     // Onboarding gate (mandatory first-run).
-    @AppStorage("onboarded") var onboarded = false
+    //
+    // Deliberately a @Published property backed by UserDefaults rather than
+    // @AppStorage. @AppStorage only drives invalidation through DynamicProperty
+    // inside a View; in an ObservableObject its setter writes the default
+    // without firing objectWillChange, so finishing onboarding did not reliably
+    // swap the root view over. It waited for some unrelated published change.
+    @Published var onboarded = UserDefaults.standard.bool(forKey: "onboarded") {
+        didSet { UserDefaults.standard.set(onboarded, forKey: "onboarded") }
+    }
 
     // Preferences. Only events matching these are shown on Discover and Map.
     @Published var preferredCategories: Set<String> = []
@@ -106,7 +113,6 @@ final class AppState: NSObject, ObservableObject {
         do {
             let resp = try await EventService.fetch(sort: sort, range: range, origin: origin)
             events = resp.events
-            sourcesLoaded = resp.sources
             region = resp.region
             // A manual override is the user's own choice of UK town, so it is
             // always in market. Only the device's own position can be abroad.
@@ -216,22 +222,6 @@ final class AppState: NSObject, ObservableObject {
         if deviceOrigin != nil && inMarket { return "near you" }
         return "in \(placeName)"
     }
-
-    /// How to describe the feed's centre as a bare noun.
-    var originName: String {
-        if let o = placeOverride { return o.label }
-        return (deviceOrigin != nil && inMarket) ? "you" : placeName
-    }
-
-    // MARK: Preferences
-
-    func togglePreference(_ id: String) {
-        if preferredCategories.contains(id) { preferredCategories.remove(id) }
-        else { preferredCategories.insert(id) }
-        persist()
-    }
-
-    func clearPreferences() { preferredCategories.removeAll(); persist() }
 
     /// True only when preferences actually narrow the feed, that is some but not
     /// all, interests are selected. (All selected ≈ none selected ≈ show all.)

@@ -77,8 +77,8 @@ capital.
 |---|---|---|---|
 | **Ticketmaster Discovery** | Free key (`TM_API_KEY`) | REST, `countryCode=GB` | Concerts, theatre, comedy, arena sport |
 | **Skiddle** | Free key (`SKIDDLE_API_KEY`) | REST, queried by lat/lng | UK-only listings: gigs, club nights, festivals, comedy, food. Coordinates and prices in pounds on every result |
-| **Football fixtures** | Free key (`THESPORTSDB_KEY`) | TheSportsDB REST | Upcoming fixtures for the English leagues and the Scottish Premiership |
-| **Eventbrite UK** | No | `eventbrite.co.uk` discovery pages, JSON-LD, 11 verticals | Music, food, comedy, arts, film, sport, family, festivals, pop-ups, free events |
+| **Football fixtures** | Free key (`THESPORTSDB_KEY`) | TheSportsDB REST | Upcoming fixtures in the Premier League, Championship, League One, League Two and the Scottish Premiership |
+| **Eventbrite UK** | No | `eventbrite.co.uk` discovery pages, JSON-LD, 11 pages per town | Music, food, comedy, arts, film, sport, family, festivals, pop-ups, free events |
 | **Local guide** | No | Built in | Real UK venues with regular programming |
 
 Every keyed source returns nothing at all when its key is unset, so the app
@@ -108,9 +108,10 @@ rather than a large number competing with the event name.
 hero scrims, the loading skeleton and the map overlay were all gradients and
 are now solid.
 
-**No emoji**, apart from the interest filter chips, where they earn their place
-by making a twelve-item grid scannable. Everywhere else the app uses SF Symbols
-on iOS and inline SVG on the web, so nothing depends on an emoji font or shifts
+**No emoji**, apart from the iOS interest filter chips, where they earn their
+place by making a twelve-item grid scannable. They are the only ones in either
+client: the web app has none at all. Everywhere else the app uses SF Symbols on
+iOS and inline SVG on the web, so nothing depends on an emoji font or shifts
 weight between platforms.
 
 **Logo.** A flat map pin with a knocked-out centre. It is deliberately a
@@ -122,6 +123,13 @@ geometry, three implementations kept in step:
   (`node tools/make_icon.js`); `make_icon.swift` is the CoreGraphics twin for
   running on a Mac
 - `api/public/icon.svg`, the web and PWA icon
+
+## Designing
+
+[`DESIGN.md`](DESIGN.md) is the brief for anyone taking the interface further:
+the audience, the palette and the reasoning behind it, the type scale, every
+screen and what it has to show, the hard constraints, and an explicit list of
+what is deliberately a placeholder. The logo is first on that list.
 
 ## Deploying
 

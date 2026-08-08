@@ -105,11 +105,28 @@ const GROUNDS = {
 function normalise(name) {
   return String(name || "")
     .toLowerCase()
-    .replace(/[’`]/g, "'")
+    .replace(/[\u2019`]/g, "'")
     .replace(/[^a-z0-9' ]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
+
+// The table is written the way the grounds are spelled, so some keys carry
+// punctuation ("Swansea.com Stadium"). Normalise both sides once at load, or
+// an exact lookup can never hit those entries.
+const NORMALISED_GROUNDS = new Map(
+  Object.entries(GROUNDS).map(([name, coords]) => [normalise(name), coords])
+);
+
+// Words that appear in dozens of ground names and so identify nothing on their
+// own. A candidate match has to share at least one word outside this set,
+// otherwise "Stadium" would resolve to the Emirates and "Community Stadium" to
+// the Gtech.
+const GENERIC_WORDS = new Set([
+  "stadium", "park", "ground", "arena", "the", "community", "city", "town",
+  "road", "lane", "street", "field", "centre", "center", "sports", "football",
+  "club", "county", "new", "old", "north", "south", "east", "west", "united",
+]);
 
 /// Resolve a ground name to coordinates, tolerating the ways the feed dresses
 /// up the same place ("Old Trafford", "Old Trafford Stadium"). Returns null
@@ -121,10 +138,11 @@ function normalise(name) {
 export function groundFor(venue) {
   const v = normalise(venue);
   if (!v) return null;
-  if (GROUNDS[v]) return GROUNDS[v];
+  const exact = NORMALISED_GROUNDS.get(v);
+  if (exact) return exact;
 
   const words = v.split(" ");
-  for (const [key, coords] of Object.entries(GROUNDS)) {
+  for (const [key, coords] of NORMALISED_GROUNDS) {
     const kw = key.split(" ");
     if (containsRun(words, kw) || containsRun(kw, words)) return coords;
   }
@@ -132,10 +150,13 @@ export function groundFor(venue) {
 }
 
 /// True when `needle` appears in `haystack` as a consecutive run of whole
-/// words. A single-word needle has to be a distinctive one, otherwise a name
-/// like "Victoria Park" matches half the country.
+/// words, and carries at least one word that identifies a specific ground. The
+/// second condition is what stops "Stadium" or "Community Stadium" standing in
+/// for a real name, and a single-word needle still has to be a long one so
+/// "Park" cannot match half the country either.
 function containsRun(haystack, needle) {
   if (!needle.length || needle.length > haystack.length) return false;
+  if (!needle.some((w) => !GENERIC_WORDS.has(w))) return false;
   if (needle.length === 1 && needle[0].length < 7) return false;
   for (let i = 0; i + needle.length <= haystack.length; i++) {
     let hit = true;
