@@ -170,7 +170,6 @@ function isFree(e) { return (e.price || "").toLowerCase() === "free"; }
 // Show the green Free badge only when "Free" isn't already the category chip.
 function freeTag(e) { return isFree(e) && e.category !== "Free" ? `<span class="tag free">Free</span>` : ""; }
 // Neutral price chip on cards when a non-free price is known (e.g. "£39").
-function priceTag(e) { return e.price && !isFree(e) ? `<span class="tag">${esc(e.price)}</span>` : ""; }
 // Bookmark glyph: outline when unsaved, filled accent when saved.
 function bmIcon(on) {
   return `<svg viewBox="0 0 24 24" width="20" height="20" fill="${on ? "var(--accent)" : "none"}" stroke="${on ? "var(--accent)" : "currentColor"}" stroke-width="2" stroke-linejoin="round"><path d="M6 3.5h12a.5.5 0 0 1 .5.5v16.2l-6.5-3.8-6.5 3.8V4a.5.5 0 0 1 .5-.5z"/></svg>`;

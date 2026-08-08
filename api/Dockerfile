@@ -1,4 +1,4 @@
-# Slim Node image — no headless browser anymore (every source is now plain
+# Slim Node image. No headless browser anymore (every source is now plain
 # HTTP/JSON), so the container is tiny and runs comfortably in 512 MB.
 FROM node:20-slim
 

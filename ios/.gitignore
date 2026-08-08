@@ -1,4 +1,4 @@
-# Xcode / Swift — for the Pulse iOS app.
+# Xcode and Swift, for the Pulse iOS app.
 ## Build generated
 build/
 DerivedData/
@@ -51,7 +51,7 @@ fastlane/test_output
 ## macOS
 .DS_Store
 
-## Secrets — never commit
+## Secrets, never commit
 *.env
 .env
 *.p12

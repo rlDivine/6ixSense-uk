@@ -67,8 +67,8 @@ serves Toronto and is a different product.
 - **Out of market.** Open the app abroad and the backend serves London with
   `inMarket: false`; the app shows a notice explaining that, rather than
   labelling London listings "near you".
-- **Sport keywords** are football, rugby, cricket, netball and darts, not
-  hockey and baseball.
+- **Sport keywords** are football, rugby, cricket, netball, athletics, boxing,
+  darts, snooker and racing, not hockey and baseball. In `Preference.swift`.
 
 ## The logo
 
@@ -103,8 +103,9 @@ Pulse/
   Services/EventService.swift   async URLSession client (baseURL here)
   State/AppState.swift          ObservableObject: fetch, filters, location, saved, reminders
   Design/Theme.swift            Colour tokens, category palette, PulseLogo, date and distance helpers
-  Views/                        PulseApp, RootView, Onboarding, Discover, EventCard,
-                                EventMapView, SavedView, SearchView, EventDetailView,
+  Views/                        PulseApp.swift (also holds RootView and MainTabView),
+                                OnboardingView, DiscoverView, EventCard, EventMapView,
+                                SavedView, SearchView, EventDetailView,
                                 PreferencesView, RegionBrowserView, States
   Views/iPad/                   Regular-width shell, map pane, sidebar primitives
   Assets.xcassets/              AppIcon: the three 1024px PNGs and their Contents.json
