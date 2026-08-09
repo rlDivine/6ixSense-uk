@@ -1,6 +1,8 @@
 import SwiftUI
+import UIKit
 import MapKit
 import CoreLocation
+import QuartzCore
 
 /// The set of events the user surfaced by tapping somewhere on the map.
 /// `title` is what the tray header shows, e.g. "3 events near Brixton Academy".
@@ -138,7 +140,7 @@ struct EventMapView: View {
     /// Re-centres the whole feed on what the map is showing. The name comes
     /// from the geocoder, on device, so the rest of the app can still say where
     /// the feed is for: the Discover title and the status line both read it.
-    private func searchThisArea() async {
+    @MainActor private func searchThisArea() async {
         guard let centre = visibleCentre, !searchingArea else { return }
         searchingArea = true
         let here = CLLocation(latitude: centre.latitude, longitude: centre.longitude)

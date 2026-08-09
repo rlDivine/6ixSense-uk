@@ -4,6 +4,15 @@ import MapKit
 /// iPad map: a full-bleed map column plus a dedicated 340pt "Around you" rail.
 /// The phone version stacks a carousel over the map; at regular width there is
 /// room to give the list its own column, so nothing overlaps the pins.
+///
+/// The rail appears or disappears on the *width this pane is given*, not on the
+/// device or the orientation, so a Split View or Stage Manager window that is
+/// too narrow for both simply drops back to a full-bleed map with its floating
+/// controls, and a rotation re-decides live.
+///
+/// Everything that floats over the map sits on a material rather than a flat
+/// panel fill, which is the liquid glass treatment the phone map tray already
+/// uses in this codebase.
 struct IPadMapPane: View {
     @EnvironmentObject var app: AppState
 

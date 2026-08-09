@@ -766,7 +766,7 @@ struct IPadDetailBody: View {
                     .kerning(-0.7)
                     .foregroundStyle(Tok.text)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(description)
+                Text(blurb)
                     .font(.system(size: 14))
                     .lineSpacing(4)
                     .foregroundStyle(Tok.muted)
@@ -805,7 +805,7 @@ struct IPadDetailBody: View {
             .accessibilityHidden(true)
     }
 
-    private var description: String {
+    private var blurb: String {
         "The full listing, the line up and tickets are on \(event.source)."
     }
 
