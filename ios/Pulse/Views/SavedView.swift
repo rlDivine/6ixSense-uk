@@ -140,7 +140,7 @@ struct SavedView: View {
         if days == 1 { return "Tomorrow" }
         let gb = Locale(identifier: "en_GB")
         let weekday = d.formatted(.dateTime.weekday(.wide).locale(gb))
-        let date = d.formatted(.dateTime.day().month(.numeric).locale(gb))
+        let date = d.formatted(.dateTime.day().month(.defaultDigits).locale(gb))
         return "\(weekday), \(date)"
     }
 }
