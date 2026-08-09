@@ -32,68 +32,80 @@ const VARIANTS = {
 };
 
 // ---- the logo, on its 24x24 grid ------------------------------------------
-// "Proximity": a filled dot with two rising arcs above it. These numbers are
-// the reference geometry documented in ios/Pulse/Design/Theme.swift
+// "Beacon": a map pin with a pulse trace knocked out of it as a counter. These
+// numbers are the reference geometry documented in ios/Pulse/Design/Theme.swift
 // (PulseLogoGeometry) and reproduced in ios/tools/make_icon.swift and
-// api/public/icon.svg. Change one, change all four.
+// api/public/icon.svg, plus the inline brand mark in api/public/index.html.
+// Change one, change all five.
 //
-//   dot     centre (12, 17) radius 2.6, filled
-//   arc 1   (7.6, 12.6) to (16.4, 12.6)  on radius 6.2
-//   arc 2   (4.2, 8.9)  to (19.8, 8.9)   on radius 11
-//   both arcs stroked at 2.1 with round caps
-const DOT = { x: 12, y: 17, r: 2.6 };
-const STROKE = 2.1;
-const CAP = STROKE / 2;
+// The old mark was a stroke, so it could be rasterised from a distance field.
+// This one is a filled outline built from two circular arcs, two cubics and a
+// rounded tip, and there is no closed-form distance to a cubic. It is flattened
+// to a dense polygon instead and tested with a crossing count. At 4000 segments
+// the worst chord error on the 24 grid is far below one pixel at 1024.
+const HEAD = { x: 12, y: 10, r: 8.2 };
+const TIP_R = 1.1, TIP_HALF = 0.7, TIP_CHORD_Y = 22.3;
+const TIP = { x: 12, y: TIP_CHORD_Y - Math.sqrt(TIP_R * TIP_R - TIP_HALF * TIP_HALF) };
 
-/// Polar angle of p about c in degrees, normalised to 0 up to 360. Positive y
-/// is downward here, the same as the SVG and the SwiftUI shape, so 270 is
-/// straight up and a sweep over the top is an increasing range.
-function angleOf(p, c) {
-  const a = (Math.atan2(p.y - c.y, p.x - c.x) * 180) / Math.PI;
-  return a < 0 ? a + 360 : a;
-}
+const D = Math.PI / 180;
+const arcPoints = (c, r, a0, a1, steps) => {
+  const out = [];
+  for (let i = 0; i <= steps; i++) {
+    const a = (a0 + ((a1 - a0) * i) / steps) * D;
+    out.push({ x: c.x + r * Math.cos(a), y: c.y + r * Math.sin(a) });
+  }
+  return out;
+};
+const cubicPoints = (p0, c1, c2, p1, steps) => {
+  const out = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps, u = 1 - t;
+    out.push({
+      x: u * u * u * p0.x + 3 * u * u * t * c1.x + 3 * u * t * t * c2.x + t * t * t * p1.x,
+      y: u * u * u * p0.y + 3 * u * u * t * c1.y + 3 * u * t * t * c2.y + t * t * t * p1.y,
+    });
+  }
+  return out;
+};
 
-/// The minor arc of `radius` running from `from` to `to` and bulging upward,
-/// which is how the handoff's two SVG arc commands resolve. Both chords here
-/// are horizontal, so the centre sits directly below the chord's midpoint.
-function makeArc(from, to, radius) {
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const half = Math.sqrt((dx * dx + dy * dy) / 4);
-  const drop = Math.sqrt(radius * radius - half * half);
-  const c = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 + drop };
-  return { c, r: radius, a0: angleOf(from, c), a1: angleOf(to, c), from, to };
-}
+const tipStart = (Math.atan2(TIP_CHORD_Y - TIP.y, -TIP_HALF) * 180) / Math.PI;
+const tipEnd = (Math.atan2(TIP_CHORD_Y - TIP.y, TIP_HALF) * 180) / Math.PI;
 
-const ARCS = [
-  makeArc({ x: 7.6, y: 12.6 }, { x: 16.4, y: 12.6 }, 6.2),
-  makeArc({ x: 4.2, y: 8.9 }, { x: 19.8, y: 8.9 }, 11),
+/// The pin outline, anticlockwise on screen from the top of the crown.
+const OUTLINE = [
+  ...arcPoints(HEAD, HEAD.r, 270, 180, 1000),
+  ...cubicPoints({ x: 3.8, y: 10 }, { x: 3.8, y: 15.9 }, { x: 11, y: 22 }, { x: 11.3, y: 22.3 }, 1000),
+  ...arcPoints(TIP, TIP_R, tipStart, tipEnd, 200),
+  ...cubicPoints({ x: 12.7, y: 22.3 }, { x: 13, y: 22 }, { x: 20.2, y: 15.9 }, { x: 20.2, y: 10 }, 1000),
+  ...arcPoints(HEAD, HEAD.r, 0, -90, 1000),
 ];
 
-/// Distance from (x,y) to the arc's centreline. Inside the angular range that
-/// is the difference between the point's radius and the arc's; outside it the
-/// nearest endpoint wins, which is exactly what a round cap is. Sampling this
-/// distance field avoids approximating the curve with segments, so the arcs
-/// stay true circles at any canvas size.
-function arcDistance(x, y, arc) {
-  const dx = x - arc.c.x;
-  const dy = y - arc.c.y;
-  let t = (Math.atan2(dy, dx) * 180) / Math.PI;
-  if (t < 0) t += 360;
-  if (t >= arc.a0 && t <= arc.a1) return Math.abs(Math.hypot(dx, dy) - arc.r);
-  return Math.min(
-    Math.hypot(x - arc.from.x, y - arc.from.y),
-    Math.hypot(x - arc.to.x, y - arc.to.y),
-  );
+/// The pulse trace, as the closed outline of a stroke so it can be a hole.
+const TRACE = [
+  { x: 7, y: 10.7 }, { x: 9.6, y: 10.7 }, { x: 11, y: 7.3 }, { x: 13.1, y: 12.9 },
+  { x: 14.3, y: 10.2 }, { x: 17.1, y: 10.2 }, { x: 17.1, y: 8.8 }, { x: 13, y: 8.8 },
+  { x: 12.3, y: 10.3 }, { x: 10.2, y: 4.8 }, { x: 7.8, y: 10.5 }, { x: 7, y: 10.5 },
+];
+
+/// The x positions where the horizontal line at `y` crosses `poly`, sorted.
+/// Computing these once per scanline is what keeps this tractable: a per pixel
+/// point in polygon test against a 4000 segment outline, supersampled, is tens
+/// of billions of operations and never finishes.
+function crossings(y, poly) {
+  const xs = [];
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i], b = poly[j];
+    if ((a.y > y) !== (b.y > y)) xs.push(((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x);
+  }
+  xs.sort((p, q) => p - q);
+  return xs;
 }
 
-/// True when the grid point (x,y) is inside the logo.
-function inMark(x, y) {
-  if (Math.hypot(x - DOT.x, y - DOT.y) <= DOT.r) return true;
-  for (const arc of ARCS) {
-    if (arcDistance(x, y, arc) <= CAP) return true;
-  }
-  return false;
+/// Odd number of crossings to the left means inside.
+function insideAt(xs, x) {
+  let c = 0;
+  for (let i = 0; i < xs.length; i++) if (xs[i] < x) c++;
+  return (c & 1) === 1;
 }
 
 /// Renders one variant to raw RGB bytes (3 per pixel, no alpha).
@@ -104,31 +116,39 @@ function render({ bg, fg }) {
   const scale = (SIZE * 0.62) / 24;
   const centre = SIZE / 2;
 
-  for (let py = 0; py < SIZE; py++) {
-    for (let pxi = 0; pxi < SIZE; pxi++) {
-      // Coverage by supersampling: how many of the SS by SS subsamples land
-      // inside the mark. That fraction is the antialiasing.
+  // Coverage by supersampling, exactly as before: the fraction of the SS by SS
+  // subsamples inside the mark is the antialiasing. The loop is ordered by
+  // subsample row rather than by pixel so each row's crossings are found once.
+  const cov = new Float32Array(SIZE * SIZE);
+  const rows = SIZE * SS;
+  for (let r = 0; r < rows; r++) {
+    const py = (r / SS) | 0;
+    const cyp = py + ((r % SS) + 0.5) / SS;
+    const gy = (cyp - centre) / scale + 12;
+    const outline = crossings(gy, OUTLINE);
+    if (outline.length === 0) continue;
+    const trace = crossings(gy, TRACE);
+    // Nothing outside the outline's own span can be inside it.
+    const lo = Math.max(0, Math.floor((outline[0] - 12) * scale + centre) - 1);
+    const hi = Math.min(SIZE - 1, Math.ceil((outline[outline.length - 1] - 12) * scale + centre) + 1);
+    for (let pxi = lo; pxi <= hi; pxi++) {
       let hits = 0;
-      for (let sy = 0; sy < SS; sy++) {
-        for (let sx = 0; sx < SS; sx++) {
-          const cxp = pxi + (sx + 0.5) / SS;
-          const cyp = py + (sy + 0.5) / SS;
-          const gx = (cxp - centre) / scale + 12;
-          const gy = (cyp - centre) / scale + 12;
-          if (inMark(gx, gy)) hits++;
-        }
+      for (let sx = 0; sx < SS; sx++) {
+        const gx = (pxi + (sx + 0.5) / SS - centre) / scale + 12;
+        if (insideAt(outline, gx) && !insideAt(trace, gx)) hits++;
       }
-      const a = hits / (SS * SS);
-      const o = (py * SIZE + pxi) * 3;
-      for (let c = 0; c < 3; c++) {
-        px[o + c] = Math.round(bg[c] * (1 - a) + fg[c] * a);
-      }
+      if (hits) cov[py * SIZE + pxi] += hits;
     }
+  }
+
+  for (let i = 0; i < SIZE * SIZE; i++) {
+    const a = cov[i] / (SS * SS);
+    const o = i * 3;
+    for (let c = 0; c < 3; c++) px[o + c] = Math.round(bg[c] * (1 - a) + fg[c] * a);
   }
   return px;
 }
 
-// ---- minimal PNG encoder (truecolour, 8-bit, no alpha) ---------------------
 function chunk(type, data) {
   const len = Buffer.alloc(4);
   len.writeUInt32BE(data.length);

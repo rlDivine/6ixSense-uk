@@ -1,17 +1,15 @@
-<!-- Pulse mark, "Proximity": a filled dot with two rising arcs above it.
-     The geometry matches PulseLogoGeometry in ios/Pulse/Design/Theme.swift and
-     the rasterisers in ios/tools/make_icon.js and ios/tools/make_icon.swift.
-     Change one, change all four.
-     Dot centre (12, 17) r 2.6 filled; arcs on radius 6.2 and 11, stroked at
-     2.1 with round caps, all on a 24 grid, drawn here scaled by 512/24 * 0.62
-     and centred. The tile is accent-fill with the mark knocked out in white.
-     Flat colour throughout: no gradient, no shadow, no rounded rectangle. -->
+<!-- Pulse mark, "Beacon": a map pin with a pulse trace knocked out of it as a
+     counter. One filled path, even-odd, so the trace is a hole rather than a
+     second shape sitting on top. The geometry matches PulseLogoGeometry in
+     ios/Pulse/Design/Theme.swift, the rasterisers in ios/tools/make_icon.js
+     and ios/tools/make_icon.swift, and the inline brand mark in index.html.
+     Change one, change all five.
+     Drawn on a 24 grid, scaled by 512/24 * 0.62 and centred. The tile is
+     accent-fill with the mark knocked out in white. Flat colour throughout:
+     no gradient, no shadow, no rounded rectangle, the platform masks it. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Pulse">
   <rect width="512" height="512" fill="#C8102E"/>
-  <g transform="translate(256 256) scale(13.226667) translate(-12 -12)"
-     fill="none" stroke="#FFFFFF" stroke-width="2.1" stroke-linecap="round">
-    <circle cx="12" cy="17" r="2.6" fill="#FFFFFF" stroke="none"/>
-    <path d="M7.6 12.6a6.2 6.2 0 0 1 8.8 0"/>
-    <path d="M4.2 8.9a11 11 0 0 1 15.6 0"/>
+  <g transform="translate(256 256) scale(13.226667) translate(-12 -12)">
+    <path fill="#FFFFFF" fill-rule="evenodd" d="M12 1.8a8.2 8.2 0 0 0-8.2 8.2c0 5.9 7.2 12 7.5 12.3a1.1 1.1 0 0 0 1.4 0c.3-.3 7.5-6.4 7.5-12.3A8.2 8.2 0 0 0 12 1.8Zm-5 8.9h2.6l1.4-3.4 2.1 5.6 1.2-2.7h2.8V8.8h-4.1l-.7 1.5-2.1-5.5-2.4 5.7H7v.2Z"/>
   </g>
 </svg>

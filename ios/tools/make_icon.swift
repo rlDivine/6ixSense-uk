@@ -56,65 +56,64 @@ func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
 }
 
 // Reference geometry, matching PulseLogoGeometry in Design/Theme.swift.
-// "Proximity": a filled dot with two rising arcs above it.
+// "Beacon": a map pin with a pulse trace knocked out of it as a counter.
 //
-//   dot     centre (12, 17) radius 2.6, filled
-//   arc 1   (7.6, 12.6) to (16.4, 12.6)  on radius 6.2
-//   arc 2   (4.2, 8.9)  to (19.8, 8.9)   on radius 11
-//   both arcs stroked at 2.1 with round caps
-struct LogoArc {
-    let centre: CGPoint
-    let radius: CGFloat
-    let start: CGFloat
-    let end: CGFloat
+// One filled path with a hole, so this is filled even-odd rather than stroked.
+// The arcs are given as centre and angles because that is what CGPath wants;
+// they are the handoff's endpoint arcs converted, and the conversion was
+// checked by rendering both forms and comparing pixels.
+let headCentre = CGPoint(x: 12, y: 10)
+let headRadius: CGFloat = 8.2
+let tipRadius: CGFloat = 1.1
+let tipHalfChord: CGFloat = 0.7
+let tipChordY: CGFloat = 22.3
+let tipCentre = CGPoint(
+    x: 12,
+    y: tipChordY - (tipRadius * tipRadius - tipHalfChord * tipHalfChord).squareRoot()
+)
+
+/// Degrees to radians in the y-down space the rest of this file works in.
+func rad(_ d: Double) -> CGFloat { CGFloat(d * Double.pi / 180) }
+
+/// Polar angle of `q` about `c`, in radians.
+func ang(_ q: CGPoint, _ c: CGPoint) -> CGFloat {
+    CGFloat(atan2(Double(q.y - c.y), Double(q.x - c.x)))
 }
 
-/// The minor arc of `radius` running from `from` to `to` and bulging upward,
-/// which is how the handoff's two SVG arc commands resolve. Both chords here
-/// are horizontal, so the centre sits directly below the chord's midpoint.
-/// Angles come back in radians, normalised to 0 up to 2 pi, in the same y-down
-/// space the rest of this file works in.
-func makeArc(_ from: CGPoint, _ to: CGPoint, _ radius: CGFloat) -> LogoArc {
-    let dx = to.x - from.x
-    let dy = to.y - from.y
-    let half = ((dx * dx + dy * dy) / 4).squareRoot()
-    let drop = (radius * radius - half * half).squareRoot()
-    let c = CGPoint(x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 + drop)
-    func ang(_ q: CGPoint) -> CGFloat {
-        let a = atan2(Double(q.y - c.y), Double(q.x - c.x))
-        return CGFloat(a < 0 ? a + 2 * Double.pi : a)
-    }
-    return LogoArc(centre: c, radius: radius, start: ang(from), end: ang(to))
-}
-
-let arcs = [
-    makeArc(CGPoint(x: 7.6, y: 12.6), CGPoint(x: 16.4, y: 12.6), 6.2),
-    makeArc(CGPoint(x: 4.2, y: 8.9), CGPoint(x: 19.8, y: 8.9), 11),
+/// The pulse trace, as the closed outline of a stroke so it can be a hole.
+let trace: [CGPoint] = [
+    CGPoint(x: 7,    y: 10.7), CGPoint(x: 9.6,  y: 10.7), CGPoint(x: 11,   y: 7.3),
+    CGPoint(x: 13.1, y: 12.9), CGPoint(x: 14.3, y: 10.2), CGPoint(x: 17.1, y: 10.2),
+    CGPoint(x: 17.1, y: 8.8),  CGPoint(x: 13,   y: 8.8),  CGPoint(x: 12.3, y: 10.3),
+    CGPoint(x: 10.2, y: 4.8),  CGPoint(x: 7.8,  y: 10.5), CGPoint(x: 7,    y: 10.5),
 ]
 
 let fgColor = CGColor(srgbRed: fg.0, green: fg.1, blue: fg.2, alpha: 1)
 
-// The dot.
-let dot = p(12, 17)
-let dotR: CGFloat = 2.6 * s
-ctx.setFillColor(fgColor)
-ctx.fillEllipse(in: CGRect(x: dot.x - dotR, y: dot.y - dotR,
-                           width: 2 * dotR, height: 2 * dotR))
+let mark = CGMutablePath()
+// Every sweep runs in the direction of decreasing angle, which in this y-down
+// space is anticlockwise on screen. CoreGraphics calls that clockwise: true
+// here, the same convention Theme.swift documents.
+mark.move(to: p(12, 1.8))
+mark.addArc(center: p(headCentre.x, headCentre.y), radius: headRadius * s,
+            startAngle: rad(270), endAngle: rad(180), clockwise: true)
+mark.addCurve(to: p(11.3, 22.3), control1: p(3.8, 15.9), control2: p(11, 22))
+mark.addArc(center: p(tipCentre.x, tipCentre.y), radius: tipRadius * s,
+            startAngle: ang(CGPoint(x: 12 - tipHalfChord, y: tipChordY), tipCentre),
+            endAngle: ang(CGPoint(x: 12 + tipHalfChord, y: tipChordY), tipCentre),
+            clockwise: true)
+mark.addCurve(to: p(20.2, 10), control1: p(13, 22), control2: p(20.2, 15.9))
+mark.addArc(center: p(headCentre.x, headCentre.y), radius: headRadius * s,
+            startAngle: rad(0), endAngle: rad(-90), clockwise: true)
+mark.closeSubpath()
 
-// The two arcs, stroked rather than outlined: CoreGraphics does the round caps
-// and the constant width, so there is nothing here to get wrong by hand.
-ctx.setStrokeColor(fgColor)
-ctx.setLineWidth(2.1 * s)
-ctx.setLineCap(.round)
-for arc in arcs {
-    let path = CGMutablePath()
-    // Swept over the top. In this flipped context that is the direction
-    // CoreGraphics calls clockwise: false, the same convention the pin used.
-    path.addArc(center: p(arc.centre.x, arc.centre.y), radius: arc.radius * s,
-                startAngle: arc.start, endAngle: arc.end, clockwise: false)
-    ctx.addPath(path)
-    ctx.strokePath()
-}
+mark.move(to: p(trace[0].x, trace[0].y))
+for point in trace.dropFirst() { mark.addLine(to: p(point.x, point.y)) }
+mark.closeSubpath()
+
+ctx.setFillColor(fgColor)
+ctx.addPath(mark)
+ctx.fillPath(using: .evenOdd)
 
 guard let cg = ctx.makeImage() else { FileHandle.standardError.write("makeImage failed\n".data(using: .utf8)!); exit(1) }
 let url = URL(fileURLWithPath: out)

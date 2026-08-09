@@ -227,89 +227,88 @@ extension Categories {
 
 // MARK: - Pulse logo
 //
-// "Proximity": a filled dot with two rising arcs above it. The dot is the
-// person, the arcs are the two axes the product actually ranks on, close and
-// soon. There is no map pin in it, which is the point: the pin said "map app"
-// and said nothing about what this one does. It also holds up better than a
-// pin at 18pt, because three separated shapes survive shrinking where a
-// silhouette with a knocked-out counter does not.
+// "Beacon": a map pin with a pulse trace knocked out of it as a counter. The
+// pin says map at a glance, and the trace is what stops it being a stock
+// location pin: it names the product rather than the category.
 //
-// The geometry lives on a 24x24 grid and is mirrored in three other places:
+// This replaced "Proximity", a dot under two rising arcs, which read as a wifi
+// symbol at every size. The handoff recommends Proximity on the grounds that a
+// silhouette with a knocked-out counter does not shrink as well as three
+// separated shapes, and that is a real trade: see the note on `trace` below.
+//
+// The geometry lives on a 24x24 grid and is mirrored in four other places:
 // ios/tools/make_icon.js (which rasterises the app icon PNGs),
-// ios/tools/make_icon.swift (its CoreGraphics twin) and api/public/icon.svg
-// (the web and PWA mark). All four must be kept in step, so the numbers below
-// are the reference.
+// ios/tools/make_icon.swift (its CoreGraphics twin), api/public/icon.svg (the
+// web and PWA mark) and the inline brand mark in api/public/index.html, which
+// the old note missed. All five must be kept in step, so the numbers below
+// are the reference. They are the handoff's own path, converted from SVG's
+// endpoint arcs to the centre and angles that CoreGraphics and SwiftUI want.
+// The conversion was checked by rendering both forms and comparing pixels.
 //
-//   dot     centre (12, 17)   radius 2.6, filled
-//   arc 1   (7.6, 12.6) to (16.4, 12.6)  on radius 6.2
-//   arc 2   (4.2, 8.9)  to (19.8, 8.9)   on radius 11
-//   both arcs stroked at 2.1 with round caps
-//
-// Each arc is the minor arc that bulges upward, which is how the handoff's two
-// SVG arc commands resolve. Both chords are horizontal, so each centre sits
-// directly below its chord's midpoint. They land at (12, 16.968) and
-// (12, 16.656), near enough to the dot that the mark reads as concentric.
-//
-// This is a stroked mark, but `Shape` has to hand back one fillable `Path`, so
-// the two strokes are converted to closed outlines here: outer edge forward,
-// round cap, inner edge back, round cap. The three subpaths do not touch, so
-// the fill rule makes no difference to the result.
+// Unlike the old mark this is a single filled outline with a hole in it, so
+// the even-odd rule is now load bearing rather than incidental.
 
 enum PulseLogoGeometry {
-    static let dotCentre = CGPoint(x: 12, y: 17)
-    static let dotRadius: CGFloat = 2.6
-    static let strokeWidth: CGFloat = 2.1
+    /// The pin's head. Both of the outline's long arcs ride this circle.
+    static let headCentre = CGPoint(x: 12, y: 10)
+    static let headRadius: CGFloat = 8.2
 
-    /// One of the two rising arcs, resolved from its two endpoints and radius
-    /// so that this file and the two icon generators all start from the same
-    /// four numbers rather than from transcribed angles.
-    struct Arc {
-        let centre: CGPoint
-        let radius: CGFloat
-        /// Degrees in the view's own space, where y increases downward, so 270
-        /// is straight up. The sweep runs from `startDegrees` to `endDegrees`
-        /// in the direction of increasing angle.
-        let startDegrees: Double
-        let endDegrees: Double
+    /// Where the crown starts and the two flanks meet the head, in degrees in
+    /// the view's own space: y increases downward, so 270 is straight up.
+    static let crownStart: Double = 270      // (12, 1.8), the top
+    static let crownEnd: Double = 180        // (3.8, 10), the left
+    static let flankStart: Double = 0        // (20.2, 10), the right
+    static let flankEnd: Double = -90        // back to the top
 
-        init(from: CGPoint, to: CGPoint, radius: CGFloat) {
-            let dx = to.x - from.x
-            let dy = to.y - from.y
-            let half = ((dx * dx + dy * dy) / 4).squareRoot()
-            // Positive y is downward, so adding the sagitta puts the centre
-            // below the chord and leaves the minor arc bulging upward.
-            let drop = (radius * radius - half * half).squareRoot()
-            let c = CGPoint(x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 + drop)
-            self.centre = c
-            self.radius = radius
-            self.startDegrees = Arc.angle(of: from, about: c)
-            self.endDegrees = Arc.angle(of: to, about: c)
-        }
+    /// The rounded tip. Its chord runs from (11.3, 22.3) to (12.7, 22.3), so
+    /// the centre sits directly above the midpoint by the sagitta and the minor
+    /// arc bulges downward into the point.
+    static let tipRadius: CGFloat = 1.1
+    static let tipHalfChord: CGFloat = 0.7
+    static let tipChordY: CGFloat = 22.3
+    static let tipCentre = CGPoint(
+        x: 12,
+        y: tipChordY - (tipRadius * tipRadius - tipHalfChord * tipHalfChord).squareRoot()
+    )
 
-        /// Polar angle of `p` about `c`, normalised to 0 up to 360 so that a
-        /// sweep over the top is an increasing range rather than one that
-        /// wraps through zero.
-        static func angle(of p: CGPoint, about c: CGPoint) -> Double {
-            let a = atan2(Double(p.y - c.y), Double(p.x - c.x)) * 180 / Double.pi
-            return a < 0 ? a + 360 : a
-        }
+    /// The left flank, as a cubic from the head down to the tip, and the right
+    /// flank back up. Straight from the handoff's two curve commands.
+    static let leftFlank = (control1: CGPoint(x: 3.8, y: 15.9),
+                            control2: CGPoint(x: 11, y: 22),
+                            end: CGPoint(x: 11.3, y: 22.3))
+    static let rightFlank = (control1: CGPoint(x: 13, y: 22),
+                             control2: CGPoint(x: 20.2, y: 15.9),
+                             end: CGPoint(x: 20.2, y: 10))
 
-        /// A point at `radius` and `degrees` from `centre`, for a centre and
-        /// radius already scaled into the destination rect.
-        static func point(about c: CGPoint, radius: CGFloat, degrees: Double) -> CGPoint {
-            let a = degrees * Double.pi / 180
-            return CGPoint(x: c.x + radius * CGFloat(cos(a)),
-                           y: c.y + radius * CGFloat(sin(a)))
-        }
-    }
-
-    static let arcs: [Arc] = [
-        Arc(from: CGPoint(x: 7.6, y: 12.6), to: CGPoint(x: 16.4, y: 12.6), radius: 6.2),
-        Arc(from: CGPoint(x: 4.2, y: 8.9), to: CGPoint(x: 19.8, y: 8.9), radius: 11),
+    /// The pulse trace, as the closed outline of a stroke rather than a stroke,
+    /// so it can be a hole. Every segment is a straight line.
+    ///
+    /// This is the part that pays for the pin: at 18pt in a header the trace is
+    /// close to the limit of what survives, and below about 20pt it starts to
+    /// fill in. It is legible at the sizes the app actually uses it.
+    static let trace: [CGPoint] = [
+        CGPoint(x: 7,    y: 10.7),
+        CGPoint(x: 9.6,  y: 10.7),
+        CGPoint(x: 11,   y: 7.3),
+        CGPoint(x: 13.1, y: 12.9),
+        CGPoint(x: 14.3, y: 10.2),
+        CGPoint(x: 17.1, y: 10.2),
+        CGPoint(x: 17.1, y: 8.8),
+        CGPoint(x: 13,   y: 8.8),
+        CGPoint(x: 12.3, y: 10.3),
+        CGPoint(x: 10.2, y: 4.8),
+        CGPoint(x: 7.8,  y: 10.5),
+        CGPoint(x: 7,    y: 10.5),
     ]
 
-    /// Builds the logo inside `rect`, fitted to a 24x24 grid and centred.
-    /// The result is three closed subpaths that can simply be filled.
+    /// Polar angle of `p` about `c`, in the same y-down degrees as above.
+    static func angle(of p: CGPoint, about c: CGPoint) -> Double {
+        atan2(Double(p.y - c.y), Double(p.x - c.x)) * 180 / Double.pi
+    }
+
+    /// Builds the logo inside `rect`, fitted to a 24x24 grid and centred. The
+    /// result is two closed subpaths, the pin and the trace inside it, meant to
+    /// be filled even-odd so the trace reads as a hole.
     static func path(in rect: CGRect) -> Path {
         let s = min(rect.width / 24, rect.height / 24)
         let ox = rect.midX - 12 * s
@@ -318,39 +317,41 @@ enum PulseLogoGeometry {
 
         var path = Path()
 
-        let dc = place(dotCentre)
-        let dr = dotRadius * s
-        path.addEllipse(in: CGRect(x: dc.x - dr, y: dc.y - dr, width: 2 * dr, height: 2 * dr))
+        let head = place(headCentre)
+        let hr = headRadius * s
+        let tip = place(tipCentre)
+        let tr = tipRadius * s
+        let tipStart = angle(of: CGPoint(x: 12 - tipHalfChord, y: tipChordY), about: tipCentre)
+        let tipEnd = angle(of: CGPoint(x: 12 + tipHalfChord, y: tipChordY), about: tipCentre)
 
-        let cap = strokeWidth / 2 * s
-        for arc in arcs {
-            let c = place(arc.centre)
-            let mid = arc.radius * s
-            let start = Angle(degrees: arc.startDegrees)
-            let end = Angle(degrees: arc.endDegrees)
-            let capStart = Arc.point(about: c, radius: mid, degrees: arc.startDegrees)
-            let capEnd = Arc.point(about: c, radius: mid, degrees: arc.endDegrees)
+        // Every sweep here runs in the direction of decreasing angle, which in
+        // this y-down space is anticlockwise on screen, so `clockwise: true`
+        // throughout. Each arc begins exactly where the previous command left
+        // off, so none of them inserts a joining line.
+        path.move(to: place(CGPoint(x: 12, y: 1.8)))
+        path.addArc(center: head, radius: hr,
+                    startAngle: .degrees(crownStart), endAngle: .degrees(crownEnd),
+                    clockwise: true)
+        path.addCurve(to: place(leftFlank.end),
+                      control1: place(leftFlank.control1),
+                      control2: place(leftFlank.control2))
+        path.addArc(center: tip, radius: tr,
+                    startAngle: .degrees(tipStart), endAngle: .degrees(tipEnd),
+                    clockwise: true)
+        path.addCurve(to: place(rightFlank.end),
+                      control1: place(rightFlank.control1),
+                      control2: place(rightFlank.control2))
+        path.addArc(center: head, radius: hr,
+                    startAngle: .degrees(flankStart), endAngle: .degrees(flankEnd),
+                    clockwise: true)
+        path.closeSubpath()
 
-            // Outer edge, forward. clockwise: false traverses in the direction
-            // of increasing angle, which in this y-down space is visually
-            // clockwise, so the sweep goes over the top.
-            path.move(to: Arc.point(about: c, radius: mid + cap, degrees: arc.startDegrees))
-            path.addArc(center: c, radius: mid + cap,
-                        startAngle: start, endAngle: end, clockwise: false)
-            // Round cap at the finishing end, bulging past it.
-            path.addArc(center: capEnd, radius: cap,
-                        startAngle: end, endAngle: Angle(degrees: arc.endDegrees + 180),
-                        clockwise: false)
-            // Inner edge, back the way we came.
-            path.addArc(center: c, radius: mid - cap,
-                        startAngle: end, endAngle: start, clockwise: true)
-            // Round cap at the starting end, closing the outline.
-            path.addArc(center: capStart, radius: cap,
-                        startAngle: Angle(degrees: arc.startDegrees + 180),
-                        endAngle: Angle(degrees: arc.startDegrees + 360),
-                        clockwise: false)
+        if let first = trace.first {
+            path.move(to: place(first))
+            for point in trace.dropFirst() { path.addLine(to: place(point)) }
             path.closeSubpath()
         }
+
         return path
     }
 }
