@@ -122,6 +122,11 @@ const state = {
   saved: store.get("saved", {}),          // id -> event object
   reminders: store.get("reminders", {}),  // id -> bool
   theme: store.get("theme", "dark"),
+  // A manually chosen town, or null for "follow the device". Persisted, so the
+  // choice survives a reload the way the saved list and the theme do.
+  city: store.get("city", null),   // { id, label, area, nation, lat, lng }
+  cities: [],                       // the catalogue, fetched once on demand
+  sheetCollapsed: store.get("sheetCollapsed", false),
 };
 
 /* ---- helpers ---- */
@@ -426,12 +431,20 @@ function endOfDay(d) { const x = new Date(d); x.setHours(23, 59, 59, 999); retur
 function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
 // Upcoming (or current) Sat and Sun, the same convention as the server's range filter.
 function weekendRange(now, next) {
-  const day = now.getDay();
-  let sat = new Date(now);
-  if (day === 0) sat.setHours(0, 0, 0, 0);
-  else { sat.setDate(sat.getDate() + ((6 - day + 7) % 7)); sat.setHours(0, 0, 0, 0); }
+  const day = now.getDay();          // 0 = Sunday
+  const sat = new Date(now);
+  if (day === 0) {
+    // Already in the weekend: it started yesterday. Anchoring on today would
+    // run the window Sunday to Monday and call Monday the weekend.
+    sat.setDate(sat.getDate() - 1);
+  } else {
+    sat.setDate(sat.getDate() + ((6 - day + 7) % 7));
+  }
+  sat.setHours(0, 0, 0, 0);
   if (next) sat.setDate(sat.getDate() + 7);
-  const sun = new Date(sat); sun.setDate(sun.getDate() + 1); sun.setHours(23, 59, 59, 999);
+  const sun = new Date(sat);
+  sun.setDate(sun.getDate() + 1);
+  sun.setHours(23, 59, 59, 999);
   return { min: sat, max: sun };
 }
 // Returns { range: {min,max}|null, rest: leftover text still matched by title/venue/category }.
@@ -478,8 +491,8 @@ function parseDateQuery(raw) {
     }
   }
 
-  m = raw.match(/\b(next\s+)?weekend\b/i);
-  if (m) return { range: weekendRange(now, !!m[1]), rest: strip(m[0]) };
+  m = raw.match(/\b(this\s+|next\s+)?weekend\b/i);
+  if (m) return { range: weekendRange(now, /next/i.test(m[1] || "")), rest: strip(m[0]) };
 
   m = raw.match(/\bnext week\b/i);
   if (m) return { range: { min: startOfDay(addDays(now, 7)), max: endOfDay(addDays(now, 13)) }, rest: strip(m[0]) };
@@ -519,7 +532,7 @@ function renderSearch() {
   const res = $("#searchResults");
   if (!raw) {
     res.innerHTML = "";
-    const cats = ["Music", "Food & Drink", "Pop-up", "Free", "Today", "This weekend"];
+    const cats = ["Music", "Food", "Markets", "Free", "Today", "This weekend"];
     sug.innerHTML = `<h3>Popular</h3><div class="chips">${cats.map((c) => `<button data-sq="${esc(c)}">${esc(c)}</button>`).join("")}</div>`;
     return;
   }
@@ -791,6 +804,93 @@ function applyTheme() {
   if (state.events.length) renderAll();
 }
 
+/* ---- city picker ----
+   The backend already serves its whole catalogue at /api/regions, grouped by
+   country, so this fetches once and filters in memory rather than asking the
+   server on every keystroke. */
+async function loadCities() {
+  if (state.cities.length) return state.cities;
+  try {
+    const res = await fetch("/api/regions");
+    const data = await res.json();
+    state.cities = (data.countries || []).flatMap((c) => c.cities || []);
+  } catch {
+    state.cities = [];
+  }
+  return state.cities;
+}
+
+function renderCityList(filter = "") {
+  const q = filter.trim().toLowerCase();
+  const rows = state.cities.filter(
+    (c) => !q || c.label.toLowerCase().includes(q) || (c.area || "").toLowerCase().includes(q)
+  );
+  const el = $("#cityList");
+  if (!state.cities.length) {
+    el.innerHTML = `<p class="city-empty">Could not load the list of towns. Check your connection and try again.</p>`;
+    return;
+  }
+
+  // "Automatic" always sits at the top, unfiltered, because it is how you get
+  // back out of a manual choice.
+  let html = `<button class="city-row ${state.city ? "" : "on"}" data-city="auto">`
+    + `<span>Automatic, use my location</span></button>`;
+
+  if (!rows.length) {
+    html += `<p class="city-empty">No town matches "${esc(filter)}".</p>`;
+  } else {
+    // Grouped by nation, then county, which is how the picker in the iOS app
+    // presents the same catalogue.
+    const byNation = {};
+    for (const c of rows) (byNation[c.nation] ||= []).push(c);
+    for (const nation of Object.keys(byNation).sort()) {
+      html += `<div class="city-group">${esc(nation)}</div>`;
+      const list = byNation[nation].slice().sort((a, b) => a.label.localeCompare(b.label));
+      for (const c of list) {
+        const on = state.city && state.city.id === c.id;
+        html += `<button class="city-row ${on ? "on" : ""}" data-city="${esc(c.id)}" aria-pressed="${on ? "true" : "false"}">`
+          + `<span>${esc(c.label)}</span><span class="city-area">${esc(c.area || "")}</span></button>`;
+      }
+    }
+  }
+  el.innerHTML = html;
+}
+
+async function openCityPicker() {
+  $("#cityPicker").classList.remove("hidden");
+  $("#cityFilter").value = "";
+  await loadCities();
+  renderCityList("");
+  $("#cityFilter").focus();
+}
+
+function chooseCity(id) {
+  if (id === "auto") {
+    state.city = null;
+    store.set("city", null);
+    state.origin = null;
+    renderCityLabel();
+    $("#cityPicker").classList.add("hidden");
+    // Hand ranking back to the device.
+    requestLocation();
+    return;
+  }
+  const c = state.cities.find((x) => x.id === id);
+  if (!c) return;
+  state.city = c;
+  store.set("city", c);
+  state.origin = { lat: c.lat, lng: c.lng };
+  renderCityLabel();
+  $("#cityPicker").classList.add("hidden");
+  if (map) map.flyTo([c.lat, c.lng], 12, { duration: 0.6 });
+  load();
+}
+
+function renderCityLabel() {
+  const el = $("#cityLabel");
+  if (el) el.textContent = state.city ? state.city.label : "Automatic";
+}
+
 /* ---- onboarding ---- */
 let obIdx = 0;
 function showOnboarding() {
@@ -816,8 +916,16 @@ function requestLocationOnce() { if (!askedLoc) { askedLoc = true; requestLocati
 function startApp() {
   $("#app").classList.remove("hidden");
   initMap();
-  requestLocation(); // refines distance + reloads when ready
-  load();            // show results immediately (downtown default)
+  renderCityLabel();
+  if (state.city) {
+    // A manual choice wins over the device. Asking for a position anyway would
+    // reload the feed around wherever the user physically is, quietly undoing
+    // the city they picked.
+    state.origin = { lat: state.city.lat, lng: state.city.lng };
+  } else {
+    requestLocation(); // refines distance + reloads when ready
+  }
+  load();              // show results immediately
 }
 
 function wireEvents() {
@@ -842,13 +950,45 @@ function wireEvents() {
     renderStatus(); renderList(); if (state.tab === "map") renderMap();
   });
   $("#tabbar").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) switchTab(b.dataset.tab); });
-  $("#locChip").onclick = requestLocation;
+  $("#locChip").onclick = () => {
+    state.city = null;
+    store.set("city", null);
+    renderCityLabel();
+    requestLocation();
+  };
   $("#locateBtn").onclick = locateMe;
   $("#refreshBtn").onclick = () => load();
   $$("#themeSeg button").forEach((b) => {
     b.onclick = () => { state.theme = b.dataset.themeChoice; store.set("theme", state.theme); applyTheme(); };
   });
+  // The map's event tray collapses so the map itself can be browsed full
+  // screen. The choice is remembered, because someone who collapses it is
+  // usually done with the list for that session.
+  const sheet = $("#mapSheet");
+  const applySheet = () => {
+    const off = !!state.sheetCollapsed;
+    sheet.classList.toggle("collapsed", off);
+    $("#sheetToggle").setAttribute("aria-expanded", off ? "false" : "true");
+    $("#sheetToggleLabel").textContent = off ? "Show upcoming events" : "Upcoming events";
+    if (map) setTimeout(() => map.invalidateSize(), 220);
+  };
+  $("#sheetToggle").onclick = () => {
+    state.sheetCollapsed = !state.sheetCollapsed;
+    store.set("sheetCollapsed", state.sheetCollapsed);
+    applySheet();
+  };
+  applySheet();
+
   const settings = $("#settings");
+  const picker = $("#cityPicker");
+  $("#cityBtn").onclick = () => { settings.classList.add("hidden"); openCityPicker(); };
+  $("#cityClose").onclick = () => picker.classList.add("hidden");
+  picker.onclick = (e) => { if (e.target === picker) picker.classList.add("hidden"); };
+  $("#cityFilter").addEventListener("input", (e) => renderCityList(e.target.value));
+  $("#cityList").addEventListener("click", (e) => {
+    const row = e.target.closest("[data-city]");
+    if (row) chooseCity(row.dataset.city);
+  });
   $("#settingsBtn").onclick = () => settings.classList.remove("hidden");
   $("#settingsClose").onclick = () => settings.classList.add("hidden");
   settings.onclick = (e) => { if (e.target === settings) settings.classList.add("hidden"); };
@@ -895,11 +1035,10 @@ function wireEvents() {
 applyTheme();
 wireEvents();
 if (store.get("onboarded", false)) {
-  state.origin = null;
-  $("#app").classList.remove("hidden");
-  initMap();
-  requestLocation();
-  load();
+  // Same path as a first run, rather than a second copy of it. The duplicate
+  // this replaced cleared the origin and always asked the device, which
+  // silently threw away a manually chosen city on every reload.
+  startApp();
 } else {
   showOnboarding();
 }

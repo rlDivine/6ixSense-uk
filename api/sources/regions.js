@@ -470,6 +470,7 @@ export const CITIES = [
   wal("Ceredigion", "aberystwyth", "Aberystwyth", 52.4153, -4.0829, "aberystwyth"),
   wal("Conwy", "llandudno", "Llandudno", 53.3241, -3.8276, "llandudno"),
   wal("Denbighshire", "rhyl", "Rhyl", 53.3210, -3.4890, "rhyl"),
+  wal("Denbighshire", "st-asaph", "St Asaph", 53.2583, -3.4417, "st-asaph"),
   wal("Flintshire", "mold", "Mold", 53.1667, -3.1400, "mold"),
   wal("Gwynedd", "bangor", "Bangor", 53.2280, -4.1280, "bangor"),
   wal("Isle of Anglesey", "holyhead", "Holyhead", 53.3090, -4.6330, "holyhead"),
@@ -477,6 +478,7 @@ export const CITIES = [
   wal("Monmouthshire", "abergavenny", "Abergavenny", 51.8240, -3.0170, "abergavenny"),
   wal("Neath Port Talbot", "neath", "Neath", 51.6640, -3.8060, "neath"),
   wal("Pembrokeshire", "haverfordwest", "Haverfordwest", 51.8010, -4.9700, "haverfordwest"),
+  wal("Pembrokeshire", "st-davids", "St Davids", 51.8819, -5.2683, "st-davids"),
   wal("Powys", "brecon", "Brecon", 51.9470, -3.3900, "brecon"),
   wal("Rhondda Cynon Taf", "pontypridd", "Pontypridd", 51.6020, -3.3420, "pontypridd"),
   wal("Torfaen", "cwmbran", "Cwmbran", 51.6530, -3.0210, "cwmbran"),
@@ -519,6 +521,7 @@ export const CITIES = [
 
   // ---- Northern Ireland ---------------------------------------------------
   nir("Antrim", "belfast", "Belfast", 54.5973, -5.9301, "belfast"),
+  nir("Antrim", "lisburn", "Lisburn", 54.5162, -6.0581, "lisburn"),
   nir("Londonderry", "derry", "Derry", 54.9966, -7.3086, "londonderry"),
   nir("Armagh", "armagh", "Armagh", 54.3500, -6.6530, "armagh"),
   nir("Down", "newry", "Newry", 54.1750, -6.3390, "newry"),

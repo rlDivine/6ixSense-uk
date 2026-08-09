@@ -58,9 +58,9 @@
         </div>
 
           <div class="controls">
-          <div class="seg" id="sortSeg" role="group" aria-label="Sort events">
-            <button data-sort="nearest" class="active" aria-pressed="true">Nearest</button>
-            <button data-sort="soonest" aria-pressed="false">Soonest</button>
+          <div class="segmented" id="sortSeg" role="group" aria-label="Sort events">
+            <button data-sort="nearest" class="active" aria-pressed="true">📍 Nearest</button>
+            <button data-sort="soonest" aria-pressed="false">⏱️ Soonest</button>
           </div>
           <div class="pillrow" id="rangeRow">
             <button data-range="all" class="active">All upcoming</button>
@@ -71,11 +71,11 @@
           <div class="chiprow" id="catRow"></div>
           <div class="statusbar">
             <span id="status">Loading…</span>
-            <button class="refresh" id="refreshBtn" aria-label="Refresh"><span id="updated"></span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 12a8.4 8.4 0 1 1-2.5-6"/><path d="M20.4 4.2V10h-5.8"/></svg></button>
+            <button class="refresh" id="refreshBtn" aria-label="Refresh"><span id="updated"></span> ↻</button>
           </div>
         </div>
 
-          <div class="pull-hint" id="pullHint"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" aria-hidden="true" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.4v15.2"/><path d="m6.4 13.6 5.6 6 5.6-6"/></svg> Pull to refresh</div>
+          <div class="pull-hint" id="pullHint">↓ Pull to refresh</div>
           <div id="list" class="list"></div>
           <div class="endcap" id="endcap"></div>
         </div>
@@ -96,7 +96,10 @@
         </button>
         <div class="pip hidden" id="pip"></div>
         <div class="sheet" id="mapSheet">
-          <div class="sheet-grip"></div>
+          <button class="sheet-toggle" id="sheetToggle" aria-expanded="true" aria-controls="carousel">
+            <span class="sheet-grip" aria-hidden="true"></span>
+            <span class="sheet-toggle-label" id="sheetToggleLabel">Upcoming events</span>
+          </button>
           <div class="carousel" id="carousel"></div>
         </div>
       </section>
@@ -138,11 +141,32 @@
               <button data-theme-choice="light" aria-pressed="false">Light</button>
             </div>
           </div>
+          <button class="setting-row" id="cityBtn">
+            <span class="setting-label">City</span>
+            <span class="setting-value" id="cityLabel">Automatic</span>
+          </button>
           <button class="setting-row" id="locChip">
             <span class="setting-label">Use my location</span>
             <span class="setting-value" id="locLabel">the UK</span>
           </button>
           <p class="setting-note">Pulse covers the United Kingdom only. Distances are in miles.</p>
+        </div>
+      </div>
+
+      <!-- CITY PICKER. Every town the backend serves, grouped by nation and
+           county, filtered as you type. "Automatic" hands ranking back to the
+           device's own position. -->
+      <div class="modal hidden" id="cityPicker" role="dialog" aria-modal="true" aria-labelledby="cityPickerTitle">
+        <div class="modal-card tall">
+          <div class="modal-head">
+            <h2 id="cityPickerTitle">Choose a city</h2>
+            <button class="icon-btn" id="cityClose" aria-label="Close city picker"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5.4 5.4 18.6 18.6M18.6 5.4 5.4 18.6"/></svg></button>
+          </div>
+          <div class="searchfield city-search">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" aria-hidden="true" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="M15.7 15.7 21 21"/></svg>
+            <input id="cityFilter" type="search" placeholder="Search towns and cities" autocomplete="off" aria-label="Filter towns and cities" />
+          </div>
+          <div class="city-list" id="cityList"></div>
         </div>
       </div>
 

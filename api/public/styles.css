@@ -166,19 +166,24 @@ button { font-family: inherit; cursor: pointer; }
   display: grid; place-items: center;
 }
 
-/* ---- Two segment control ----
-   A well with the live segment filled. Replaces the underlined pair of words,
-   which read as tabs rather than as a choice. */
-.seg {
-  display: flex; gap: 3px; padding: 3px;
-  background: var(--glass); border: 1px solid var(--hairline); border-radius: 11px;
-  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+/* ---- Sort control ----
+   Matched one to one with 6ix Sense at the user's request: a bordered inline
+   well with the live segment filled in the accent, rather than the flat
+   two-up well the Pulse handoff specified. The emoji in the two labels are
+   part of that match and are the deliberate exception to the web client's
+   otherwise no-emoji rule. */
+.segmented {
+  display: inline-flex; align-self: flex-start;
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 12px; padding: 3px;
 }
-.seg button {
-  flex: 1; border: 0; background: none; color: var(--ink-2);
-  font-size: 13.5px; font-weight: 600; padding: 8px 10px; border-radius: 9px;
+.segmented button {
+  border: 0; background: transparent; color: var(--ink-2);
+  padding: 8px 16px; border-radius: 9px; font-weight: 650; font-size: 13.5px;
 }
-.seg button.active { background: var(--active-bg); color: var(--active-fg); }
+/* accent-fill, not accent: this is a filled background under a white label,
+   and on dark the two are different values. */
+.segmented button.active { background: var(--accent-fill); color: #fff; }
 
 .titleblock { padding: 14px 0 12px; }
 .pagedate { margin: 3px 0 0; font-size: 13px; color: var(--ink-2); }
@@ -222,18 +227,26 @@ button { font-family: inherit; cursor: pointer; }
 }
 .segmented button.active { color: var(--ink); border-bottom-color: var(--accent); }
 
-.pillrow, .chiprow { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 1px; }
+.pillrow, .chiprow { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
 .pillrow::-webkit-scrollbar, .chiprow::-webkit-scrollbar { display: none; }
-.pillrow button, .chiprow button {
-  flex: 0 0 auto; border: 1px solid var(--hairline); background: var(--glass);
-  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
-  color: var(--ink-2); padding: 6px 12px; border-radius: 999px;
+.pillrow button {
+  flex: 0 0 auto; border: 1px solid var(--hairline); background: var(--surface);
+  color: var(--ink-2); padding: 7px 13px; border-radius: 999px;
   font-size: 12.5px; font-weight: 600; white-space: nowrap;
 }
-.pillrow button.active, .chiprow button.active {
+.pillrow button.active {
+  background: var(--accent-fill); color: #fff; border-color: var(--accent-fill);
+}
+.chiprow button {
+  flex: 0 0 auto; border: 1px solid var(--hairline); background: var(--surface-2);
+  color: var(--ink-2); padding: 6px 12px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+/* The category chip keeps the navy selected state rather than 6ix Sense's
+   cyan accent-2, which has no equivalent in the flag palette. */
+.chiprow button.active {
   background: var(--active-bg); color: var(--active-fg); border-color: var(--active-bg);
 }
-.chiprow button { font-size: 12px; padding: 5px 11px; }
 
 .statusbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 1px; }
 #status { font-size: 12.5px; color: var(--ink-3); flex: 1; min-width: 0; }
@@ -346,7 +359,18 @@ button { font-family: inherit; cursor: pointer; }
 .pip .pip-b p { margin: 0; font-size: 12px; color: var(--ink-2); }
 
 .sheet { position: absolute; left: 0; right: 0; bottom: 58px; background: var(--surface); border-top: 1px solid var(--hairline); border-radius: 22px 22px 0 0; box-shadow: 0 -8px 24px rgba(0,0,0,0.28); z-index: 620; padding: 8px 0 12px; }
-.sheet-grip { width: 36px; height: 4px; border-radius: 999px; background: var(--hairline); margin: 2px auto 10px; }
+/* The tray header is the collapse control: the whole strip is the hit area,
+   with the grip kept as the visual affordance it always was. */
+.sheet-toggle {
+  width: 100%; background: none; border: 0; padding: 6px 16px 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  color: var(--ink-2);
+}
+.sheet-grip { width: 36px; height: 4px; border-radius: 999px; background: var(--hairline); display: block; }
+.sheet-toggle-label { font-size: 11.5px; font-weight: 650; }
+/* Collapsed: the carousel is hidden but the header stays, so the tray can be
+   brought back without hunting for a target. */
+.sheet.collapsed .carousel { display: none; }
 .carousel { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 0 16px; scrollbar-width: none; }
 .carousel::-webkit-scrollbar { display: none; }
 .ccard { display: block; padding: 0; text-align: left; color: var(--ink); scroll-snap-align: center; flex: 0 0 78%; background: var(--surface-2); border: 1px solid var(--hairline); border-radius: 16px; overflow: hidden; }
@@ -465,3 +489,25 @@ button { font-family: inherit; cursor: pointer; }
 .state-actions .btn-primary, .state-actions .btn-ghost { width: 100%; }
 .state h3 { color: var(--ink); font-size: 18px; margin: 0 0 8px; }
 .state p { margin: 0; line-height: 1.55; }
+
+/* ---- City picker ----
+   Every town the backend serves. Tall rather than a short sheet, because the
+   list is 454 entries and scrolling a short window through it is miserable. */
+.modal-card.tall { height: 88%; display: flex; flex-direction: column; }
+.city-search { margin-bottom: 10px; flex: 0 0 auto; }
+.city-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: 0 -16px; padding: 0 16px; }
+.city-group {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--surface);
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink-3);
+  padding: 12px 0 6px;
+}
+.city-row {
+  width: 100%; display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  background: none; border: 0; border-bottom: 1px solid var(--hairline);
+  padding: 12px 2px; color: var(--ink); font-size: 15px; text-align: left;
+}
+.city-row .city-area { font-size: 12px; color: var(--ink-3); flex: 0 0 auto; }
+.city-row.on { color: var(--accent); font-weight: 650; }
+.city-empty { padding: 28px 2px; color: var(--ink-3); font-size: 13.5px; text-align: center; }
