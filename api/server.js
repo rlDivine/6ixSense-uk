@@ -8,6 +8,11 @@ import { fetchSkiddle } from "./sources/skiddle.js";
 import { fetchSportsFixtures } from "./sources/sportsfixtures.js";
 import { fetchCurated } from "./sources/curated.js";
 import { fetchCarBoots } from "./sources/carboots.js";
+import { aiConfigured } from "./ai/provider.js";
+import { aiSearch } from "./ai/search.js";
+import { extractEvent } from "./ai/extract.js";
+import { geocodePlace } from "./ai/geocode.js";
+import { createSubmissionStore } from "./ai/submissions.js";
 import { fetchEventbrite } from "./sources/eventbrite.js";
 import { fetchPredictHQ } from "./sources/predicthq.js";
 import {
@@ -37,6 +42,19 @@ try {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Submissions are held in memory, which is a deliberate Phase 1 limit and not
+// an oversight: AI-DISCOVERY.md defers Postgres to Phase 2 pending a decision
+// on hosting, and the store is written behind an interface so that swap does
+// not reach callers. What it means today is that a restart, and on Render's
+// free plan a spin-down, empties the queue. Nothing user-facing is lost that
+// was not already unverified, but do not promise a submitter it is kept.
+const submissions = createSubmissionStore();
+
+// Only /api/submissions posts a body, and it is text from a share sheet rather
+// than an upload, so the cap is small on purpose: it bounds both the request
+// and, downstream, what can be handed to a model that is paid for by the token.
+app.use(express.json({ limit: "128kb" }));
 
 // Every event source, keyed by the ids that regions list in `sources`.
 // Each one is handed the region so it searches around that town rather than
@@ -69,7 +87,29 @@ const SOURCE_IMPL = {
     label: "Car boot sales",
     run: (r) => Promise.resolve(fetchCarBoots({ lat: r.lat, lng: r.lng, radiusKm: r.radiusKm })),
   },
+  // Events somebody spotted and sent in. Listed last so that on a de-dupe tie
+  // the ticketed copy of an event always wins: §4 of AI-DISCOVERY.md says an
+  // unverified listing never outranks one somebody sold a ticket for, and the
+  // order of this object is where that is actually enforced.
+  spotted: {
+    label: "Spotted locally",
+    run: (r) =>
+      Promise.resolve(submissions.toEvents({ lat: r.lat, lng: r.lng, radiusKm: r.radiusKm })),
+  },
 };
+
+/// Moderation is destructive and publishes to everyone's feed, so it is shut
+/// unless a token is configured. An open moderate route would let anyone
+/// approve their own submission, which is a worse hole than having no
+/// moderation at all: unverified events are at least badged as unverified.
+/// Unset means the endpoints answer 503 rather than 404, because a silent
+/// not-found reads as a bug when it is a deliberate closed door.
+function moderatorOk(req) {
+  const token = process.env.MODERATION_TOKEN;
+  if (!token) return false;
+  const sent = req.get("x-moderation-token") || "";
+  return sent.length === token.length && sent === token;
+}
 
 /// Which optional keys are configured. Reported by /api/status and /api/diag,
 /// which is the quickest way to work out why a feed looks thin.
@@ -79,6 +119,10 @@ function keyStatus() {
     SKIDDLE_API_KEY: !!process.env.SKIDDLE_API_KEY,
     THESPORTSDB_KEY: !!process.env.THESPORTSDB_KEY,
     PREDICTHQ_API_KEY: !!process.env.PREDICTHQ_API_KEY,
+    // Not a source key: it gates AI search and submission extraction. Unset
+    // means both answer "not configured" and make no network call.
+    AI_API_KEY: aiConfigured(),
+    MODERATION_TOKEN: !!process.env.MODERATION_TOKEN,
   };
 }
 
@@ -306,6 +350,146 @@ app.get("/api/events", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// ---------------------------------------------------------------------------
+// AI surfaces. Both are shut and harmless when AI_API_KEY is unset, which is
+// the same bargain every keyed source in this app makes.
+// ---------------------------------------------------------------------------
+
+/// Natural language search over the region's own feed.
+///
+/// The model only ever picks from events this server already returned, so the
+/// worst it can do is choose badly. It cannot introduce an event, and
+/// ai/search.js discards any id that was not in what it was sent.
+///
+/// `ok: false` is not an error, it is the client's signal to fall back to the
+/// literal search it already has. An unconfigured key, a model failure and a
+/// timeout all land there, so search never gets worse than it is today.
+app.get("/api/search", async (req, res) => {
+  const q = String(req.query.q || "");
+  const lat = Number(req.query.lat);
+  const lng = Number(req.query.lng);
+  const hasOrigin = Number.isFinite(lat) && Number.isFinite(lng);
+  const region = hasOrigin ? resolveRegion(lat, lng) : DEFAULT_REGION;
+  const origin = hasOrigin && isInMarket(lat, lng) ? { lat, lng } : { lat: region.lat, lng: region.lng };
+
+  try {
+    const events = await gatherEvents(region);
+    const out = await aiSearch(events, q);
+    if (!out.ok) {
+      return res.json({ ok: false, usedAI: out.usedAI, query: q, count: 0, events: [] });
+    }
+
+    // Map ids back here rather than trusting anything the model returned as an
+    // event. The reason line is the only new text that reaches the client.
+    const byId = new Map(events.map((e) => [e.id, e]));
+    const matched = out.matches
+      .map((m) => {
+        const e = byId.get(m.id);
+        return e ? { ...e, distanceKm: distanceKm(origin.lat, origin.lng, e.lat, e.lng), reason: m.reason } : null;
+      })
+      .filter(Boolean);
+
+    res.json({
+      ok: true,
+      usedAI: true,
+      query: q,
+      region: publicRegion(region),
+      count: matched.length,
+      events: matched,
+    });
+  } catch (err) {
+    console.warn("[search]", err?.message || err);
+    res.json({ ok: false, usedAI: false, query: q, count: 0, events: [] });
+  }
+});
+
+/// Somebody spotted an event and sent the text in. Extract it, place it, queue it.
+///
+/// Geocoding is not optional and not best-effort: §4 of AI-DISCOVERY.md rules
+/// that an event nobody can place is an event we do not ship, because distance
+/// is the whole premise of the app. A candidate that will not geocode is
+/// refused here rather than stored with a town-centre pin.
+app.post("/api/submissions", async (req, res) => {
+  if (!aiConfigured()) {
+    return res.status(503).json({ ok: false, reason: "ai-not-configured" });
+  }
+  const body = req.body || {};
+  const text = String(body.text || "");
+  const sourceUrl = String(body.sourceUrl || "");
+  if (!text.trim()) return res.status(400).json({ ok: false, reason: "no-text" });
+
+  const lat = Number(body.lat);
+  const lng = Number(body.lng);
+  const region = Number.isFinite(lat) && Number.isFinite(lng) ? resolveRegion(lat, lng) : DEFAULT_REGION;
+
+  try {
+    const extracted = await extractEvent(text, { sourceUrl });
+    if (!extracted.ok) {
+      return res.status(422).json({ ok: false, reason: "not-an-event", rejected: extracted.rejected });
+    }
+
+    const placed = await geocodePlace(extracted.candidate.venue, {
+      regionLat: region.lat,
+      regionLng: region.lng,
+    });
+    if (!placed.ok) {
+      return res.status(422).json({ ok: false, reason: "cannot-place", detail: placed.reason });
+    }
+
+    const result = submissions.submit({
+      ...extracted.candidate,
+      lat: placed.lat,
+      lng: placed.lng,
+      regionId: region.id,
+      // Anonymous is allowed and cannot corroborate, which is what stops one
+      // person publishing their own submission by sending it twice.
+      submitter: String(body.submitter || ""),
+    });
+
+    res.json({
+      ok: true,
+      id: result.id,
+      status: result.status,
+      confidence: extracted.confidence,
+      precision: placed.precision,
+      candidate: extracted.candidate,
+    });
+  } catch (err) {
+    console.error("[submissions]", err?.message || err);
+    res.status(500).json({ ok: false, reason: "extraction-failed" });
+  }
+});
+
+/// A reader saying an event is wrong. Deliberately unauthenticated and
+/// deliberately one-directional: a report can only ever remove something from
+/// the feed, never add one, so the worst an abuser achieves is hiding an
+/// unverified listing that nobody had corroborated.
+app.post("/api/submissions/:id/report", (req, res) => {
+  const out = submissions.report(String(req.params.id || ""));
+  res.json({ ok: true, ...out });
+});
+
+// The moderation queue. Token-gated; see moderatorOk above.
+app.get("/api/submissions", (req, res) => {
+  if (!moderatorOk(req)) return res.status(503).json({ ok: false, reason: "moderation-not-configured" });
+  res.json({
+    ok: true,
+    submissions: submissions.list({
+      status: req.query.status ? String(req.query.status) : undefined,
+      regionId: req.query.regionId ? String(req.query.regionId) : undefined,
+    }),
+  });
+});
+
+app.post("/api/submissions/:id/moderate", (req, res) => {
+  if (!moderatorOk(req)) return res.status(503).json({ ok: false, reason: "moderation-not-configured" });
+  const verdict = String((req.body || {}).verdict || "");
+  if (verdict !== "approve" && verdict !== "reject") {
+    return res.status(400).json({ ok: false, reason: "verdict must be approve or reject" });
+  }
+  res.json({ ok: true, ...submissions.moderate(String(req.params.id || ""), verdict) });
 });
 
 function distRank(a, b) {

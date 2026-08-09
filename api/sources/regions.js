@@ -18,8 +18,10 @@ import { distanceKm } from "./util.js";
 // - eventbrite:   scraped per eventbrite.co.uk town slug
 // - curated:      built-in guide of UK venues near the region
 // - carboots:     built-in table of UK car boot sales, expanded into dates
+// - spotted:      events users sent in, once published. Listed last so a
+//                 ticketed copy of the same event always wins the de-dupe.
 //
-// Every UK region runs all seven. The keyed sources return nothing at all when
+// Every UK region runs all eight. The keyed sources return nothing at all when
 // their key is unset, so the app still works with none configured. Eventbrite
 // is a per-town scrape, and a town with no Eventbrite page simply contributes
 // nothing rather than failing the request.
@@ -29,7 +31,7 @@ import { distanceKm } from "./util.js";
 // Skiddle carry a real ticket link and price, so they are listed ahead of
 // PredictHQ, which carries neither, so that a duplicate resolves to the more
 // useful copy of the two.
-const UK_SOURCES = ["ticketmaster", "skiddle", "fixtures", "predicthq", "eventbrite", "curated", "carboots"];
+const UK_SOURCES = ["ticketmaster", "skiddle", "fixtures", "predicthq", "eventbrite", "curated", "carboots", "spotted"];
 
 // A UK region. Every entry carries the county / council area / principal area
 // it sits in, and the nation, so the app's picker can group several hundred
@@ -583,6 +585,12 @@ export function publicRegion(r) {
     timeZone: r.timeZone,
     unit: r.unit,
     center: { lat: r.lat, lng: r.lng },
+    // How far every source actually searched around `center`. The clients use
+    // it as the ceiling on their own "how far to look" control, so the app can
+    // never offer a radius wider than the data behind it. Raising a region's
+    // radiusKm here widens that control without shipping a new build, the same
+    // way /api/regions drives the town picker.
+    radiusKm: r.radiusKm,
     // Kept so older builds of the app still decode. VenTrack only ever serves
     // curated UK regions, so it is always false.
     generic: false,

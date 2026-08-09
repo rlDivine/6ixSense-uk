@@ -64,6 +64,45 @@ a legacy field kept so older builds still decode, and is always `false`.
 Distances (`distanceKm`) are always sent in kilometres and the clients convert.
 Every UK region reports `"unit": "mi"`, so both clients display miles.
 
+## The AI surfaces
+
+Two features, one key, both inert without it. The plan behind them is
+[`AI-DISCOVERY.md`](../AI-DISCOVERY.md); the interface is
+[`DESIGN-AI.md`](../DESIGN-AI.md).
+
+| Route | Does | Without `AI_API_KEY` |
+|---|---|---|
+| `GET /api/search?q=&lat=&lng=` | Natural-language search over the region's own feed, with a one-line reason per match | `{ ok: false }`, and the client keeps its literal search |
+| `POST /api/submissions` | Extract an event from pasted or shared text, place it, queue it | `503 ai-not-configured` |
+| `POST /api/submissions/:id/report` | Pull an event a reader says is wrong | Works: no key needed, and it can only remove |
+| `GET /api/submissions` | The moderation queue | `503` unless `MODERATION_TOKEN` is set |
+| `POST /api/submissions/:id/moderate` | Approve or reject | `503` unless `MODERATION_TOKEN` is set |
+
+Three properties worth stating, because they are what makes this safe to ship:
+
+**Search cannot invent an event.** The model is handed a numbered list of events
+this server already returned and may only answer with ids from it. Any id it
+returns that was not sent is discarded, and the server maps ids back to its own
+objects rather than trusting anything the model shaped.
+
+**Extraction cannot invent a fact.** Every field arrives with a verbatim quote
+from the submitted text, the quote is checked to really be a substring of it,
+and a second model call sees only the quote and the value and asks whether the
+one supports the other. A field failing either check is dropped, and a candidate
+with no date or no place is refused rather than defaulted.
+
+**An event nobody can place is not shipped.** `ai/geocode.js` resolves a postcode
+through postcodes.io or a venue name through a small gazetteer, and refuses
+anything outside the UK or improbably far from the region. It never falls back
+to the town centre: distance is this app's whole premise, so a plausible but
+wrong pin is worse than a missing event. Same call
+[`sources/carboots.js`](sources/carboots.js) makes.
+
+Submissions are held **in memory**. That is a deliberate Phase 1 limit, not an
+oversight: Postgres is Phase 2 in the plan, pending a hosting decision, and the
+store sits behind an interface so the swap will not reach any caller. Today a
+restart, or a spin-down on Render's free plan, empties the queue.
+
 ## Where the events come from
 
 | Source | Key needed? | How | Covers |
@@ -75,6 +114,7 @@ Every UK region reports `"unit": "mi"`, so both clients display miles.
 | **Eventbrite UK** | No | `eventbrite.co.uk` discovery pages, embedded JSON-LD, 13 pages per town | Music, food, **food festivals and food expos**, comedy, arts, film, sport, family, festivals, pop-ups, free events |
 | **Local guide** | No | Built in | Real UK venues with regular programming |
 | **Car boot sales** | No | Built in | Car boot sales and boot fairs across all four nations, expanded from recurrence rules into dates |
+| **Spotted locally** | `AI_API_KEY` to submit | Built in, from user submissions | Events somebody sent in that no feed carries. Unverified until corroborated or moderated |
 
 Ticketmaster is pinned to GB so a radius search from the Kent coast or Northern
 Ireland cannot pull in French or Irish listings. Skiddle takes its radius in

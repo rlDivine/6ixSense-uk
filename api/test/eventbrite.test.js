@@ -82,9 +82,12 @@ test("the vertical a listing came from becomes its category", async () => {
 test("hits every vertical, and none of them more than once", async () => {
   await withStubbedFetch(serve({}), async (calls) => {
     await fetchEventbrite();
-    assert.equal(calls.length, 11);
-    assert.equal(new Set(calls.map((c) => c.url)).size, 11);
-    // All eleven are on the UK site, not eventbrite.com.
+    // Thirteen since the two food-and-drink format crossings were added,
+    // `food-and-drink--festivals` and `food-and-drink--expos`, which are where
+    // a food festival actually surfaces. See queriesFor() in sources/eventbrite.js.
+    assert.equal(calls.length, 13);
+    assert.equal(new Set(calls.map((c) => c.url)).size, 13);
+    // All thirteen are on the UK site, not eventbrite.com.
     for (const c of calls) assert.match(c.url, /^https:\/\/www\.eventbrite\.co\.uk\/d\//);
   });
 });

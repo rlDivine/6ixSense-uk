@@ -67,3 +67,10 @@ services:
       # the _KEY suffix kept for consistency with the three above.
       - key: PREDICTHQ_API_KEY
         sync: false
+      # Gates AI search and submission extraction. Unset and both are inert,
+      # so this can be deployed before there is a key and nothing breaks.
+      - key: AI_API_KEY
+        sync: false
+      # Shuts the moderation queue unless set. See api/.env.example.
+      - key: MODERATION_TOKEN
+        sync: false
