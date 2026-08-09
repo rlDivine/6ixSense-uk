@@ -756,6 +756,10 @@ struct IPadDetailBody: View {
 
     @EnvironmentObject var app: AppState
 
+    /// The .ics behind the Calendar action, written once when the body appears
+    /// and again whenever the pane is handed a different event.
+    @State private var calendarFile: URL?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             hero
@@ -781,6 +785,17 @@ struct IPadDetailBody: View {
             .padding(20)
             .padding(.bottom, 24)
         }
+        .onAppear(perform: prepareCalendarFile)
+        .onChange(of: event.id) { _, _ in prepareCalendarFile() }
+    }
+
+    /// Writes the calendar file off the body path, because writing to disk from
+    /// a body would happen on every evaluation. The pane and the overlay are
+    /// reused for whatever is selected next rather than rebuilt, so `onAppear`
+    /// alone would leave the button offering the previous event's file, which
+    /// is why the id is watched as well.
+    private func prepareCalendarFile() {
+        calendarFile = CalendarFile.url(for: event)
     }
 
     /// Flat category wash with the category mark on it, replaced by the photo
@@ -925,9 +940,13 @@ struct IPadDetailBody: View {
         }
     }
 
+    /// Share, Calendar and Save carry the same weight, which is what the
+    /// handoff asks for. None of the three is the thing the pane is for, so
+    /// none of them is allowed to look like it is.
     private var secondaryActions: some View {
         HStack(spacing: 9) {
             shareButton
+            calendarButton
             Button { app.toggleSave(event) } label: {
                 secondary(app.isSaved(event) ? "Saved" : "Save")
             }
@@ -940,6 +959,19 @@ struct IPadDetailBody: View {
             ShareLink(item: url) { secondary("Share") }
         } else {
             secondary("Share").opacity(0.4).accessibilityHidden(true)
+        }
+    }
+
+    /// The same trick the phone screen uses: an .ics written to a temporary
+    /// file and handed to the share sheet, which offers Add to Calendar. That
+    /// means no EventKit, no permission prompt and nothing extra in Info.plist.
+    /// Dimmed when the listing has no start date, since an event with no time
+    /// on it has nothing to put in a calendar.
+    @ViewBuilder private var calendarButton: some View {
+        if let file = calendarFile {
+            ShareLink(item: file) { secondary("Calendar") }
+        } else {
+            secondary("Calendar").opacity(0.4).accessibilityHidden(true)
         }
     }
 

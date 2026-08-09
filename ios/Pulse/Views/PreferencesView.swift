@@ -10,6 +10,11 @@ struct PreferencesView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
 
+    /// False until the catalogue fetch has actually been attempted. Without it
+    /// a failed fetch is indistinguishable from a slow one, and the picker sits
+    /// on "Loading towns" for ever with no way to retry.
+    @State private var triedRegions = false
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -35,7 +40,7 @@ struct PreferencesView: View {
                 .padding(16)
             }
             .background(Tok.bg.ignoresSafeArea())
-            .task { await app.loadRegions() }
+            .task { await refreshRegions() }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -106,10 +111,30 @@ struct PreferencesView: View {
                     .font(.system(size: 12.5)).foregroundStyle(Tok.accent)
                     .padding(.horizontal, 4)
             } else if app.countries.isEmpty {
-                Text("Loading towns…")
-                    .font(.system(size: 12.5)).foregroundStyle(Tok.muted).padding(.horizontal, 4)
+                if triedRegions {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("The town list could not be loaded. Check your connection, then try again.")
+                            .font(.system(size: 12.5)).foregroundStyle(Tok.muted)
+                        Button("Try again") { Task { await refreshRegions() } }
+                            .font(.system(size: 12.5, weight: .semibold))
+                            .foregroundStyle(Tok.link)
+                    }
+                    .padding(.horizontal, 4)
+                } else {
+                    Text("Loading towns…")
+                        .font(.system(size: 12.5)).foregroundStyle(Tok.muted).padding(.horizontal, 4)
+                }
             }
         }
+    }
+
+    /// Fetch the catalogue, recording that the attempt happened either way.
+    /// `AppState.loadRegions` is a no-op once the list is in hand, so this is
+    /// safe to call on every appearance and on every retry.
+    @MainActor private func refreshRegions() async {
+        triedRegions = false
+        await app.loadRegions()
+        triedRegions = true
     }
 
     /// Whether this country's row is the one currently in force. A country with

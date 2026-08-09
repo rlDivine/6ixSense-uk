@@ -381,10 +381,29 @@ struct EventDetailView: View {
     //
     // Written as an .ics and handed to the share sheet, which offers Add to
     // Calendar. Doing it this way means the app never has to ask for access to
-    // somebody's calendar just to put one event in it.
+    // somebody's calendar just to put one event in it. The writing itself lives
+    // in `CalendarFile`, below, because the iPad detail body offers the same
+    // action and two copies of forty lines of iCalendar would drift apart.
 
     private func makeCalendarFile() {
-        guard calendarFile == nil, let start = event.startDate else { return }
+        guard calendarFile == nil else { return }
+        calendarFile = CalendarFile.url(for: event)
+    }
+}
+
+/// Writes an event out as an .ics in the temporary directory and hands back the
+/// file, which both detail screens then give to `ShareLink`. The share sheet is
+/// what offers Add to Calendar, so nothing here touches EventKit and the app
+/// never asks for calendar access or needs a usage description in Info.plist.
+///
+/// This touches the file system, so call it from `onAppear` or another one-shot
+/// hook. Never call it from a view body: SwiftUI evaluates a body as often as
+/// it likes, and each evaluation would be another write.
+enum CalendarFile {
+    /// The written file, or nil when the event carries no start date, since
+    /// there is nothing to put in a calendar then, or when the write failed.
+    static func url(for event: Event) -> URL? {
+        guard let start = event.startDate else { return nil }
         let end = start.addingTimeInterval(2 * 60 * 60)
 
         let stamp = DateFormatter()
@@ -398,30 +417,31 @@ struct EventDetailView: View {
         lines.append("PRODID:-//Pulse//Pulse UK//EN")
         lines.append("CALSCALE:GREGORIAN")
         lines.append("BEGIN:VEVENT")
-        lines.append("UID:\(icsEscape(event.id))@pulse.uk")
+        lines.append("UID:\(escape(event.id))@pulse.uk")
         lines.append("DTSTAMP:\(stamp.string(from: Date()))")
         lines.append("DTSTART:\(stamp.string(from: start))")
         lines.append("DTEND:\(stamp.string(from: end))")
-        lines.append("SUMMARY:\(icsEscape(event.title))")
+        lines.append("SUMMARY:\(escape(event.title))")
         let place = [event.venue ?? "", event.address ?? ""].filter { !$0.isEmpty }.joined(separator: ", ")
-        if !place.isEmpty { lines.append("LOCATION:\(icsEscape(place))") }
-        if let url = event.webURL { lines.append("URL:\(url.absoluteString)") }
+        if !place.isEmpty { lines.append("LOCATION:\(escape(place))") }
+        if let link = event.webURL { lines.append("URL:\(link.absoluteString)") }
         lines.append("END:VEVENT")
         lines.append("END:VCALENDAR")
 
         let text = lines.joined(separator: "\r\n")
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        let destination = FileManager.default.temporaryDirectory
+            .appendingPathComponent(fileName(for: event))
         do {
-            try text.write(to: url, atomically: true, encoding: .utf8)
-            calendarFile = url
+            try text.write(to: destination, atomically: true, encoding: .utf8)
+            return destination
         } catch {
-            calendarFile = nil
+            return nil
         }
     }
 
     /// The event id comes from a third party feed, so it is scrubbed down to
     /// something that is definitely a safe file name.
-    private var fileName: String {
+    private static func fileName(for event: Event) -> String {
         let safe = event.id.unicodeScalars.map { scalar -> Character in
             CharacterSet.alphanumerics.contains(scalar) ? Character(scalar) : Character("-")
         }
@@ -429,7 +449,7 @@ struct EventDetailView: View {
         return "pulse-" + (stem.isEmpty ? "event" : stem) + ".ics"
     }
 
-    private func icsEscape(_ s: String) -> String {
+    private static func escape(_ s: String) -> String {
         s.replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: ";", with: "\\;")
             .replacingOccurrences(of: ",", with: "\\,")

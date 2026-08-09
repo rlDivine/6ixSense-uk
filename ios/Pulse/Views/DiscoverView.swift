@@ -57,35 +57,46 @@ struct DiscoverView: View {
         .padding(.horizontal, 16)
     }
 
-    /// Two segments in a well. Selected is the navy (near white on dark) with
-    /// the matching foreground, never a hardcoded white.
+    /// A bordered inline well that hugs its content, matching the web client,
+    /// which took the control back from 6ix Sense. The live segment is filled
+    /// with `accentFill` under a white label. That pairing is the whole reason
+    /// `accentFill` exists as a separate token: `accent` is the lighter red for
+    /// text and would fail contrast under white on the dark theme.
+    ///
+    /// The two emoji are a deliberate, user-requested exception to this app's
+    /// otherwise no-emoji rule. Nothing else in the app gets one.
     private var sortControl: some View {
-        HStack(spacing: 4) {
-            sortSegment("Nearest", .nearest)
-            sortSegment("Soonest", .soonest)
+        HStack(spacing: 0) {
+            sortSegment("📍", "Nearest", .nearest)
+            sortSegment("⏱️", "Soonest", .soonest)
         }
-        .padding(4)
-        .background(Tok.panel2, in: RoundedRectangle(cornerRadius: 13))
+        .padding(3)
+        .background(Tok.panel, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Tok.hairline, lineWidth: 1))
         .padding(.horizontal, 16)
     }
 
-    private func sortSegment(_ label: String, _ value: EventService.Sort) -> some View {
+    /// The emoji is kept out of the accessibility label, so VoiceOver says
+    /// "sort by nearest" rather than reading the pin out loud.
+    private func sortSegment(_ emoji: String, _ label: String,
+                             _ value: EventService.Sort) -> some View {
         let on = app.sort == value
         return Button {
             guard app.sort != value else { return }
             app.sort = value
             Task { await app.load() }
         } label: {
-            Text(label)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(on ? Tok.activeFg : Tok.muted)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 9)
-                .background(on ? Tok.activeBg : Color.clear,
-                            in: RoundedRectangle(cornerRadius: 10))
-                .contentShape(RoundedRectangle(cornerRadius: 10))
+            Text("\(emoji) \(label)")
+                .font(.system(size: 13.5, weight: .semibold))
+                .foregroundStyle(on ? Color.white : Tok.muted)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(on ? Tok.accentFill : Color.clear,
+                            in: RoundedRectangle(cornerRadius: 9))
+                .contentShape(RoundedRectangle(cornerRadius: 9))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("Sort by \(label.lowercased())")
         .accessibilityAddTraits(on ? .isSelected : [])
     }
 
@@ -202,8 +213,10 @@ struct DiscoverView: View {
     }
 }
 
-/// The date range chip. Filled with the selected colour when on, and a solid
-/// surface with a hairline when off, so it stays readable sitting on glass.
+/// The date range chip. Selected is the filled red under a white label, which
+/// is `accentFill` and never `accent`: on the dark theme those are different
+/// values and `accent` is too light to carry white. Unselected is a solid
+/// surface with a hairline, so it stays readable sitting on glass.
 struct Pill: View {
     let text: String
     let active: Bool
@@ -215,19 +228,24 @@ struct Pill: View {
                 .font(.system(size: small ? 12 : 12.5, weight: .semibold))
                 .padding(.horizontal, small ? 11 : 13)
                 .padding(.vertical, small ? 6 : 7)
-                .foregroundStyle(active ? Tok.activeFg : Tok.text)
-                .background(active ? Tok.activeBg : Tok.panel, in: Capsule())
-                .overlay(Capsule().stroke(active ? Tok.activeBg : Tok.hairline, lineWidth: 1))
+                .foregroundStyle(active ? Color.white : Tok.text)
+                .background(active ? Tok.accentFill : Tok.panel, in: Capsule())
+                .overlay(Capsule().stroke(active ? Tok.accentFill : Tok.hairline, lineWidth: 1))
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(active ? .isSelected : [])
     }
 }
 
-/// A category chip. The 6pt dot is the category's own adaptive colour, which is
-/// what tells two chips apart at a glance. When the chip is selected that dot
-/// would vanish into the navy, so it flips to the selected foreground and stays
-/// visible.
+/// A category chip. Unlike the sort control and the range pills, this one keeps
+/// the navy selected state rather than taking the red: it sits directly under a
+/// row of red pills, and two filled reds in a stack read as one control. That
+/// means `activeBg` with `activeFg`, and never `activeBg` with a hardcoded
+/// white, which is invisible on dark where `activeBg` is near white.
+///
+/// The 6pt dot is the category's own adaptive colour, which is what tells two
+/// chips apart at a glance. When the chip is selected that dot would vanish into
+/// the navy, so it flips to the selected foreground and stays visible.
 struct CategoryChip: View {
     let name: String
     let active: Bool
@@ -240,13 +258,13 @@ struct CategoryChip: View {
                     Circle().fill(dot).frame(width: 6, height: 6)
                 }
                 Text(name)
-                    .font(.system(size: 12.5, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(active ? Tok.activeFg : Tok.text)
                     .lineLimit(1)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 7)
-            .background(active ? Tok.activeBg : Tok.panel, in: Capsule())
+            .background(active ? Tok.activeBg : Tok.panel2, in: Capsule())
             .overlay(Capsule().stroke(active ? Tok.activeBg : Tok.hairline, lineWidth: 1))
         }
         .buttonStyle(.plain)

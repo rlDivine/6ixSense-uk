@@ -15,29 +15,35 @@
    ============================================================ */
 :root,
 [data-theme="dark"] {
-  --bg: #080e1c;
-  --surface: #0f1730;
-  --surface-2: #16203c;
-  --hairline: #1d2846;
-  --ink: #eef1f8;          /* primary text */
-  --ink-2: #9aa5c2;        /* secondary text */
-  --ink-3: #7d88a4;        /* overlines, tertiary. 4.5:1 on surface-2, the worst case */
-  --accent: #f44f63;       /* flag red on navy, for text and indicators. 4.7:1 on surface-2 */
-  --accent-fill: #d21e3c;  /* same red darkened, so a white label on it clears 4.5:1 */
-  --link: #8fadea;         /* flag blue, lightened for the same reason */
-  --active-bg: #eef1f8;    /* selected state: near white on dark */
-  --active-fg: #0b1327;
+  --bg: #141926;
+  --surface: #1c2231;
+  --surface-2: #252c3d;
+  --hairline: #2f3749;
+  --ink: #e4e7ee;          /* primary text */
+  --ink-2: #a3abbd;        /* secondary text */
+  /* Overlines and tertiary text. surface-2 is the worst case background this
+     sits on, not surface, and it is the pair most often forgotten. The revised
+     handoff specifies #8a92a4, which lands at 4.47:1 there and so misses the
+     4.5:1 text bar. #8d95a7 is the smallest lift that clears it, at 4.64:1. */
+  --ink-3: #8d95a7;
+  --accent: #f4707f;       /* flag red on navy, for text and indicators. 4.9:1 on surface-2 */
+  --accent-fill: #c8324a;  /* same red darkened, so a white label on it clears 4.5:1 */
+  --link: #9db6e8;         /* flag blue, lightened for the same reason */
+  --active-bg: #e4e7ee;    /* selected state: near white on dark */
+  --active-fg: #161b27;
   --shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
   --shadow-sm: none;
-  --wash-alpha: 0.18;
+  --wash-alpha: 0.20;
 
   /* Liquid glass. Translucent, never a gradient.
      0.88 is not a taste value. Chrome on glass has event photos scrolling
      underneath it, so the composite has to hold up against a white thumbnail
-     as well as against the page. Solved for the worst case: at this alpha both
-     --ink and --ink-2 clear 4.5:1 over any backdrop. --ink-3 does not, so it is
-     never used on a glass surface. */
-  --glass: rgba(15, 23, 48, 0.88);
+     as well as against the page. Solved for the worst case: over a white event
+     photo at this alpha, --ink lands at 8.79:1 and --ink-2 at 4.73:1, so both
+     clear 4.5:1 over any backdrop. --ink-3 does not, so it is never used on a
+     glass surface. Re-solved against the softened dark palette: the three
+     channels below are --surface, so this must move whenever --surface does. */
+  --glass: rgba(28, 34, 49, 0.88);
   --glass-blur: saturate(160%) blur(18px);
 }
 [data-theme="light"] {
@@ -217,16 +223,6 @@ button { font-family: inherit; cursor: pointer; }
 /* ---- Controls ---- */
 .controls { padding: 0 0 10px; display: flex; flex-direction: column; gap: 9px; }
 
-/* Sort reads as two words with the live one underlined, not as a pair of
-   buttons competing with everything else on the screen. */
-.segmented { display: flex; gap: 18px; align-items: center; border-bottom: 1px solid var(--hairline); }
-.segmented button {
-  border: 0; background: none; color: var(--ink-3);
-  padding: 0 0 9px; font-weight: 600; font-size: 14px;
-  border-bottom: 2px solid transparent; margin-bottom: -1px;
-}
-.segmented button.active { color: var(--ink); border-bottom-color: var(--accent); }
-
 .pillrow, .chiprow { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
 .pillrow::-webkit-scrollbar, .chiprow::-webkit-scrollbar { display: none; }
 .pillrow button {
@@ -348,8 +344,12 @@ button { font-family: inherit; cursor: pointer; }
 .pin { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid #fff; box-shadow: 0 3px 6px rgba(0,0,0,0.4); }
 .pin span { transform: rotate(45deg); display: grid; place-items: center; }
 .pin.sel { width: 38px; height: 38px; z-index: 700; }
-.youdot { width: 16px; height: 16px; background: var(--link); border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 0 rgba(143,173,234,0.6); animation: radar 2s infinite; }
-@keyframes radar { 0% { box-shadow: 0 0 0 0 rgba(143,173,234,0.5);} 100% { box-shadow: 0 0 0 16px rgba(143,173,234,0);} }
+/* The radar ring is the dot's own colour, so these three channels are the dark
+   --link. A keyframe cannot read a custom property through a colour function
+   here without changing the animation, so it is written out and has to be kept
+   in step with --link by hand. */
+.youdot { width: 16px; height: 16px; background: var(--link); border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 0 rgba(157,182,232,0.6); animation: radar 2s infinite; }
+@keyframes radar { 0% { box-shadow: 0 0 0 0 rgba(157,182,232,0.5);} 100% { box-shadow: 0 0 0 16px rgba(157,182,232,0);} }
 
 .pip { position: absolute; z-index: 650; left: 50%; transform: translateX(-50%); bottom: 150px; width: 250px; background: var(--surface); border: 1px solid var(--hairline); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
 .pip .pip-img { height: 88px; display: grid; place-items: center; position: relative; overflow: hidden; }

@@ -25,7 +25,11 @@ enum Preferences {
         .init(id: "free",      label: "Free Events",      emoji: "🎟️", keywords: ["free"]),
         .init(id: "popup",     label: "Pop-ups & Markets", emoji: "🎁", keywords: ["pop-up", "popup", "market", "bazaar"]),
         .init(id: "family",    label: "Family",           emoji: "🎡", keywords: ["family", "kid", "child"]),
-        .init(id: "outdoors",  label: "Tours & Outdoors", emoji: "🚶", keywords: ["tour", "walk", "outdoor", "hike", "park"]),
+        // Tours folded into Museums when the category vocabulary was unified,
+        // so the old keywords (tour, walk, outdoor, hike, park) matched no
+        // category at all and this interest silently returned nothing. The
+        // label follows the bucket it actually resolves to now.
+        .init(id: "outdoors",  label: "Tours & Heritage", emoji: "🚶", keywords: ["museum", "heritage", "tour", "exhibit"]),
     ]
 
     static func with(ids: Set<String>) -> [Preference] { all.filter { ids.contains($0.id) } }

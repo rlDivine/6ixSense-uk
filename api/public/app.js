@@ -797,7 +797,7 @@ function applyTheme() {
     b.setAttribute("aria-pressed", on ? "true" : "false");
   });
   const mc = document.querySelector('meta[name="theme-color"]');
-  if (mc) mc.content = state.theme === "dark" ? "#080e1c" : "#f6f7fb";
+  if (mc) mc.content = state.theme === "dark" ? "#141926" : "#f6f7fb";
   if (tileLayer) tileLayer.setUrl(tileURL()); // swap map tiles to match theme
   // Category colours are written into inline styles, so a theme change has to
   // repaint the list rather than relying on the cascade.

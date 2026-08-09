@@ -31,35 +31,38 @@ extension Color {
 }
 
 enum Tok {
-    static let bg       = Color(dark: 0x080E1C, light: 0xF6F7FB)
-    static let panel    = Color(dark: 0x0F1730, light: 0xFFFFFF)
-    static let panel2   = Color(dark: 0x16203C, light: 0xEEF1F7)
-    static let hairline = Color(dark: 0x1D2846, light: 0xE3E7F0)
+    static let bg       = Color(dark: 0x141926, light: 0xF6F7FB)
+    static let panel    = Color(dark: 0x1C2231, light: 0xFFFFFF)
+    static let panel2   = Color(dark: 0x252C3D, light: 0xEEF1F7)
+    static let hairline = Color(dark: 0x2F3749, light: 0xE3E7F0)
 
     /// Three weights of text. Using all three, rather than just text and muted,
     /// is most of what gives a list its hierarchy.
-    static let text     = Color(dark: 0xEEF1F8, light: 0x0B1633)
-    static let muted    = Color(dark: 0x9AA5C2, light: 0x59627B)
+    static let text     = Color(dark: 0xE4E7EE, light: 0x0B1633)
+    static let muted    = Color(dark: 0xA3ABBD, light: 0x59627B)
     /// Solved against the worst background each theme puts it on, which is
     /// panel2 in both cases. The earlier values failed 4.5:1 on the card
-    /// overline and footer, which are real text, not decoration.
-    static let faint    = Color(dark: 0x7D88A4, light: 0x686E7E)
+    /// overline and footer, which are real text, not decoration. The revised
+    /// handoff asks for 0x8A92A4 on dark, but against the lifted panel2 that
+    /// only reaches 4.47:1 and so misses the bar again. 0x8D95A7 is the
+    /// smallest lift that clears it, at 4.64:1.
+    static let faint    = Color(dark: 0x8D95A7, light: 0x686E7E)
 
     /// Flag red, for text and indicators. On dark it has to be light enough to
     /// read on navy.
-    static let accent   = Color(dark: 0xF44F63, light: 0xC8102E)
+    static let accent   = Color(dark: 0xF4707F, light: 0xC8102E)
     /// The same red as a filled background under a white label, which needs the
     /// opposite of the above: dark enough for white to clear 4.5:1. One colour
     /// cannot do both on a dark theme, so fills get their own token. On light,
     /// Pantone 186 already carries white at 5.9:1 and no split is needed.
-    static let accentFill = Color(dark: 0xD21E3C, light: 0xC8102E)
+    static let accentFill = Color(dark: 0xC8324A, light: 0xC8102E)
     /// Flag blue, for links and secondary emphasis.
-    static let link     = Color(dark: 0x8FADEA, light: 0x012169)
+    static let link     = Color(dark: 0x9DB6E8, light: 0x012169)
 
     /// Selected state. Flag navy on light, near white on dark, with the
     /// matching foreground so a filled chip is always legible.
-    static let activeBg = Color(dark: 0xEEF1F8, light: 0x012169)
-    static let activeFg = Color(dark: 0x0B1327, light: 0xFFFFFF)
+    static let activeBg = Color(dark: 0xE4E7EE, light: 0x012169)
+    static let activeFg = Color(dark: 0x161B27, light: 0xFFFFFF)
 
     /// Kept for the Free label, which uses the accent rather than reaching for
     /// a green that belongs to neither flag colour.
@@ -113,7 +116,7 @@ struct CatStyle {
         return Color(UIColor { tc in
             let dark = tc.userInterfaceStyle == .dark
             return UIColor(Color(hex: dark ? d : l))
-                .withAlphaComponent(dark ? 0.18 : 0.12)
+                .withAlphaComponent(dark ? 0.20 : 0.12)
         })
     }
 }

@@ -27,7 +27,7 @@ let variant = CommandLine.arguments.count > 2 ? CommandLine.arguments[2] : "ligh
 // the lifted red the dark interface uses behind white.
 let (bg, fg): ((Double, Double, Double), (Double, Double, Double)) = {
     switch variant {
-    case "dark":   return ((0xD2 / 255, 0x1E / 255, 0x3C / 255), (1.0, 1.0, 1.0))
+    case "dark":   return ((0xC8 / 255, 0x32 / 255, 0x4A / 255), (1.0, 1.0, 1.0))
     case "tinted": return ((0.0, 0.0, 0.0), (0xD8 / 255, 0xD8 / 255, 0xD8 / 255))
     default:       return ((0xC8 / 255, 0x10 / 255, 0x2E / 255), (1.0, 1.0, 1.0))
     }

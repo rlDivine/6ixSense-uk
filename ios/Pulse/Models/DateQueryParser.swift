@@ -43,7 +43,10 @@ enum DateQueryParser {
     }
     private static func weekendRange(_ now: Date, next: Bool) -> (Date, Date) {
         let day = jsWeekday(now)
-        var sat = day == 0 ? startOfDay(now) : startOfDay(addDays(now, (6 - day + 7) % 7))
+        // On a Sunday the weekend is already under way: it started yesterday.
+        // Anchoring on today would run the window Sunday to Monday and call
+        // Monday part of the weekend.
+        var sat = day == 0 ? startOfDay(addDays(now, -1)) : startOfDay(addDays(now, (6 - day + 7) % 7))
         if next { sat = addDays(sat, 7) }
         let sun = addDays(sat, 1)
         return (sat, endOfDay(sun))
@@ -89,7 +92,11 @@ enum DateQueryParser {
                     d1 = date(year: y + 1, month: mi + 1, day: d1n) ?? d1
                     d2 = date(year: y + 1, month: mi + 1, day: d2n) ?? d2
                 }
-                let (mn, mx) = (startOfDay(d1), endOfDay(d2))
+                // Written back to front ("july 27-25") the two days would make a
+                // range whose lower bound sits above its upper bound, and
+                // building a ClosedRange from that is a crash, not an empty
+                // result. Read them low to high whichever way round they arrive.
+                let (mn, mx) = (startOfDay(Swift.min(d1, d2)), endOfDay(Swift.max(d1, d2)))
                 return DateQuery(range: mn...mx, label: label(mn, mx), rest: strip(raw, m[0]))
             }
         }
@@ -115,8 +122,11 @@ enum DateQueryParser {
             }
         }
 
-        if let m = firstMatch(#"\b(next\s+)?weekend\b"#, in: raw) {
-            let (mn, mx) = weekendRange(now, next: !m[1].isEmpty)
+        // The leading "this" has to be part of the match, not left behind: the
+        // leftover text is matched against title, venue and category, so a
+        // stray "this" would filter out very nearly everything.
+        if let m = firstMatch(#"\b(this\s+|next\s+)?weekend\b"#, in: raw) {
+            let (mn, mx) = weekendRange(now, next: m[1].lowercased().contains("next"))
             return DateQuery(range: mn...mx, label: label(mn, mx), rest: strip(raw, m[0]))
         }
 

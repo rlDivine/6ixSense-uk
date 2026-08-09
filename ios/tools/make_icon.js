@@ -27,7 +27,7 @@ const SS = 4; // supersampling factor. 4x gives clean antialiased curves
 // recolour it with whatever tint the user has chosen.
 const VARIANTS = {
   light:  { bg: [0xc8, 0x10, 0x2e], fg: [0xff, 0xff, 0xff], file: "icon_1024.png" },
-  dark:   { bg: [0xd2, 0x1e, 0x3c], fg: [0xff, 0xff, 0xff], file: "icon_dark.png" },
+  dark:   { bg: [0xc8, 0x32, 0x4a], fg: [0xff, 0xff, 0xff], file: "icon_dark.png" },
   tinted: { bg: [0x00, 0x00, 0x00], fg: [0xd8, 0xd8, 0xd8], file: "icon_tinted.png" },
 };
 

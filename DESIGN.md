@@ -73,17 +73,17 @@ read on navy.
 
 | Token | Light | Dark | Job |
 |---|---|---|---|
-| `bg` | `#f6f7fb` | `#080e1c` | Page |
-| `surface` | `#ffffff` | `#0f1730` | Cards, sheets |
-| `surface-2` | `#eef1f7` | `#16203c` | Wells, search field, skeletons |
-| `hairline` | `#e3e7f0` | `#1d2846` | Borders, rules |
-| `ink` | `#0b1633` | `#eef1f8` | Primary text |
-| `ink-2` | `#59627b` | `#9aa5c2` | Secondary text |
-| `ink-3` | `#686e7e` | `#7d88a4` | Overlines, tertiary |
-| `accent` | `#c8102e` | `#f44f63` | Logo, today, indicators. **Text weight** |
-| `accent-fill` | `#c8102e` | `#d21e3c` | The same red as a filled background under a white label |
-| `link` | `#012169` | `#8fadea` | Links, secondary emphasis |
-| `active-bg` / `active-fg` | `#012169` / `#ffffff` | `#eef1f8` / `#0b1327` | Selected chips and pills |
+| `bg` | `#f6f7fb` | `#141926` | Page |
+| `surface` | `#ffffff` | `#1c2231` | Cards, sheets |
+| `surface-2` | `#eef1f7` | `#252c3d` | Wells, search field, skeletons |
+| `hairline` | `#e3e7f0` | `#2f3749` | Borders, rules |
+| `ink` | `#0b1633` | `#e4e7ee` | Primary text |
+| `ink-2` | `#59627b` | `#a3abbd` | Secondary text |
+| `ink-3` | `#686e7e` | `#8d95a7` | Overlines, tertiary |
+| `accent` | `#c8102e` | `#f4707f` | Logo, today, indicators. **Text weight** |
+| `accent-fill` | `#c8102e` | `#c8324a` | The same red as a filled background under a white label |
+| `link` | `#012169` | `#9db6e8` | Links, secondary emphasis |
+| `active-bg` / `active-fg` | `#012169` / `#ffffff` | `#e4e7ee` / `#161b27` | Selected chips and pills |
 
 Light red is Pantone 186, light link is Pantone 280. Both are the flag colours
 unmodified.
@@ -100,21 +100,27 @@ Defined in two places that must stay in step: `api/public/styles.css` (the
 
 **Contrast, audited.** Every token pair was checked against WCAG 2.1 using
 computed relative luminance, at 4.5:1 for text (1.4.3) and 3:1 for graphical
-objects (1.4.11). It passes at both bars. The tightest margins, which are the
-ones to re-check if you change anything:
+objects (1.4.11). It passes at both bars. The dark figures below were re-audited
+against the revised dark palette; the light ones are unchanged. The tightest
+margins, which are the ones to re-check if you change anything:
 
 | Pair | Ratio | Bar |
 |---|---|---|
 | `ink-3` on `surface-2`, light | 4.50:1 | 4.5 |
-| `ink-3` on `surface-2`, dark | 4.54:1 | 4.5 |
-| `accent` on `surface-2`, dark | 4.71:1 | 4.5 |
-| White on `accent-fill`, dark | 5.26:1 | 4.5 |
+| `ink-3` on `surface-2`, dark | 4.64:1 | 4.5 |
+| `accent` on `surface-2`, dark | 4.96:1 | 4.5 |
+| White on `accent-fill`, dark | 5.24:1 | 4.5 |
 | Category glyph on its own wash, light | 3.04:1 | 3 |
-| `accent-fill` on `bg`, dark | 3.66:1 | 3 |
+| Category glyph on its own wash, dark, worst case | 3.68:1 | 3 |
 | White symbol on a map pin | 3.93:1 | 3 |
 
+Dark `ink-3` is `#8d95a7` rather than the lighter-looking `#8a92a4` the handoff
+proposed, because `#8a92a4` measures 4.47:1 on `surface-2` and fails 1.4.3 by a
+hair. The map pin is unchanged in both themes: the pins use the light mid-tones,
+so the revised dark palette does not touch that number.
+
 Two things are deliberately below 3:1 and are exempt rather than overlooked:
-the hairlines (1.22:1 dark, 1.24:1 light). They are decorative dividers, not
+the hairlines (1.33:1 dark, 1.24:1 light). They are decorative dividers, not
 component boundaries. A card is identified by its surface against the page, not
 by its border, so removing every hairline would lose no information.
 
