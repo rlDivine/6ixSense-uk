@@ -7,6 +7,7 @@ import { fetchTicketmaster } from "./sources/ticketmaster.js";
 import { fetchSkiddle } from "./sources/skiddle.js";
 import { fetchSportsFixtures } from "./sources/sportsfixtures.js";
 import { fetchCurated } from "./sources/curated.js";
+import { fetchCarBoots } from "./sources/carboots.js";
 import { fetchEventbrite } from "./sources/eventbrite.js";
 import { fetchPredictHQ } from "./sources/predicthq.js";
 import {
@@ -61,6 +62,12 @@ const SOURCE_IMPL = {
   curated: {
     label: "Local guide",
     run: (r) => Promise.resolve(fetchCurated({ lat: r.lat, lng: r.lng, radiusKm: r.radiusKm })),
+  },
+  // Like the guide, a table rather than a fetch, for the reasons set out at the
+  // top of sources/carboots.js. No feed carries car boot sales.
+  carboots: {
+    label: "Car boot sales",
+    run: (r) => Promise.resolve(fetchCarBoots({ lat: r.lat, lng: r.lng, radiusKm: r.radiusKm })),
   },
 };
 

@@ -72,8 +72,9 @@ Every UK region reports `"unit": "mi"`, so both clients display miles.
 | **Skiddle** | Free key (`SKIDDLE_API_KEY`) | REST, queried by lat/lng | UK-only listings: gigs, club nights, festivals, comedy, food |
 | **Football fixtures** | Free key (`THESPORTSDB_KEY`) | TheSportsDB REST | Premier League, Championship, League One, League Two and the Scottish Premiership |
 | **PredictHQ** | Free key (`PREDICTHQ_API_KEY`) | REST, `within` radius search, `country=GB` | Concerts, festivals, performing arts, expos, community listings, sport |
-| **Eventbrite UK** | No | `eventbrite.co.uk` discovery pages, embedded JSON-LD, 11 pages per town | Music, food, comedy, arts, film, sport, family, festivals, pop-ups, free events |
+| **Eventbrite UK** | No | `eventbrite.co.uk` discovery pages, embedded JSON-LD, 13 pages per town | Music, food, **food festivals and food expos**, comedy, arts, film, sport, family, festivals, pop-ups, free events |
 | **Local guide** | No | Built in | Real UK venues with regular programming |
+| **Car boot sales** | No | Built in | Car boot sales and boot fairs across all four nations, expanded from recurrence rules into dates |
 
 Ticketmaster is pinned to GB so a radius search from the Kent coast or Northern
 Ireland cannot pull in French or Irish listings. Skiddle takes its radius in

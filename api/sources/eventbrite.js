@@ -25,6 +25,14 @@ function queriesFor(site) {
   const base = `https://${site.host}/d/${site.slug}`;
   return [
     { category: "Music", url: `${base}/music--events/` },
+    // Eventbrite crosses a category with a *format*, and "festivals" as a
+    // format is where food festivals actually live. Neither of the two plain
+    // verticals below finds them reliably: the food one is dominated by
+    // tastings, supper clubs and classes, the festivals one by music. Hence
+    // this pair, listed first so it wins the category on de-dupe. "Fair" is
+    // not a format of its own on Eventbrite; it is folded into festivals.
+    { category: "Food festival", url: `${base}/food-and-drink--festivals/` },
+    { category: "Food expo", url: `${base}/food-and-drink--expos/` },
     { category: "Food & Drink", url: `${base}/food-and-drink--events/` },
     { category: "Festival", url: `${base}/festivals--events/` },
     { category: "Comedy", url: `${base}/performing-and-visual-arts--comedy--events/` },

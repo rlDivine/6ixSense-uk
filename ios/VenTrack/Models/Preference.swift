@@ -23,7 +23,11 @@ enum Preferences {
         // word British listings actually use for a scheduled match.
         .init(id: "sports",    label: "Sports",           emoji: "⚽️", keywords: ["sport", "football", "rugby", "cricket", "netball", "athletics", "boxing", "darts", "snooker", "racing", "match", "fixture", "league"]),
         .init(id: "free",      label: "Free Events",      emoji: "🎟️", keywords: ["free"]),
-        .init(id: "popup",     label: "Pop-ups & Markets", emoji: "🎁", keywords: ["pop-up", "popup", "market", "bazaar"]),
+        // "boot" covers both British names for the same Sunday morning: a car
+        // boot sale everywhere, a boot fair in Kent and Sussex. Matched against
+        // the title as well as the category, so a listing called "Ashford
+        // Market Boot Fair" reaches this interest whichever source found it.
+        .init(id: "popup",     label: "Pop-ups & Markets", emoji: "🎁", keywords: ["pop-up", "popup", "market", "bazaar", "boot", "jumble", "flea"]),
         .init(id: "family",    label: "Family",           emoji: "🎡", keywords: ["family", "kid", "child"]),
         // Tours folded into Museums when the category vocabulary was unified,
         // so the old keywords (tour, walk, outdoor, hike, park) matched no

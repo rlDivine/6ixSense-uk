@@ -245,12 +245,27 @@ final class AppState: NSObject, ObservableObject {
     }
 
     /// True if the event matches the user's chosen interests (or if none chosen).
+    ///
+    /// Matched against the title as well as the category, because a category is
+    /// a single choice and plenty of events honestly belong to two interests. A
+    /// food festival is the clearest case: the API files it under Food, which is
+    /// the more useful of the two buckets to browse, but someone who picked
+    /// Festivals and nothing else still wants to see it. The title says
+    /// "festival" and now that is enough.
+    ///
+    /// The keywords are specific enough to survive the wider net. The one to
+    /// watch is "free", which is why that interest is answered by the event's
+    /// own price flag above and never by a keyword: "free" appears in the title
+    /// of plenty of events that are not.
     func matchesPreferences(_ e: Event) -> Bool {
         guard !preferredCategories.isEmpty else { return true }
         let cat = e.category.lowercased()
+        let title = e.title.lowercased()
         for pref in Preferences.with(ids: preferredCategories) {
-            if pref.id == "free" && e.isFree { return true }
-            if pref.keywords.contains(where: { cat.contains($0) }) { return true }
+            if pref.id == "free" { if e.isFree { return true }; continue }
+            if pref.keywords.contains(where: { cat.contains($0) || title.contains($0) }) {
+                return true
+            }
         }
         return false
     }

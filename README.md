@@ -79,8 +79,9 @@ capital.
 | **Skiddle** | Free key (`SKIDDLE_API_KEY`) | REST, queried by lat/lng | UK-only listings: gigs, club nights, festivals, comedy, food. Coordinates and prices in pounds on every result |
 | **Football fixtures** | Free key (`THESPORTSDB_KEY`) | TheSportsDB REST | Upcoming fixtures in the Premier League, Championship, League One, League Two and the Scottish Premiership |
 | **PredictHQ** | Free key (`PREDICTHQ_API_KEY`) | REST, `within` radius search, `country=GB` | Concerts, festivals, performing arts, expos, community listings, sport |
-| **Eventbrite UK** | No | `eventbrite.co.uk` discovery pages, JSON-LD, 11 pages per town | Music, food, comedy, arts, film, sport, family, festivals, pop-ups, free events |
+| **Eventbrite UK** | No | `eventbrite.co.uk` discovery pages, JSON-LD, 13 pages per town | Music, food, **food festivals and food expos**, comedy, arts, film, sport, family, festivals, pop-ups, free events |
 | **Local guide** | No | Built in | Real UK venues with regular programming |
+| **Car boot sales** | No | Built in | Real car boot sales and boot fairs UK-wide, with admission, opening time and season |
 
 Every keyed source returns nothing at all when its key is unset, so the app
 works with none of them configured. Skiddle is the one worth setting first: it
@@ -92,6 +93,41 @@ its own, so those cards get drawn category artwork like any other listing with
 no photo; what it adds is the long tail of expos and community events the
 ticketing sources never carry, plus, sometimes, a real description rather than
 the generic fallback text.
+
+### Car boot sales and food festivals
+
+Two things people look for on a British weekend that no feed carries properly.
+
+**Food festivals** are on Eventbrite, but not where you would think. The plain
+food vertical is mostly tastings, supper clubs and classes, and the plain
+festivals vertical is mostly music, so a food festival reliably falls between
+them. Eventbrite crosses a category with a *format*, and it is that crossing,
+`food-and-drink--festivals` and `food-and-drink--expos`, that actually returns
+them. Both are scraped now, ahead of the two plain verticals so they win the
+category on de-dupe.
+
+**Car boot sales** are not on any feed at all, and the reason is worth stating
+because it is the argument for how they are done here. Ticketmaster and Skiddle
+sell tickets; a boot sale is cash at the gate. Eventbrite carries a few dozen
+nationally against the several hundred that run. The directories that do list
+them publish no JSON-LD, no API and no coordinates, and distance is the whole
+premise of this app. Most of all, a boot sale is not an event: it is a
+recurrence rule with a season, and any source would have to expand
+"every Sunday, Easter to October" into dates itself.
+
+So `api/sources/carboots.js` is a table, the same bargain `curated.js` makes,
+and it expands those rules into real dates: weekly, fortnightly against an
+anchor date, or the first Sunday of the month; a per-sale season, because most
+outdoor sales stop for the winter and the indoor and hardstanding ones do not;
+per-date exclusions, because York does not run on racing Saturdays. Times are
+when **buyers** are let in, not when sellers set up. A sale whose dates cannot
+be stated as a rule is left out rather than guessed at, and the ones left out
+are named in the file so nobody re-adds them.
+
+Both land in the existing **Markets** and **Food** buckets rather than new
+categories, and `categoryFromTitle` in `api/sources/util.js` puts them there no
+matter which source found them: a title that says "car boot sale" or "beer
+festival" now beats whatever shelf the source filed it under.
 
 ## Design
 

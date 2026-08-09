@@ -17,8 +17,9 @@ import { distanceKm } from "./util.js";
 //                 (needs a free key)
 // - eventbrite:   scraped per eventbrite.co.uk town slug
 // - curated:      built-in guide of UK venues near the region
+// - carboots:     built-in table of UK car boot sales, expanded into dates
 //
-// Every UK region runs all six. The keyed sources return nothing at all when
+// Every UK region runs all seven. The keyed sources return nothing at all when
 // their key is unset, so the app still works with none configured. Eventbrite
 // is a per-town scrape, and a town with no Eventbrite page simply contributes
 // nothing rather than failing the request.
@@ -28,7 +29,7 @@ import { distanceKm } from "./util.js";
 // Skiddle carry a real ticket link and price, so they are listed ahead of
 // PredictHQ, which carries neither, so that a duplicate resolves to the more
 // useful copy of the two.
-const UK_SOURCES = ["ticketmaster", "skiddle", "fixtures", "predicthq", "eventbrite", "curated"];
+const UK_SOURCES = ["ticketmaster", "skiddle", "fixtures", "predicthq", "eventbrite", "curated", "carboots"];
 
 // A UK region. Every entry carries the county / council area / principal area
 // it sits in, and the nation, so the app's picker can group several hundred
