@@ -14,7 +14,7 @@ import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ICONSET = path.join(__dirname, "..", "Pulse", "Assets.xcassets", "AppIcon.appiconset");
+const ICONSET = path.join(__dirname, "..", "VenTrack", "Assets.xcassets", "AppIcon.appiconset");
 
 const SIZE = 1024;
 const SS = 4; // supersampling factor. 4x gives clean antialiased curves
@@ -33,8 +33,8 @@ const VARIANTS = {
 
 // ---- the logo, on its 24x24 grid ------------------------------------------
 // "Beacon": a map pin with a pulse trace knocked out of it as a counter. These
-// numbers are the reference geometry documented in ios/Pulse/Design/Theme.swift
-// (PulseLogoGeometry) and reproduced in ios/tools/make_icon.swift and
+// numbers are the reference geometry documented in ios/VenTrack/Design/Theme.swift
+// (VenTrackLogoGeometry) and reproduced in ios/tools/make_icon.swift and
 // api/public/icon.svg, plus the inline brand mark in api/public/index.html.
 // Change one, change all five.
 //

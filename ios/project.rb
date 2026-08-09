@@ -1,35 +1,38 @@
-# Generates Pulse.xcodeproj from the Swift sources.
+# Generates VenTrack.xcodeproj from the Swift sources.
 # Run:  ruby project.rb       (requires the `xcodeproj` gem, bundled with Xcode tools)
 require 'xcodeproj'
 
 ROOT = __dir__
-proj_path = File.join(ROOT, 'Pulse.xcodeproj')
+proj_path = File.join(ROOT, 'VenTrack.xcodeproj')
 project = Xcodeproj::Project.new(proj_path)
 
-target = project.new_target(:application, 'Pulse', :ios, '17.0')
+target = project.new_target(:application, 'VenTrack', :ios, '17.0')
 
 # Add the source group + all Swift files
-group = project.main_group.new_group('Pulse', 'Pulse')
-Dir.glob(File.join(ROOT, 'Pulse', '**', '*.swift')).sort.each do |f|
+group = project.main_group.new_group('VenTrack', 'VenTrack')
+Dir.glob(File.join(ROOT, 'VenTrack', '**', '*.swift')).sort.each do |f|
   ref = group.new_reference(f)
   target.add_file_references([ref])
 end
 
 # Info.plist reference (not compiled)
-group.new_reference(File.join(ROOT, 'Pulse', 'Info.plist'))
+group.new_reference(File.join(ROOT, 'VenTrack', 'Info.plist'))
 
 # Asset catalog (app icon), added as a resource so the xcassets is compiled.
-assets = group.new_reference(File.join(ROOT, 'Pulse', 'Assets.xcassets'))
+assets = group.new_reference(File.join(ROOT, 'VenTrack', 'Assets.xcassets'))
 target.add_resources([assets])
 
 # Build settings on every configuration
 target.build_configurations.each do |config|
   s = config.build_settings
-  # A new bundle id: Pulse is a separate App Store product from 6ix Sense, not
+  # A new bundle id: VenTrack is a separate App Store product from 6ix Sense, not
   # an update to it, so it must not reuse com.voice2jobs.6ixsense.
-  s['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.voice2jobs.pulseuk'
+  # Changing this from com.voice2jobs.pulseuk likewise makes VenTrack a distinct
+  # product rather than an update to the old one, which is the point: it ships
+  # as its own App Store listing with its own installs and reviews.
+  s['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.voice2jobs.ventrackuk'
   s['PRODUCT_NAME'] = '$(TARGET_NAME)'
-  s['INFOPLIST_FILE'] = 'Pulse/Info.plist'
+  s['INFOPLIST_FILE'] = 'VenTrack/Info.plist'
   s['GENERATE_INFOPLIST_FILE'] = 'NO'
   s['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
   s['SWIFT_VERSION'] = '5.0'
@@ -37,7 +40,7 @@ target.build_configurations.each do |config|
   # run the app in scaled-iPhone compatibility mode, so the regular-width
   # sidebar layout in Views/iPad never activates. That is what got 6ix Sense
   # build 1.0 (1) rejected under Guideline 4, Design (reviewed on an iPad Air
-  # 11-inch); Pulse inherits the same layout and the same requirement.
+  # 11-inch); VenTrack inherits the same layout and the same requirement.
   s['TARGETED_DEVICE_FAMILY'] = '1,2'      # iPhone + iPad
   s['CODE_SIGN_STYLE'] = 'Automatic'
   # NOTE: do NOT force CODE_SIGNING_ALLOWED=NO here. It breaks signing in the

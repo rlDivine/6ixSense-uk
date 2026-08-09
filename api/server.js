@@ -286,7 +286,7 @@ app.get("/api/events", async (req, res) => {
       origin,
       region: publicRegion(region),
       // False when the caller sent a coordinate outside the UK. The app uses
-      // it to say "showing London, Pulse covers the UK" rather than silently
+      // it to say "showing London, VenTrack covers the UK" rather than silently
       // pretending the user is in the capital.
       inMarket,
       sort,
@@ -317,7 +317,7 @@ function timeRank(a, b) {
 app.use(express.static(path.join(__dirname, "public")));
 
 app.listen(PORT, () => {
-  console.log(`\n  Pulse UK running at http://localhost:${PORT}`);
+  console.log(`\n  VenTrack UK running at http://localhost:${PORT}`);
   console.log(
     process.env.TM_API_KEY
       ? "  Ticketmaster: ON (live ticketed events enabled)"

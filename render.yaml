@@ -1,4 +1,4 @@
-# Render blueprint for the Pulse UK backend.
+# Render blueprint for the VenTrack UK backend.
 #
 # This file has to live at the REPOSITORY ROOT: Render's Blueprint flow only
 # looks here, and it will not find a render.yaml nested inside a subdirectory.
@@ -9,6 +9,22 @@
 # things you set by hand, in the dashboard, after the first deploy.
 services:
   - type: web
+    # DO NOT RENAME THIS. It is not the product name, it is the identity of a
+    # live Render web service, and Render derives the public hostname from it:
+    # this service is reachable at https://pulse-uk-api.onrender.com, and the
+    # iOS client pins `productionURL` in EventService.swift to exactly that
+    # host. The product was renamed from Pulse to VenTrack; this deployment
+    # identity deliberately was not, because changing the string here does not
+    # rename a service, it mints a different one on a different URL and takes
+    # the deployed backend offline.
+    #
+    # Renaming it properly is a four-step migration, done on purpose and not as
+    # tidying: create a new Render service under the new name, copy the four
+    # API keys (TM_API_KEY, SKIDDLE_API_KEY, THESPORTSDB_KEY, PREDICTHQ_API_KEY)
+    # across to it, update `productionURL` in the iOS app to the new host and
+    # ship that build, and accept that every client still on the old build keeps
+    # calling the old URL until it is updated. Until someone does all four, this
+    # line stays as it is.
     name: pulse-uk-api
     runtime: docker
 

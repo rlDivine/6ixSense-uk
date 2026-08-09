@@ -8,13 +8,21 @@ import CoreLocation
 /// means the phone itself. Find the IP with `ipconfig getifaddr en0`.
 /// If your Mac's IP changes (new Wi-Fi network), update `macLAN_IP` below.
 enum EventService {
-    /// PRODUCTION: the deployed Pulse UK backend (see `api/render.yaml`, which
+    /// PRODUCTION: the deployed VenTrack UK backend (see `api/render.yaml`, which
     /// names the service `pulse-uk-api`). When set, every device uses it:
     /// simulator, your iPhone, any App Store user, and your Mac is no longer
     /// involved. Leave it empty to use the local Mac during development.
     ///
-    /// This must point at a Pulse deployment: the 6ix Sense backend serves
+    /// This must point at a VenTrack deployment: the 6ix Sense backend serves
     /// Toronto and is a separate product.
+    ///
+    /// The host still says `pulse-uk-api` and that is deliberate. It is the
+    /// identity of a deployed Render service, not the product name: the URL is
+    /// derived from the service name, so renaming the service mints a brand new
+    /// URL and takes every installed app offline until it is updated. Moving to
+    /// a ventrack host means creating a new Render service and carrying the
+    /// four configured API keys across to it, which is a separate deliberate
+    /// migration and not part of the product rename.
     private static let productionURL = "https://pulse-uk-api.onrender.com"
 
     /// DEV ONLY: your Mac's Wi-Fi IP, for running on a physical iPhone at home.

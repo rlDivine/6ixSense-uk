@@ -1,4 +1,4 @@
-# Deploying the Pulse UK backend to Render
+# Deploying the VenTrack UK backend to Render
 
 This runs the event API in the cloud so the iOS app, and every App Store user,
 pulls from one shared server. Your Mac is no longer involved.
@@ -18,9 +18,11 @@ here: Render's Blueprint flow only reads it from the root, and a copy inside
 2. Go to <https://dashboard.render.com> and choose **New**, then **Blueprint**.
 3. Connect your GitHub and pick the repo and the `main` branch. Render reads
    `render.yaml` **from the repository root** and creates the **pulse-uk-api**
-   web service. `dockerContext` in that file points down into `api/`, so the
-   image only ever contains the backend, not the iOS app.
-4. Render prompts for the three keys below; paste them in, or leave them blank
+   web service. That name is the app's old one and is kept on purpose; see
+   [The service name](#the-service-name-stays-pulse-uk-api) below.
+   `dockerContext` in that file points down into `api/`, so the image only ever
+   contains the backend, not the iOS app.
+4. Render prompts for the four keys below; paste them in, or leave them blank
    and set them later in **Environment**.
 5. Click **Apply**. First build takes ~2 min.
 6. When it's live, copy the URL (e.g. `https://pulse-uk-api.onrender.com`).
@@ -47,8 +49,36 @@ quickest way to check a deploy picked them up.
 Optionally set `WARM_REGIONS` to change which towns stay pre-warmed. The
 default is `london,manchester,birmingham,glasgow`.
 
+## The service name stays `pulse-uk-api`
+
+The product was renamed from Pulse to VenTrack. The Render service was not, and
+that is deliberate rather than an oversight.
+
+On Render, `name:` in `render.yaml` is the service's identity and the source of
+its public hostname. This service is live at `https://pulse-uk-api.onrender.com`
+with the four API keys set on it, and the iOS app's `productionURL` is pinned to
+that exact host. Editing the string does not relabel the running service: the
+blueprint would create a *second* service on a *different* URL, and every
+shipped client would keep calling a host that is no longer being deployed to.
+
+So the old name is correct wherever it appears in these instructions, and every
+`pulse-uk-api.onrender.com` URL here is a real address rather than a leftover.
+
+Renaming it for real is a migration rather than a tidy-up, and it takes all
+four of these steps:
+
+1. Create a new Render service under the new name, from the same blueprint.
+2. Copy the four API keys (`TM_API_KEY`, `SKIDDLE_API_KEY`, `THESPORTSDB_KEY`,
+   `PREDICTHQ_API_KEY`) across to it and confirm with `GET /api/status`.
+3. Update `productionURL` in `ios/VenTrack/Services/EventService.swift` to the
+   new host and ship that build.
+4. Accept the new URL, and keep the old service running until enough users have
+   taken the new build, since older installs will keep calling the old host.
+
+Until someone does all four on purpose, leave `name: pulse-uk-api` alone.
+
 ## Point the app at it
-In `ios/Pulse/Services/EventService.swift`, set:
+In `ios/VenTrack/Services/EventService.swift`, set:
 
 ```swift
 private static let productionURL = "https://pulse-uk-api.onrender.com"

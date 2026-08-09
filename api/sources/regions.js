@@ -1,6 +1,6 @@
 // Region catalogue + resolution.
 //
-// Pulse serves the United Kingdom and nothing else, so every region in here is
+// VenTrack serves the United Kingdom and nothing else, so every region in here is
 // a UK town or city. A request resolves to a *region* first, and each region
 // has its own source list and its own cache entry.
 //
@@ -548,7 +548,7 @@ export function nearestCity(lat, lng) {
 // How far from the nearest listed town a coordinate can be and still count as
 // "in the UK". The catalogue is dense enough that anywhere in the country is
 // well inside this; the allowance is for offshore waters and the far reaches of
-// the Northern Isles. Beyond it the user is abroad, and Pulse, being a UK-only
+// the Northern Isles. Beyond it the user is abroad, and VenTrack, being a UK-only
 // product, shows them London rather than a market it does not cover.
 const OUT_OF_MARKET_KM = 250;
 
@@ -563,7 +563,7 @@ export function resolveRegion(lat, lng) {
   return DEFAULT_REGION;
 }
 
-/// Whether a coordinate falls inside the market Pulse serves. The app uses the
+/// Whether a coordinate falls inside the market VenTrack serves. The app uses the
 /// answer (via /api/events) to explain why an overseas user is seeing London.
 export function isInMarket(lat, lng) {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
@@ -582,7 +582,7 @@ export function publicRegion(r) {
     timeZone: r.timeZone,
     unit: r.unit,
     center: { lat: r.lat, lng: r.lng },
-    // Kept so older builds of the app still decode. Pulse only ever serves
+    // Kept so older builds of the app still decode. VenTrack only ever serves
     // curated UK regions, so it is always false.
     generic: false,
   };

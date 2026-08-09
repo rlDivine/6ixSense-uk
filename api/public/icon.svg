@@ -1,7 +1,7 @@
-<!-- Pulse mark, "Beacon": a map pin with a pulse trace knocked out of it as a
+<!-- VenTrack mark, "Beacon": a map pin with a pulse trace knocked out of it as a
      counter. The trace is a constant width stroke masked out of the pin, so it
      is a real hole and the tile colour shows through it.
-     The geometry matches PulseLogoGeometry in ios/Pulse/Design/Theme.swift,
+     The geometry matches VenTrackLogoGeometry in ios/VenTrack/Design/Theme.swift,
      the rasterisers in ios/tools/make_icon.js and ios/tools/make_icon.swift,
      and the inline brand mark in index.html. Change one, change all five.
 
@@ -17,15 +17,15 @@
      Drawn on a 24 grid, scaled by 512/24 * 0.62 and centred. The tile is
      accent-fill with the mark knocked out in white. Flat colour throughout:
      no gradient, no shadow, no rounded rectangle, the platform masks it. -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Pulse">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="VenTrack">
   <defs>
-    <mask id="pulse-trace-icon">
+    <mask id="ventrack-trace-icon">
       <path fill="#FFFFFF" d="M12 1.8a8.2 8.2 0 0 0-8.2 8.2c0 5.9 7.2 12 7.5 12.3a1.1 1.1 0 0 0 1.4 0c.3-.3 7.5-6.4 7.5-12.3A8.2 8.2 0 0 0 12 1.8Z"/>
       <path fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M6.6 10.2H9.4L10.9 6.2L12.9 12.6L14 9.4H17.4"/>
     </mask>
   </defs>
   <rect width="512" height="512" fill="#C8102E"/>
   <g transform="translate(256 256) scale(13.226667) translate(-12 -12)">
-    <path fill="#FFFFFF" mask="url(#pulse-trace-icon)" d="M12 1.8a8.2 8.2 0 0 0-8.2 8.2c0 5.9 7.2 12 7.5 12.3a1.1 1.1 0 0 0 1.4 0c.3-.3 7.5-6.4 7.5-12.3A8.2 8.2 0 0 0 12 1.8Z"/>
+    <path fill="#FFFFFF" mask="url(#ventrack-trace-icon)" d="M12 1.8a8.2 8.2 0 0 0-8.2 8.2c0 5.9 7.2 12 7.5 12.3a1.1 1.1 0 0 0 1.4 0c.3-.3 7.5-6.4 7.5-12.3A8.2 8.2 0 0 0 12 1.8Z"/>
   </g>
 </svg>

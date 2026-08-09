@@ -1,10 +1,10 @@
-# Pulse: design brief
+# VenTrack: design brief
 
-A brief for designing the Pulse interface for the United Kingdom market.
+A brief for designing the VenTrack interface for the United Kingdom market.
 
 The app is built and working. This document exists so a designer can take it
 somewhere better without having to reverse-engineer the intent from the code.
-It describes what Pulse is, who uses it, what has already been decided and why,
+It describes what VenTrack is, who uses it, what has already been decided and why,
 what is deliberately a placeholder, and where the real design work is.
 
 Read it alongside the running app: `cd api && npm start`, then open
@@ -15,7 +15,7 @@ current state, not a mockup.
 
 ## 1. The product
 
-Pulse answers one question: **what is on near me, soon?**
+VenTrack answers one question: **what is on near me, soon?**
 
 Someone opens it with a free evening and no plan. They want a scannable list of
 real things happening tonight or this weekend, close enough to get to, with
@@ -97,7 +97,7 @@ background. No single value does both. On light, Pantone 186 already carries
 white at 5.9:1, so the two tokens are the same and the split costs nothing.
 
 Defined in two places that must stay in step: `api/public/styles.css` (the
-`:root` and `[data-theme="light"]` blocks) and `ios/Pulse/Design/Theme.swift`
+`:root` and `[data-theme="light"]` blocks) and `ios/VenTrack/Design/Theme.swift`
 (`enum Tok`).
 
 **Contrast, audited.** Every token pair was checked against WCAG 2.1 using
@@ -179,6 +179,11 @@ A map pin with a pulse trace knocked out of it as a counter, drawn as a single
 path filled even-odd. It is the handoff's option **1b, Beacon**, and it replaced
 the first pass at an identity, option 1a, a filled dot under two rising arcs.
 
+"Pulse trace" here names the heartbeat line in the artwork, not the product. It
+was a pun on the old name and is now just a description of the shape, so it
+survives the rename to VenTrack and should not be edited out of the drawing
+code or of this section.
+
 The handoff recommended 1a and the recommendation was reasonable: three
 separated shapes hold together at small sizes better than a silhouette with a
 counter cut out of it does. It was rejected anyway, because in the app it read
@@ -197,8 +202,8 @@ a preference.
 One geometry, mirrored by hand in **five** places, all of which have to move
 together:
 
-- `ios/Pulse/Design/Theme.swift`, `PulseLogoGeometry`, the in-app mark as a
-  SwiftUI `Shape`
+- `ios/VenTrack/Design/Theme.swift`, `VenTrackLogoGeometry`, the in-app mark as
+  a SwiftUI `Shape`
 - `ios/tools/make_icon.js`, which rasterises the App Store icons
 - `ios/tools/make_icon.swift`, the CoreGraphics twin of that tool
 - `api/public/icon.svg`, the PWA and home screen icon
@@ -251,7 +256,7 @@ artwork sits underneath it and shows through rather than leaving an empty box.
 The map tray card and the iOS card do the same; anything new that shows a photo
 should too.
 
-The artwork is set out in `ios/Pulse/Design/CategoryArtwork.swift`, which is the
+The artwork is set out in `ios/VenTrack/Design/CategoryArtwork.swift`, which is the
 reference for both clients. Twelve motifs, each a composition rather than an
 enlarged icon, because a column of identical music notes still reads as missing
 data: an equaliser for music, bunting for festivals, pitch markings for
@@ -298,11 +303,11 @@ plain; they are a good place to add character.
 ## 6. Deliberately placeholder
 
 **The wordmark.** There is a mark, described above, and it is a real decision.
-There is no drawn wordmark to go beside it: "Pulse" is set in the system font
-like any other page title. A mark without a wordmark is half an identity.
+There is no drawn wordmark to go beside it: "VenTrack" is set in the system
+font like any other page title. A mark without a wordmark is half an identity.
 
-**The name.** "Pulse" was chosen quickly. It is not researched and not
-trademark-cleared.
+**The name.** "VenTrack" is recent and replaced the working name "Pulse". It is
+not researched and not trademark-cleared.
 
 **The category icon set.** Twelve hand-drawn line icons on the web
 (`ICON_PATHS` in `app.js`) paired with SF Symbols on iOS. They are serviceable
@@ -329,13 +334,13 @@ In rough order of value:
 
 | You want to change | Web | iOS |
 |---|---|---|
-| Colour tokens | `api/public/styles.css` top block | `ios/Pulse/Design/Theme.swift`, `enum Tok` |
+| Colour tokens | `api/public/styles.css` top block | `ios/VenTrack/Design/Theme.swift`, `enum Tok` |
 | Category colours and icons | `CATS` and `ICON_PATHS` in `api/public/app.js` | `Categories` in `Theme.swift` |
 | Interface icons | `UI_ICONS` in `api/public/app.js` | SF Symbol names inline |
-| The card | `cardHTML` in `app.js`, `.card` in `styles.css` | `ios/Pulse/Views/EventCard.swift` |
-| No-photo artwork | the card renderer in `app.js` and `.card` art rules in `styles.css` | `ios/Pulse/Design/CategoryArtwork.swift` |
-| The logo | `api/public/icon.svg` **and** the inline brand mark in `api/public/index.html` | `PulseLogoGeometry` in `Theme.swift`, then `node ios/tools/make_icon.js`, keeping `make_icon.swift` in step |
-| Screen layout | `api/public/index.html` | `ios/Pulse/Views/` |
+| The card | `cardHTML` in `app.js`, `.card` in `styles.css` | `ios/VenTrack/Views/EventCard.swift` |
+| No-photo artwork | the card renderer in `app.js` and `.card` art rules in `styles.css` | `ios/VenTrack/Design/CategoryArtwork.swift` |
+| The logo | `api/public/icon.svg` **and** the inline brand mark in `api/public/index.html` | `VenTrackLogoGeometry` in `Theme.swift`, then `node ios/tools/make_icon.js`, keeping `make_icon.swift` in step |
+| Screen layout | `api/public/index.html` | `ios/VenTrack/Views/` |
 
 The web client is the faster loop and renders in a headless browser, so it is
 the sensible place to try something before porting it to SwiftUI.

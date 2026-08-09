@@ -26,7 +26,7 @@ final class AppState: NSObject, ObservableObject {
     // Leeds events.
     @Published var region: Region?
 
-    /// False once we learn the device is outside the UK. Pulse covers the UK
+    /// False once we learn the device is outside the UK. VenTrack covers the UK
     /// only: the backend serves London in that case, and the app says so
     /// instead of labelling those listings "near you".
     @Published var inMarket = true

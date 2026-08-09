@@ -559,7 +559,7 @@ struct EventMapKit: UIViewRepresentable {
                      forAnnotationViewWithReuseIdentifier: UserDotView.reuseID)
         map.register(ClusterPinView.self,
                      forAnnotationViewWithReuseIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier)
-        // London until the feed says otherwise. Pulse serves the UK, so opening
+        // London until the feed says otherwise. VenTrack serves the UK, so opening
         // on anywhere else is a bug the user sees before the first fetch lands.
         map.setRegion(MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 51.5074, longitude: -0.1278),

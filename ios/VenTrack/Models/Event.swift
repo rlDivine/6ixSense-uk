@@ -122,7 +122,7 @@ struct EventsResponse: Codable {
     let count: Int
     let sources: [String]
     let region: Region?
-    /// False when the coordinate we sent was outside the UK. Pulse covers the
+    /// False when the coordinate we sent was outside the UK. VenTrack covers the
     /// UK only, so the backend serves London and says so rather than pretending
     /// the user is there. Optional so an older backend still decodes.
     let inMarket: Bool?

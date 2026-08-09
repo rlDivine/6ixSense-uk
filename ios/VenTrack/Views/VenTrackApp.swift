@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 
 @main
-struct PulseApp: App {
+struct VenTrackApp: App {
     @StateObject private var app = AppState()
 
     init() { Chrome.apply() }
@@ -84,7 +84,7 @@ enum Chrome {
     ///
     /// Main actor because `UITabBar.appearance()` is a class method on a UIView
     /// subclass, and those are main-actor isolated in the SDK. The only caller
-    /// is `PulseApp.init()`, which is already on the main actor by way of the
+    /// is `VenTrackApp.init()`, which is already on the main actor by way of the
     /// `App` protocol, so the annotation costs nothing.
     @MainActor static func apply() {
         let bar = UITabBarAppearance()
@@ -186,8 +186,8 @@ struct BrandStrip: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            PulseLogoView(size: 18)
-            Text("Pulse")
+            VenTrackLogoView(size: 18)
+            Text("VenTrack")
                 .font(.system(size: 15, weight: .bold))
                 .foregroundStyle(Tok.text)
             Spacer(minLength: 8)

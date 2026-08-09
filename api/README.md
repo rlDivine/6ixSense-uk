@@ -1,4 +1,4 @@
-# Pulse UK: backend and web app
+# VenTrack UK: backend and web app
 
 Aggregates events from across the United Kingdom and sorts them by **how close
 they are to you** and **how soon they start**. Serves both the JSON API the iOS
@@ -112,7 +112,7 @@ slug.
 
 A request resolves to the **nearest** listed town. More than 250 km from any of
 them means the caller is abroad: they get London, and `inMarket: false` so the
-clients can explain why. There are no generic worldwide cells, because Pulse
+clients can explain why. There are no generic worldwide cells, because VenTrack
 covers the UK and says so.
 
 Adding a town is one line in `sources/regions.js`. It appears in the app's
@@ -167,7 +167,7 @@ public/                 The PWA, served from the same origin
   support.html          Support page
 .env.example            The optional keys, with the signup URL for each
 Dockerfile              Node 20 image, the one Render builds
-render.yaml             Render blueprint (see DEPLOY.md)
+../render.yaml          Render blueprint, at the repository root (see DEPLOY.md)
 ```
 
 Leaflet itself is loaded from a CDN by `index.html`, not bundled, and `sw.js`
@@ -190,7 +190,7 @@ An event with no usable photograph is not left with an empty thumbnail. It gets
 drawn artwork instead: one composition per category, flat shapes in the category
 colour over its wash, with the category mark in the corner, and a layout derived
 from the event id so it does not change between renders. The design and the
-twelve motifs are set out in `../ios/Pulse/Design/CategoryArtwork.swift`, which
+twelve motifs are set out in `../ios/VenTrack/Design/CategoryArtwork.swift`, which
 both clients follow.
 
 The brand mark in the page header is an inline `<svg>` in `public/index.html`,

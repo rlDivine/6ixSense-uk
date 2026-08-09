@@ -1,5 +1,5 @@
 /* ============================================================
-   Pulse. Mobile-first PWA.
+   VenTrack. Mobile-first PWA.
 
    Palette: the Union flag, used with discipline rather than evenly. Navy
    (Pantone 280) is the interface colour and does the work of every selected
@@ -175,7 +175,7 @@ button { font-family: inherit; cursor: pointer; }
 /* ---- Sort control ----
    Matched one to one with 6ix Sense at the user's request: a bordered inline
    well with the live segment filled in the accent, rather than the flat
-   two-up well the Pulse handoff specified. The emoji in the two labels are
+   two-up well the VenTrack handoff specified. The emoji in the two labels are
    part of that match and are the deliberate exception to the web client's
    otherwise no-emoji rule. */
 .segmented {

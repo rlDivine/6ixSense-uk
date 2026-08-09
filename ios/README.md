@@ -1,4 +1,4 @@
-# Pulse: native iOS app (SwiftUI)
+# VenTrack: native iOS app (SwiftUI)
 
 A native **SwiftUI** app for iPhone and iPad that shows what's on across the
 United Kingdom, sorted by how close and how soon. It is a **client** for the
@@ -6,15 +6,15 @@ Express backend in [`../api`](../api). The backend does the aggregation and
 the distance and time sorting, and the app renders it natively.
 
 > A phone can't scrape event sites on-device, so the architecture is
-> **SwiftUI app talking to the Pulse API**. The backend must be reachable
+> **SwiftUI app talking to the VenTrack API**. The backend must be reachable
 > while the app runs.
 
 ## Open in Xcode
 
 ```bash
 cd ios
-ruby project.rb          # (re)generate Pulse.xcodeproj from the Swift sources
-open Pulse.xcodeproj
+ruby project.rb          # (re)generate VenTrack.xcodeproj from the Swift sources
+open VenTrack.xcodeproj
 ```
 
 `project.rb` needs the `xcodeproj` gem (`gem install xcodeproj`). The generated
@@ -27,9 +27,9 @@ Pick an iPhone or iPad simulator and hit Cmd-R.
 
 1. Plug the phone in (or pair it wirelessly: **Window, then Devices and
    Simulators**), unlock it, and tap **Trust** if iOS asks.
-2. In Xcode, select the **Pulse** scheme and your phone as the run
+2. In Xcode, select the **VenTrack** scheme and your phone as the run
    destination, top left, instead of a simulator.
-3. Open the **Pulse** target's **Signing & Capabilities** tab and check
+3. Open the **VenTrack** target's **Signing & Capabilities** tab and check
    **Team**. `project.rb` sets a `DEVELOPMENT_TEAM` value so regenerating the
    project does not blank it, but that value belongs to whoever's Apple
    account it was set from. Pick **your own** team from the dropdown; a free
@@ -57,8 +57,14 @@ private static let macLAN_IP     = "192.168.18.5"
   Mac's Wi-Fi IP (`ipconfig getifaddr en0`), then run `npm start` in `../api`.
   HTTP to a LAN IP is permitted via `NSAllowsLocalNetworking` in `Info.plist`.
 
-`productionURL` must point at a **Pulse** deployment. The 6ix Sense backend
+`productionURL` must point at a **VenTrack** deployment. The 6ix Sense backend
 serves Toronto and is a different product.
+
+The host still reads `pulse-uk-api`, which is deliberate. That string is the
+name of a live Render service, and a Render URL is derived from the service
+name, so renaming the service mints a new URL and takes every installed app
+offline. Moving to a `ventrack` host means standing up a new service and
+carrying its four configured API keys across, which is its own migration.
 
 ## What's in the app
 
@@ -92,7 +98,7 @@ serves Toronto and is a different product.
 
 ## The logo
 
-`Design/Theme.swift` holds `PulseLogoGeometry`: a map pin with a pulse trace
+`Design/Theme.swift` holds `VenTrackLogoGeometry`: a map pin with a pulse trace
 knocked out of it as a counter, on a 24 by 24 grid, filled even-odd so the trace
 reads as a hole. It is a SwiftUI `Shape`, so there is no image asset to keep in
 sync at any size.
@@ -126,24 +132,24 @@ and the one a user sees most often.
 ## Structure
 
 ```
-Pulse/
+VenTrack/
   Models/Event.swift            Codable models matching the API JSON
   Models/PlaceOverride.swift    Manual location choice and the town catalogue
   Models/Preference.swift       Interest buckets and their keywords
   Models/DateQueryParser.swift  "this weekend", "25/7", "next friday"
   Services/EventService.swift   async URLSession client (baseURL here)
   State/AppState.swift          ObservableObject: fetch, filters, location, saved, reminders
-  Design/Theme.swift            Colour tokens, category palette, PulseLogo, date and distance helpers
+  Design/Theme.swift            Colour tokens, category palette, VenTrackLogo, date and distance helpers
   Design/CategoryArtwork.swift  The drawn thumbnail for an event with no photo: twelve motifs
-  Views/                        PulseApp.swift (also holds RootView and MainTabView),
+  Views/                        VenTrackApp.swift (also holds RootView and MainTabView),
                                 OnboardingView, DiscoverView, EventCard, EventMapView,
                                 SavedView, SearchView, EventDetailView,
                                 PreferencesView, RegionBrowserView, States
   Views/iPad/                   Regular-width shell, map pane, sidebar primitives
   Assets.xcassets/              AppIcon: the three 1024px PNGs and their Contents.json
   Info.plist                    Location usage string and the local-network ATS exceptions
-project.rb                      Regenerates Pulse.xcodeproj
-tools/make_icon.js|.swift       Generates the AppIcon PNGs from PulseLogoGeometry
+project.rb                      Regenerates VenTrack.xcodeproj
+tools/make_icon.js|.swift       Generates the AppIcon PNGs from VenTrackLogoGeometry
 ```
 
 ## Notes
@@ -154,9 +160,11 @@ tools/make_icon.js|.swift       Generates the AppIcon PNGs from PulseLogoGeometr
 - `TARGETED_DEVICE_FAMILY` must stay `1,2`. Shipping iPhone-only makes iPadOS
   run the app in scaled-compatibility mode, so the `Views/iPad` layout never
   activates, which is what got the 6ix Sense 1.0 (1) build rejected under
-  Guideline 4 (Design). Pulse inherits both the layout and the requirement.
-- Bundle id is `com.voice2jobs.pulseuk`, a new App Store product rather than an
-  update to 6ix Sense.
+  Guideline 4 (Design). VenTrack inherits both the layout and the requirement.
+- Bundle id is `com.voice2jobs.ventrackuk`, a new App Store product rather than
+  an update to 6ix Sense. It is also distinct from the old
+  `com.voice2jobs.pulseuk`, which is the point: VenTrack ships as its own
+  listing rather than as an update to the previous one.
 
 ## No emoji, no gradients
 

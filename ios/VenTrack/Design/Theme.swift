@@ -225,7 +225,7 @@ extension Categories {
     }
 }
 
-// MARK: - Pulse logo
+// MARK: - VenTrack logo
 //
 // "Beacon": a map pin with a pulse trace knocked out of it as a counter. The
 // pin says map at a glance, and the trace is what stops it being a stock
@@ -248,7 +248,7 @@ extension Categories {
 // Unlike the old mark this is a single filled outline with a hole in it, so
 // the even-odd rule is now load bearing rather than incidental.
 
-enum PulseLogoGeometry {
+enum VenTrackLogoGeometry {
     /// The pin's head. Both of the outline's long arcs ride this circle.
     static let headCentre = CGPoint(x: 12, y: 10)
     static let headRadius: CGFloat = 8.2
@@ -366,21 +366,21 @@ enum PulseLogoGeometry {
     }
 }
 
-struct PulseLogo: Shape {
+struct VenTrackLogo: Shape {
     /// The dot and the two arc outlines are disjoint, so even-odd and non-zero
     /// give the same result. Kept as a named style because the view passes it
     /// and because it is the safe rule if the geometry ever gains a hole.
     static let fillStyle = FillStyle(eoFill: true)
-    func path(in rect: CGRect) -> Path { PulseLogoGeometry.path(in: rect) }
+    func path(in rect: CGRect) -> Path { VenTrackLogoGeometry.path(in: rect) }
 }
 
 /// The logo as used in headers and on the onboarding screen.
-struct PulseLogoView: View {
+struct VenTrackLogoView: View {
     var size: CGFloat
     var color: Color = Tok.accent
     var body: some View {
-        PulseLogo()
-            .fill(color, style: PulseLogo.fillStyle)
+        VenTrackLogo()
+            .fill(color, style: VenTrackLogo.fillStyle)
             .frame(width: size, height: size)
             .accessibilityHidden(true)
     }
@@ -417,7 +417,7 @@ enum Fmt {
         if days < 7 { return "In \(days) days" }
         return d.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
     }
-    /// Whether distances render in miles. Pulse serves the UK, where road
+    /// Whether distances render in miles. VenTrack serves the UK, where road
     /// signs are in miles, so that is the default and what every region the
     /// API knows about reports back. It stays a variable only so the feed's
     /// own `unit` remains the authority if that ever changes.

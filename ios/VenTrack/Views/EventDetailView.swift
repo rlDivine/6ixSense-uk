@@ -125,7 +125,7 @@ struct EventDetailView: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// Most sources carry no description, so this says what Pulse actually
+    /// Most sources carry no description, so this says what VenTrack actually
     /// knows and points at the listing for the rest, rather than inventing
     /// copy. A source that does carry one (PredictHQ, for some categories) is
     /// worth more here than usual, precisely because that source often has no
@@ -414,10 +414,10 @@ enum CalendarFile {
         var lines: [String] = []
         lines.append("BEGIN:VCALENDAR")
         lines.append("VERSION:2.0")
-        lines.append("PRODID:-//Pulse//Pulse UK//EN")
+        lines.append("PRODID:-//VenTrack//VenTrack UK//EN")
         lines.append("CALSCALE:GREGORIAN")
         lines.append("BEGIN:VEVENT")
-        lines.append("UID:\(escape(event.id))@pulse.uk")
+        lines.append("UID:\(escape(event.id))@ventrack.uk")
         lines.append("DTSTAMP:\(stamp.string(from: Date()))")
         lines.append("DTSTART:\(stamp.string(from: start))")
         lines.append("DTEND:\(stamp.string(from: end))")
@@ -446,7 +446,7 @@ enum CalendarFile {
             CharacterSet.alphanumerics.contains(scalar) ? Character(scalar) : Character("-")
         }
         let stem = String(safe.prefix(40))
-        return "pulse-" + (stem.isEmpty ? "event" : stem) + ".ics"
+        return "ventrack-" + (stem.isEmpty ? "event" : stem) + ".ics"
     }
 
     private static func escape(_ s: String) -> String {

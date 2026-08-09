@@ -1,10 +1,10 @@
-# Pulse
+# VenTrack
 
 **What's on across the UK, right now.** Gigs, festivals, markets, comedy, arts
 and free events, anywhere in England, Wales, Scotland or Northern Ireland,
 sorted by **how close they are to you** and **how soon they start**.
 
-Pulse is a UK-market adaptation of the 6ix Sense product. It is a **separate
+VenTrack is a UK-market adaptation of the 6ix Sense product. It is a **separate
 app**, not a rebuild of that one: different name, different bundle id,
 different backend, different catalogue. The 6ix Sense repositories
 (`6ix-sense-api`, `6ix-sense-ios`) are the read-only source of the design and
@@ -25,8 +25,8 @@ npm start                # http://localhost:3000, API and web app
 
 # 2. iOS app
 cd ../ios
-ruby project.rb          # regenerates Pulse.xcodeproj (needs the xcodeproj gem)
-open Pulse.xcodeproj     # Cmd-R on an iPhone or iPad simulator
+ruby project.rb            # regenerates VenTrack.xcodeproj (needs the xcodeproj gem)
+open VenTrack.xcodeproj    # Cmd-R on an iPhone or iPad simulator
 ```
 
 The app works immediately with no API key. Add free keys for the full live
@@ -40,7 +40,7 @@ TM_API_KEY=... SKIDDLE_API_KEY=... THESPORTSDB_KEY=... PREDICTHQ_API_KEY=... npm
 
 This is the substance of the adaptation, not just a rename.
 
-| | 6ix Sense | Pulse |
+| | 6ix Sense | VenTrack |
 |---|---|---|
 | **Market** | Toronto, plus a UK catalogue | United Kingdom, exclusively |
 | **Regions** | Toronto, UK towns, generic worldwide cells | 454 curated UK towns, no generic cells |
@@ -52,7 +52,7 @@ This is the substance of the adaptation, not just a rename.
 | **Address search** | Global geocoding | Biased to the UK and rejects non-GB hits, so "Newport" is Wales, not Rhode Island |
 | **Sport keywords** | hockey, basketball, baseball | football, rugby, cricket, netball, darts, snooker |
 | **Warm regions** | `toronto,london` | `london,manchester,birmingham,glasgow` |
-| **Bundle id** | `com.voice2jobs.6ixsense` | `com.voice2jobs.pulseuk` |
+| **Bundle id** | `com.voice2jobs.6ixsense` | `com.voice2jobs.ventrackuk` |
 
 Everything Toronto-specific was **removed**, not left dormant: the SeatGeek,
 NOW Toronto and City of Toronto sources are gone, along with the Nominatim
@@ -67,7 +67,7 @@ The app's location picker groups them by nation and county and filters as you
 type, so finding Kidderminster takes two taps.
 
 A coordinate anywhere in the country resolves to its nearest listed town. A
-coordinate more than 250 km from any of them is abroad, so Pulse serves London
+coordinate more than 250 km from any of them is abroad, so VenTrack serves London
 and tells the user plainly rather than silently pretending they are in the
 capital.
 
@@ -125,7 +125,7 @@ from image-less sources look broken rather than sparse. They now get drawn
 artwork instead: one composition per category in the category's own colour, over
 its wash, with the category mark in the corner. The layout varies per event but
 is derived from the event id, so a card does not reshuffle as you scroll.
-`ios/Pulse/Design/CategoryArtwork.swift` sets out the twelve motifs and the
+`ios/VenTrack/Design/CategoryArtwork.swift` sets out the twelve motifs and the
 reasoning; the web client follows it.
 
 **Logo.** A map pin with a pulse trace knocked out of it as a counter, drawn as
@@ -137,7 +137,7 @@ and at 18pt in a header the trace is near the limit of what survives. See
 
 One geometry, five implementations kept in step by hand:
 
-- `ios/Pulse/Design/Theme.swift`, `PulseLogoGeometry`, the in-app mark
+- `ios/VenTrack/Design/Theme.swift`, `VenTrackLogoGeometry`, the in-app mark
 - `ios/tools/make_icon.js`, which generates the three App Store icon PNGs
   (`node tools/make_icon.js`)
 - `ios/tools/make_icon.swift`, the CoreGraphics twin of that tool, for running
@@ -156,21 +156,28 @@ beside it is not.
 
 ## Deploying
 
-`api/render.yaml` is a Render blueprint (service `pulse-uk-api`, Frankfurt
+`render.yaml`, at the repository root, is a Render blueprint (Frankfurt
 region, the closest Render runs to the UK). Once deployed, point the iOS app at
-it via `productionURL` in `ios/Pulse/Services/EventService.swift`.
+it via `productionURL` in `ios/VenTrack/Services/EventService.swift`.
 
-See [`api/DEPLOY.md`](api/DEPLOY.md) for the full walkthrough.
+The service it creates is named `pulse-uk-api`, which is the app's old name and
+is left that way deliberately: on Render the name is the service's identity and
+its hostname, not a piece of branding, so renaming it would mint a second
+service on a different URL rather than relabel the running one.
+
+See [`api/DEPLOY.md`](api/DEPLOY.md) for the full walkthrough, including what a
+real rename of that service would involve.
 
 ## Before you ship
 
 - **Set the API keys** in the Render dashboard. Without them the feed is the
   curated guide plus Eventbrite only.
 - **Point `EventService.productionURL`** at your deployed backend. It currently
-  reads `https://pulse-uk-api.onrender.com`, which is where `render.yaml` will
-  put it, but the hostname is only real once you have deployed.
-- **Register `com.voice2jobs.pulseuk`** in App Store Connect. Pulse is a new
-  product, not an update to 6ix Sense, so it needs its own listing.
+  reads `https://pulse-uk-api.onrender.com`, which is where `render.yaml` puts
+  it. That host keeps the old product name on purpose, and the two strings have
+  to match, so change neither on its own.
+- **Register `com.voice2jobs.ventrackuk`** in App Store Connect. VenTrack is a
+  new product, not an update to 6ix Sense, so it needs its own listing.
 - **Check the mark at the smallest size you ship it at.** The knocked-out pulse
   trace is close to its limit at 18pt, so anything smaller needs looking at on a
   device rather than on a monitor.

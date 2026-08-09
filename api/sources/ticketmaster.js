@@ -16,7 +16,7 @@ export async function fetchTicketmaster({ lat = LONDON.lat, lng = LONDON.lng, ra
     latlong: `${lat},${lng}`,
     radius: String(Math.round(radiusKm)),
     unit: "km",
-    // Pulse is a UK product. Pinning the country stops a radius search from the
+    // VenTrack is a UK product. Pinning the country stops a radius search from the
     // Kent coast or Northern Ireland pulling in French or Irish listings the
     // app has no business showing.
     countryCode: "GB",

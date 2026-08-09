@@ -107,7 +107,7 @@ struct PreferencesView: View {
                     .font(.system(size: 12.5)).foregroundStyle(Tok.accent)
                     .padding(.horizontal, 4)
             } else if !app.inMarket {
-                Text("Pulse covers the UK and you're outside it, so we show \(app.placeName). Pick any town to browse it.")
+                Text("VenTrack covers the UK and you're outside it, so we show \(app.placeName). Pick any town to browse it.")
                     .font(.system(size: 12.5)).foregroundStyle(Tok.accent)
                     .padding(.horizontal, 4)
             } else if app.countries.isEmpty {

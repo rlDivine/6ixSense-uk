@@ -1,5 +1,5 @@
 /* ============================================================
-   Pulse. What's on across the UK. PWA logic.
+   VenTrack. What's on across the UK. PWA logic.
    ============================================================ */
 
 // Category palette and icons.
@@ -226,7 +226,7 @@ function refreshWashAlpha() {
 
 /* ---- category artwork ----
    A designed stand in for an event that has no photograph. Mirrors
-   ios/Pulse/Design/CategoryArtwork.swift shape for shape.
+   ios/VenTrack/Design/CategoryArtwork.swift shape for shape.
 
    Not every source carries images. PredictHQ has none at all, the venue guide
    has none, and Ticketmaster's occasionally fail to load. Those events used to
@@ -447,7 +447,7 @@ async function load(showSkeleton = true) {
     const data = await res.json();
     state.events = data.events || [];
     state.region = data.region || null;
-    // False when the browser reported a position outside the UK. Pulse serves
+    // False when the browser reported a position outside the UK. VenTrack serves
     // the UK only, so we say so instead of pretending they're in London.
     state.inMarket = data.inMarket !== false;
     state.lastLoad = Date.now();

@@ -91,7 +91,7 @@ struct OnboardingView: View {
             Spacer(minLength: 0)
             markTile(size: 150, mark: 92)
                 .padding(.bottom, 28)
-            Text("Pulse")
+            Text("VenTrack")
                 .font(.system(size: 30, weight: .heavy))
                 .foregroundStyle(Tok.text)
             Text("Everything happening around you, anywhere in the UK: gigs, festivals, food, comedy, markets and free events, sorted by what's closest and soonest.")
@@ -200,7 +200,7 @@ struct OnboardingView: View {
                 .fill(Tok.panel)
                 .overlay(RoundedRectangle(cornerRadius: size * 0.27)
                     .stroke(Tok.hairline, lineWidth: 1))
-            PulseLogoView(size: mark)
+            VenTrackLogoView(size: mark)
         }
         .frame(width: size, height: size)
         .accessibilityHidden(true)

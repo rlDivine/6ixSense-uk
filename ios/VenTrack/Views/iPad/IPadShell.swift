@@ -162,8 +162,8 @@ struct IPadRootView: View {
 
     private var brand: some View {
         HStack(spacing: 9) {
-            PulseLogoView(size: 24)
-            Text("Pulse")
+            VenTrackLogoView(size: 24)
+            Text("VenTrack")
                 .font(.system(size: 19, weight: .heavy))
                 .kerning(-0.4)
                 .foregroundStyle(Tok.text)
@@ -173,7 +173,7 @@ struct IPadRootView: View {
         .padding(.top, 16)
         .padding(.bottom, 14)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Pulse")
+        .accessibilityLabel("VenTrack")
     }
 
     @ViewBuilder

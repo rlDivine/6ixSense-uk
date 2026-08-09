@@ -141,7 +141,7 @@ struct DiscoverView: View {
                 Image(systemName: "info.circle.fill")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(Tok.link)
-                Text("Pulse covers the UK only. You appear to be outside it, so we are showing \(app.placeName).")
+                Text("VenTrack covers the UK only. You appear to be outside it, so we are showing \(app.placeName).")
                     .font(.system(size: 12.5))
                     .foregroundStyle(Tok.text)
                     .fixedSize(horizontal: false, vertical: true)

@@ -1,9 +1,10 @@
 // Minimal service worker: app-shell caching for installability + offline shell.
 // Bump this whenever a shell file changes. The fetch handler is cache first,
 // so returning users keep the old app.js, styles.css and index.html until the
-// name changes and the activate handler deletes the previous cache. v2 ships
-// the Beacon mark, the softened dark palette and the category artwork.
-const CACHE = "pulse-uk-v2";
+// name changes and the activate handler deletes the previous cache. This v1
+// ships the VenTrack rename on top of the Beacon mark, the softened dark
+// palette and the category artwork.
+const CACHE = "ventrack-uk-v1";
 const SHELL = ["./", "index.html", "styles.css", "app.js", "manifest.json", "icon.svg"];
 
 self.addEventListener("install", (e) => {

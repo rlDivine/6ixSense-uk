@@ -18,7 +18,7 @@ import UniformTypeIdentifiers
 
 let out = CommandLine.arguments.count > 1
     ? CommandLine.arguments[1]
-    : "Pulse/Assets.xcassets/AppIcon.appiconset/icon_1024.png"
+    : "VenTrack/Assets.xcassets/AppIcon.appiconset/icon_1024.png"
 let variant = CommandLine.arguments.count > 2 ? CommandLine.arguments[2] : "light"
 
 // Canvas and logo colours per variant. An accent-fill tile with the mark
@@ -55,7 +55,7 @@ func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
     CGPoint(x: cx + (x - 12) * s, y: cy + (y - 12) * s)
 }
 
-// Reference geometry, matching PulseLogoGeometry in Design/Theme.swift.
+// Reference geometry, matching VenTrackLogoGeometry in Design/Theme.swift.
 // "Beacon": a map pin with a pulse trace knocked out of it as a counter.
 //
 // One filled path with a hole, so this is filled even-odd rather than stroked.

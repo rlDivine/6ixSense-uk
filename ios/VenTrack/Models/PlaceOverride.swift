@@ -34,7 +34,7 @@ struct PlaceOverride: Codable, Equatable {
 }
 
 /// The backend's curated catalogue (`GET /api/regions`). In practice it is
-/// a single entry, the United Kingdom, holding every town Pulse covers.
+/// a single entry, the United Kingdom, holding every town VenTrack covers.
 ///
 /// The list is fetched rather than hardcoded so that adding a town on the
 /// server makes it appear in the picker without shipping a new build.
