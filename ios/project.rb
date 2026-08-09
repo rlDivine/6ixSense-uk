@@ -36,12 +36,26 @@ target.build_configurations.each do |config|
   s['GENERATE_INFOPLIST_FILE'] = 'NO'
   s['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
   s['SWIFT_VERSION'] = '5.0'
-  # iPhone + iPad. Must stay '1,2': shipping as iPhone-only ('1') makes iPadOS
-  # run the app in scaled-iPhone compatibility mode, so the regular-width
-  # sidebar layout in Views/iPad never activates. That is what got 6ix Sense
-  # build 1.0 (1) rejected under Guideline 4, Design (reviewed on an iPad Air
-  # 11-inch); VenTrack inherits the same layout and the same requirement.
-  s['TARGETED_DEVICE_FAMILY'] = '1,2'      # iPhone + iPad
+  # iPhone only.
+  #
+  # This used to be '1,2', and the comment here warned it had to stay that way.
+  # The reason was specific: the app carried a regular-width sidebar layout in
+  # Views/iPad, and shipping as iPhone-only made iPadOS run it in scaled-iPhone
+  # compatibility mode so that layout never activated. A reviewer on an iPad Air
+  # 11-inch saw a blown-up phone app, and 6ix Sense build 1.0 (1) was rejected
+  # under Guideline 4, Design.
+  #
+  # That warning does not apply now, because the thing it was protecting is
+  # gone. Views/iPad has been deleted and RootView no longer branches on size
+  # class, so there is no iPad layout left to fail to activate. What ships is a
+  # plainly iPhone-only app, which is a normal and accepted configuration and
+  # runs on iPad in compatibility mode by design rather than by accident.
+  #
+  # The rejection risk that remains is not this setting, it is claiming iPad
+  # support the app does not honour. So if iPad support is ever restored, put
+  # BOTH back together: the layout and this value. Half of the pair is what got
+  # the sibling app rejected.
+  s['TARGETED_DEVICE_FAMILY'] = '1'        # iPhone only
   s['CODE_SIGN_STYLE'] = 'Automatic'
   # NOTE: do NOT force CODE_SIGNING_ALLOWED=NO here. It breaks signing in the
   # Xcode UI. For headless simulator builds pass it on the command line instead:

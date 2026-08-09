@@ -16,21 +16,23 @@ struct VenTrackApp: App {
     }
 }
 
+/// iPhone only. There was a separate regular size class layout here, a three
+/// pane iPad shell, and it has been removed rather than left switched off: it
+/// was the least exercised part of the app, and shipping it would have meant
+/// maintaining a second layout and supplying a second set of App Store
+/// screenshots for it. `TARGETED_DEVICE_FAMILY` in `project.rb` is now `1` to
+/// match, so the App Store listing is iPhone only and Apple stops asking.
+///
+/// It is in the history if it is ever wanted back, and the size class is the
+/// right thing to branch on when that day comes, since Split View and Stage
+/// Manager hand an app a compact width on an iPad too.
 struct RootView: View {
     @EnvironmentObject var app: AppState
-    /// Layout branches on the *size class*, never the device model, so Split
-    /// View, Slide Over and Stage Manager get the compact layout automatically
-    /// the moment the app is handed a narrow window on an iPad.
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
         Group {
             if app.onboarded {
-                if horizontalSizeClass == .regular {
-                    IPadRootView()
-                } else {
-                    MainTabView()
-                }
+                MainTabView()
             } else {
                 OnboardingView()
             }

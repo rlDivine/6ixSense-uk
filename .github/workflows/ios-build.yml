@@ -1,0 +1,83 @@
+# Compiles the iOS app on a macOS runner.
+#
+# This exists because the app is developed in a Linux container that has no
+# Swift toolchain and, more to the point, no iOS SDK: SwiftUI, UIKit and MapKit
+# ship only with Xcode on macOS, so `import SwiftUI` cannot resolve there no
+# matter what is installed. For a long stretch the only way to find out whether
+# this code compiled was to open Xcode by hand, which meant compile errors were
+# found one screenful at a time.
+#
+# A macOS runner has Xcode, so the build happens here and the errors arrive as
+# a list. It builds against the simulator SDK with signing off, because the
+# question being asked is "does it compile", not "can it be shipped".
+name: iOS build
+
+on:
+  push:
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-build.yml'
+  pull_request:
+    paths:
+      - 'ios/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build for iOS Simulator
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show the toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      # project.pbxproj is generated rather than hand maintained, and it mints
+      # fresh UUIDs on every run, so regenerate it here rather than trusting
+      # whatever was committed.
+      - name: Generate the Xcode project
+        run: |
+          gem install xcodeproj --no-document
+          cd ios && ruby project.rb
+
+      # -target rather than -scheme: project.rb does not write a shared scheme,
+      # and xcodebuild will not invent one.
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project ios/VenTrack.xcodeproj \
+            -target VenTrack \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            build 2>&1 | tee /tmp/build.log
+
+      # The step above already fails the job on error. This one pulls the
+      # diagnostics back out of a very long log so they are readable in the
+      # summary without downloading anything.
+      - name: Collect errors and warnings
+        if: always()
+        run: |
+          echo '## Diagnostics' >> "$GITHUB_STEP_SUMMARY"
+          if grep -E '(error|warning):' /tmp/build.log > /tmp/diags.txt; then
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            sort -u /tmp/diags.txt | head -100 >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            echo "errors:   $(grep -c 'error:' /tmp/diags.txt || true)"
+            echo "warnings: $(grep -c 'warning:' /tmp/diags.txt || true)"
+          else
+            echo 'No errors or warnings.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload the full log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: /tmp/build.log
+          if-no-files-found: warn
