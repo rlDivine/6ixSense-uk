@@ -23,6 +23,26 @@ Swift file.
 
 Pick an iPhone or iPad simulator and hit Cmd-R.
 
+## Running on your own iPhone
+
+1. Plug the phone in (or pair it wirelessly: **Window, then Devices and
+   Simulators**), unlock it, and tap **Trust** if iOS asks.
+2. In Xcode, select the **Pulse** scheme and your phone as the run
+   destination, top left, instead of a simulator.
+3. Open the **Pulse** target's **Signing & Capabilities** tab and check
+   **Team**. `project.rb` sets a `DEVELOPMENT_TEAM` value so regenerating the
+   project does not blank it, but that value belongs to whoever's Apple
+   account it was set from. Pick **your own** team from the dropdown; a free
+   personal Apple ID works for on-device testing, no paid membership needed.
+   If you want that choice to survive a future `ruby project.rb`, export it
+   first: `DEV_TEAM=YOURTEAMID ruby project.rb`.
+4. Cmd-R. First run on a new phone, iOS will refuse to launch the app until
+   you go to **Settings, General, VPN & Device Management** and trust your
+   developer certificate.
+5. A free Apple ID's signature expires after 7 days, so the app needs a
+   re-run from Xcode roughly weekly, not a fresh install; a paid Apple
+   Developer account extends that to a year and unlocks TestFlight.
+
 ## Pointing it at a backend
 
 `Services/EventService.swift`:
