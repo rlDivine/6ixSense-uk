@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 // The three states the feed can be in other than "here are your events".
@@ -15,12 +16,28 @@ import SwiftUI
 /// allowed to. The skeletons are flat `panel2` blocks laid out in the card's own
 /// geometry, pulsing opacity between 0.55 and 1 over a second and a half. No
 /// shimmer sweep: that was a gradient.
+///
+/// Above them sits a progress line, because a cold load here is genuinely slow
+/// and silence reads as a hang. Three things make it slow, and only the first
+/// is ours: the backend sleeps when idle and takes most of a minute to wake,
+/// a region nobody has asked for yet is scraped from scratch, and six sources
+/// are polled before the first card can be drawn. `EventService` allows 130
+/// seconds for exactly this reason. Skeletons alone say "something is coming";
+/// they do not say "this is normal, keep waiting", which is the thing a person
+/// staring at a blank feed actually needs to know.
 struct LoadingState: View {
+    @EnvironmentObject var app: AppState
     var count: Int = 5
 
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 10) {
+                // Read off the state, not captured here: this view is rebuilt
+                // constantly while loading, and a start time held in the view
+                // would reset the estimate on every rebuild.
+                LoadProgress(startedAt: app.loadStartedAt ?? .now)
+                    .padding(.bottom, 2)
+
                 ForEach(0..<count, id: \.self) { _ in
                     SkeletonCard()
                 }
@@ -30,8 +47,110 @@ struct LoadingState: View {
             .padding(.bottom, 90)
         }
         .allowsHitTesting(false)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Finding what is on near you")
+    }
+}
+
+/// How long this is going to take, said out loud.
+///
+/// Two rules keep it honest, and both matter more than the animation:
+///
+///   1. The bar approaches full without arriving. A bar that fills and then
+///      sits there is a worse lie than no bar, and we cannot know the finish
+///      time: it is a scrape behind a server that may be asleep. The curve is
+///      asymptotic, so it is always moving and never claims to be done.
+///   2. The countdown never reaches zero. Past the budget it stops naming
+///      seconds it cannot promise and explains itself instead.
+///
+/// The estimate is rounded to five seconds throughout. "About 40 seconds"
+/// is a claim we can stand behind; "37 seconds" is not.
+private struct LoadProgress: View {
+    let startedAt: Date
+
+    /// What a cold load usually costs: roughly 45s of Render waking up, plus
+    /// the first scrape. Not a timeout, just the number the copy is pitched at.
+    private static let budget: Double = 55
+
+    /// Most loads are a warm cache and land in well under a second. Showing a
+    /// countdown for those would be a flash of noise on every pull to refresh,
+    /// so nothing appears until a load has proved itself slow.
+    private static let quiet: Double = 2
+
+    var body: some View {
+        TimelineView(.periodic(from: startedAt, by: 1)) { ctx in
+            let elapsed = max(0, ctx.date.timeIntervalSince(startedAt))
+            let shown = elapsed >= Self.quiet
+
+            VStack(alignment: .leading, spacing: 9) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(phase(elapsed))
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Tok.text)
+                    Spacer(minLength: 8)
+                    Text(detail(elapsed))
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(Tok.muted)
+                        .monospacedDigit()
+                }
+
+                bar(fraction(elapsed))
+            }
+            .padding(.horizontal, 13)
+            .padding(.vertical, 12)
+            .background(Tok.panel, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Tok.hairline, lineWidth: 1))
+            .opacity(shown ? 1 : 0)
+            .animation(.easeIn(duration: 0.35), value: shown)
+            // The row keeps its space from the start so the skeletons do not
+            // jump down a beat after the feed appears to have settled.
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(phase(elapsed)). \(detail(elapsed)).")
+        }
+    }
+
+    /// A flat two-layer bar. No gradient, per the app's own rule, and no
+    /// indeterminate sweep: the point is to show that time is passing.
+    private func bar(_ f: Double) -> some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Tok.panel2)
+                Capsule()
+                    .fill(Tok.accentFill)
+                    .frame(width: max(6, geo.size.width * f))
+            }
+        }
+        .frame(height: 5)
+        .animation(.linear(duration: 1), value: f)
+    }
+
+    /// Approaches 1 but never reaches it: at the full budget this is about
+    /// 0.92, and it keeps creeping afterwards rather than stalling at the end.
+    private func fraction(_ elapsed: Double) -> Double {
+        1 - exp(-elapsed / (Self.budget / 2.5))
+    }
+
+    /// What the server is actually doing. The middle phase is an inference, but
+    /// a safe one: a warm backend answers in under a second, so anything still
+    /// going at eight seconds is a machine being started.
+    private func phase(_ elapsed: Double) -> String {
+        switch elapsed {
+        case ..<8:              return "Finding what's on near you"
+        case ..<22:             return "Waking the events server"
+        case ..<45:             return "Gathering listings"
+        case ..<Self.budget:    return "Nearly there"
+        default:                return "Still going"
+        }
+    }
+
+    private func detail(_ elapsed: Double) -> String {
+        let left = Self.budget - elapsed
+        if left >= 7.5 {
+            // Rounded to five seconds: precision we do not have would only
+            // make the number look wrong when it slips.
+            let rounded = Int((left / 5).rounded()) * 5
+            return "about \(rounded) seconds left"
+        }
+        if left > -20 { return "any moment now" }
+        return "the server was asleep, so this first load is slow"
     }
 }
 
@@ -97,20 +216,37 @@ struct EmptyState: View {
                    message: message) {
             HStack(spacing: 10) {
                 StateButton(title: "Clear filters", kind: .primary, action: reset)
-                StateButton(title: "Try this week", kind: .secondary, action: widenAction)
+                StateButton(title: secondaryTitle, kind: .secondary, action: widenAction)
             }
         }
+    }
+
+    /// A distance limit set once in Settings is the easiest filter to forget,
+    /// and the one most likely to be the reason nothing is here, so it is named
+    /// outright rather than left to be rediscovered.
+    private var secondaryTitle: String {
+        app.isRadiusFiltered ? "Search further out" : "Try this week"
     }
 
     private var message: String {
         let town = place.trimmingCharacters(in: .whitespacesAndNewlines)
         let name = town.isEmpty ? app.placeName : town
+        if let km = app.effectiveRadiusKm {
+            return "Nothing matches those filters within \(Fmt.radius(km)) of \(name). Search further out, widen the dates, or drop a category."
+        }
         return "Nothing matches those filters in \(name). Widen the dates, or drop a category, and the list fills up again."
     }
 
     private func widenAction() {
         if let widen = widen {
             widen()
+            return
+        }
+        // Dropping the radius costs nothing: it filters events already in hand,
+        // so the list refills without a request. Widening the dates does need
+        // one, so it is only reached once distance is no longer the constraint.
+        if app.isRadiusFiltered {
+            app.setRadius(nil)
             return
         }
         app.range = .week
