@@ -43,7 +43,7 @@ struct SavedView: View {
             .padding(.horizontal, 16)
         }
         .padding(.bottom, 11)
-        .topGlass(heavy: true)
+        .topChrome()
     }
 
     @ViewBuilder private var content: some View {

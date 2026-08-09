@@ -34,7 +34,7 @@ struct DiscoverView: View {
             categoryRow
         }
         .padding(.bottom, 11)
-        .topGlass(heavy: true)
+        .topChrome()
     }
 
     /// The town is the thing worth reading, so it gets the size. The wordmark

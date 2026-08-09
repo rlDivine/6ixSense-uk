@@ -104,23 +104,22 @@ enum Chrome {
 }
 
 extension View {
-    /// Pinned top chrome. The material reaches up under the status bar so the
-    /// blur is continuous, and the hairline sits on the bottom edge, which is
-    /// where this glass meets the content.
+    /// Pinned top chrome, drawn in the page colour rather than a material.
     ///
-    /// `heavy` swaps in the thicker material for a strip that carries text
-    /// directly, which every one of ours does.
-    func topGlass(heavy: Bool = false) -> some View {
+    /// It used to be glass. A system material takes its colour from the system,
+    /// not from this palette, so on our slate page it composited to a neutral
+    /// grey and the whole strip sat visibly off tone from everything under it.
+    /// Nothing scrolls behind the top strip that is worth seeing through it
+    /// anyway, so it is now flat `Tok.bg` and the seam is gone. The hairline
+    /// stays: with chrome and page the same colour it is the only thing marking
+    /// where the pinned strip ends and the scrolling content begins.
+    ///
+    /// The map tray still uses `bottomGlass`, where translucency earns its keep
+    /// because live map tiles pass underneath.
+    func topChrome() -> some View {
         self
             .background(alignment: .center) {
-                Group {
-                    if heavy {
-                        Rectangle().fill(.regularMaterial)
-                    } else {
-                        Rectangle().fill(.ultraThinMaterial)
-                    }
-                }
-                .ignoresSafeArea(edges: .top)
+                Rectangle().fill(Tok.bg).ignoresSafeArea(edges: .top)
             }
             .overlay(alignment: .bottom) {
                 Rectangle().fill(Tok.hairline).frame(height: 1)
@@ -133,12 +132,15 @@ extension View {
     func bottomGlass(heavy: Bool = false) -> some View {
         self
             .background(alignment: .center) {
-                Group {
-                    if heavy {
-                        Rectangle().fill(.regularMaterial)
-                    } else {
-                        Rectangle().fill(.ultraThinMaterial)
+                ZStack {
+                    Group {
+                        if heavy {
+                            Rectangle().fill(.regularMaterial)
+                        } else {
+                            Rectangle().fill(.ultraThinMaterial)
+                        }
                     }
+                    Rectangle().fill(Tok.glass)
                 }
             }
             .overlay(alignment: .top) {

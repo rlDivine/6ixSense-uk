@@ -39,7 +39,7 @@ struct SearchView: View {
             searchField
         }
         .padding(.bottom, 11)
-        .topGlass(heavy: true)
+        .topChrome()
     }
 
     private var searchField: some View {

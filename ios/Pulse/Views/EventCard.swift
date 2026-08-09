@@ -22,9 +22,11 @@ struct EventCard: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dynamicTypeSize) private var typeSize
 
-    /// An event with no photo has nothing for the thumbnail to hold, so it gets
-    /// the index treatment whether or not the caller asked for it.
-    private var usesIndex: Bool { compact || event.imageURL == nil }
+    /// Only the caller decides this now. A missing photo used to force the
+    /// index treatment too, which dropped those rows to a bare colour spine and
+    /// made a feed of image-less sources look broken. They get drawn artwork
+    /// instead, so the thumbnail always has something to hold.
+    private var usesIndex: Bool { compact }
 
     private var catColor: Color { Categories.style(event.category).color }
 
@@ -63,10 +65,9 @@ struct EventCard: View {
 
     private var thumb: some View {
         ZStack {
-            Categories.wash(event.category)
-            CategoryGlyph(category: event.category, size: 26)
-            // The photo sits on top of the wash and the mark, so a URL that
-            // fails to load leaves the mark showing rather than a blank square.
+            CategoryArtwork(category: event.category, seed: event.id.hashValue)
+            // The photo sits on top of the artwork, so a URL that fails to load
+            // leaves the composition showing rather than a blank square.
             if let url = event.imageURL {
                 AsyncImage(url: url) { phase in
                     if let image = phase.image {

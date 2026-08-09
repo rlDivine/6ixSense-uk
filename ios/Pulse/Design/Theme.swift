@@ -36,6 +36,16 @@ enum Tok {
     static let panel2   = Color(dark: 0x252C3D, light: 0xEEF1F7)
     static let hairline = Color(dark: 0x2F3749, light: 0xE3E7F0)
 
+    /// Tint laid over the material on translucent chrome, so glass takes the
+    /// app's colour instead of the system's neutral grey.
+    ///
+    /// 0.88 is solved, not chosen. The map tray has live map tiles moving under
+    /// it, so the composite has to hold against a white backdrop as well as a
+    /// black one. At this alpha `text` clears 4.5:1 in both themes and so does
+    /// `muted`; at 0.85 muted drops to 4.29:1 dark and 4.30:1 light and fails.
+    /// The web client's --glass is the same colour at the same alpha.
+    static let glass = Color(dark: 0x1C2231, light: 0xFFFFFF).opacity(0.88)
+
     /// Three weights of text. Using all three, rather than just text and muted,
     /// is most of what gives a list its hierarchy.
     static let text     = Color(dark: 0xE4E7EE, light: 0x0B1633)
