@@ -6,15 +6,25 @@ field by field. Contact details and the support address are the same ones
 
 No em dashes anywhere in this file, including the copy below.
 
-## Before any of this matters
+## Build status
 
-The app has to build and run first. It has never been compiled in the
-environment these files were written in, so treat a clean build on your Mac as
-step zero, not a formality.
+It compiles. Xcode 16.4, iOS 18.5 simulator SDK, arm64 and x86_64, zero errors.
+`.github/workflows/ios-build.yml` builds it on a macOS runner on every push
+that touches `ios/`, so this stays true rather than being a claim about one
+afternoon.
 
-You also need an active Apple Developer Program membership, which is a paid
-yearly account. A free personal Apple ID signs a build onto your own phone for
-seven days but cannot submit anything.
+Six warnings, none of which block anything:
+
+- Four are the same deprecation counted once per architecture:
+  `traitCollectionDidChange` was deprecated in iOS 17 in favour of the trait
+  change registration APIs. It is called in `EventMapView` to re-render the map
+  pins when the appearance changes between light and dark. It still works, and
+  migrating it changes runtime behaviour that cannot be verified without a
+  device, so it is deliberately left alone until after the first release.
+- One says no `AppIntents.framework` dependency was found, which is expected:
+  the app declares no App Intents.
+- One is `ONLY_ACTIVE_ARCH=YES` with multiple architectures, which is an
+  artefact of building both slices on a runner rather than for one device.
 
 ## App information
 
@@ -168,19 +178,15 @@ The app uses HTTPS and nothing else, which is exempt.
 
 This is the part that needs a device and cannot be prepared in advance.
 
-The target is `TARGETED_DEVICE_FAMILY = "1,2"`, meaning iPhone and iPad, so
-Apple requires **both** sets. If you would rather ship iPhone only for version
-one, change that to `"1"` in `project.rb` and the iPad requirement disappears.
-
-Required sizes:
+`TARGETED_DEVICE_FAMILY` is `1`, iPhone only, so one set is all Apple asks for.
 
 | Device | Size | How many |
 | --- | --- | --- |
 | iPhone 6.9 inch | 1320 x 2868 or 1290 x 2796 | 3 to 10 |
-| iPad 13 inch | 2064 x 2752 or 2048 x 2732 | 3 to 10, only if you keep iPad support |
 
-Apple scales the 6.9 inch set down for smaller iPhones, so one iPhone set is
-enough.
+Apple scales that set down for smaller iPhones, so there is nothing else to
+capture. If iPad support is ever restored, a 13 inch set becomes mandatory
+again, and so does an iPad layout worth showing.
 
 Suggested five, in this order, since the first two are what people actually see
 in search results:
@@ -240,10 +246,13 @@ few days.
 Being straight about what is unfinished, since these are the likely rejection
 points rather than anything on the list above:
 
-- **The app has never been compiled.** Nothing below matters until it builds.
-- **No screenshots exist yet.** They need a device.
+- **No screenshots exist yet.** They need a device. This is the only thing
+  actually standing between here and a submission.
+- **It compiles but it has never been through a full manual pass on a device.**
+  A green build proves the code is well formed, not that every screen behaves.
+  Walk the What to Test list above before you submit.
 - **The wordmark is set in a system font.** That is fine for review and fine
   for launch, but it is not a designed identity.
-- **iPad support is real but has had less testing than iPhone.** If the iPad
-  layout is rough, dropping to iPhone only is a one line change and removes a
-  whole screenshot set.
+- **The free Render plan will make a reviewer think the app is broken.** Cold
+  starts take 30 to 60 seconds. The review notes explain it, but paying for
+  Starter is the safer answer.
