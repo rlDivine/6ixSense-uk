@@ -109,7 +109,8 @@ struct SavedView: View {
     private var countLine: String {
         let n = app.savedUpcoming.count
         guard n > 0 else { return "Nothing kept on this device yet" }
-        return "\(n) \(n == 1 ? "event" : "events"), kept on this device"
+        let noun = n == 1 ? "event" : "events"
+        return "\(n) \(noun), kept on this device"
     }
 
     private var groups: [DayGroup] {

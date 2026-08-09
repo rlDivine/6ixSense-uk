@@ -187,8 +187,10 @@ struct BrandStrip: View {
                 }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(app.isPreferenceFiltered
-                            ? "Settings, interests are filtering the feed"
-                            : "Settings")
+        .accessibilityLabel(settingsLabel)
+    }
+
+    private var settingsLabel: String {
+        app.isPreferenceFiltered ? "Settings, interests are filtering the feed" : "Settings"
     }
 }
