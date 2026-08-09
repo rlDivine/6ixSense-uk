@@ -109,12 +109,18 @@ struct IPadMapPane: View {
         .clipped()
     }
 
+    // Everything that floats over the map sits on a material rather than on a
+    // flat panel colour, which is the same treatment the phone map tray already
+    // uses. `regularMaterial` where real text sits on it, so the label keeps a
+    // solid enough backing to stay readable over a busy map. Tok.faint is never
+    // used on a material: it is solved against panel2, not against blurred map.
+    // Translucency is not a gradient, so none of this breaks the flat-fill rule.
     private var floatingBar: some View {
         HStack(spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 14, weight: .semibold)).foregroundStyle(Tok.muted)
-                TextField("Search this map", text: $query)
+                TextField("Search this area", text: $query)
                     .textFieldStyle(.plain)
                     .font(.system(size: 14))
                     .foregroundStyle(Tok.text)
@@ -126,23 +132,30 @@ struct IPadMapPane: View {
                             .font(.system(size: 14)).foregroundStyle(Tok.muted)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Clear the search")
                 }
             }
             .padding(.horizontal, 13)
             .frame(height: 44)
             .frame(minWidth: 150, maxWidth: 330)
-            .background(Tok.panel, in: RoundedRectangle(cornerRadius: 12))
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12)
-                .stroke(searchFocused ? Tok.accent : Tok.hairline, lineWidth: searchFocused ? 1.5 : 1))
+                .stroke(searchFocused ? Tok.accent : Tok.hairline,
+                        lineWidth: searchFocused ? 2 : 1))
             .shadow(color: .black.opacity(0.25), radius: 10, y: 4)
 
+            // A count is not one of red's three jobs, so this is a glass pill
+            // with an ordinary label rather than a red one.
             Text("\(mapped.count) nearby")
                 .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 14)
+                .monospacedDigit()
+                .foregroundStyle(Tok.text)
+                .padding(.horizontal, 15)
                 .frame(height: 44)
-                .background(Tok.accentFill, in: Capsule())
+                .background(.regularMaterial, in: Capsule())
+                .overlay(Capsule().stroke(Tok.hairline, lineWidth: 1))
                 .shadow(color: .black.opacity(0.25), radius: 10, y: 4)
+                .accessibilityLabel("\(mapped.count) events on the map")
 
             Spacer(minLength: 0)
         }
@@ -159,7 +172,7 @@ struct IPadMapPane: View {
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(app.locAuthorized ? Tok.accent : Tok.muted)
                 .frame(width: 48, height: 48)
-                .background(Tok.panel, in: Circle())
+                .background(.regularMaterial, in: Circle())
                 .overlay(Circle().stroke(Tok.hairline, lineWidth: 1))
                 .shadow(color: .black.opacity(0.3), radius: 10, y: 4)
         }
@@ -253,11 +266,17 @@ private struct RailRow: View {
                 Text("\(Fmt.time(event.startDate)) · \(event.venue ?? "Venue TBA")")
                     .font(.system(size: 12)).foregroundStyle(Tok.muted).lineLimit(1)
                 HStack(spacing: 6) {
+                    // Fmt.distance carries the unit the region reports, which
+                    // for a UK build is miles. No literal unit is pasted beside
+                    // it: labelling an already-converted miles figure as
+                    // kilometres is a bug these files have shipped before.
                     Text(Fmt.distance(event.distanceKm))
-                        .font(.system(size: 11, weight: .bold)).foregroundStyle(Tok.accent)
-                    Text("·").foregroundStyle(Tok.muted)
+                        .font(.system(size: 11, weight: .bold)).foregroundStyle(Tok.muted)
+                    Text("·").font(.system(size: 11)).foregroundStyle(Tok.muted)
+                    // Red is spent on imminence and nothing else in this row.
                     Text(Fmt.relDay(event.startDate))
-                        .font(.system(size: 11)).foregroundStyle(Tok.muted)
+                        .font(.system(size: 11, weight: PadWhen.isToday(event.startDate) ? .bold : .regular))
+                        .foregroundStyle(PadWhen.isToday(event.startDate) ? Tok.accent : Tok.muted)
                     if event.isFree { TagChip(text: "Free", kind: .free) }
                 }
             }

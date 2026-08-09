@@ -1,4 +1,4 @@
-// Generates the AppIcon PNGs (1024×1024, opaque, no alpha channel) from the
+// Generates the AppIcon PNGs (1024x1024, opaque, no alpha channel) from the
 // same logo geometry the app draws in SwiftUI.
 //
 //   node tools/make_icon.js            # writes all three variants
@@ -20,51 +20,80 @@ const SIZE = 1024;
 const SS = 4; // supersampling factor. 4x gives clean antialiased curves
 
 // Canvas and logo colours per variant, matching make_icon.swift.
-// Flag blue tile, white logo. The tinted variant has to be greyscale so iOS
-// can recolour it with whatever tint the user has chosen.
+// An accent-fill tile with the mark knocked out in white, flat, no gradient
+// and no shadow. Each variant uses its own theme's accent-fill, so the light
+// tile is Pantone 186 and the dark one is the lifted red the dark interface
+// uses behind white. The tinted variant has to be greyscale so iOS can
+// recolour it with whatever tint the user has chosen.
 const VARIANTS = {
-  light:  { bg: [0x01, 0x21, 0x69], fg: [0xff, 0xff, 0xff], file: "icon_1024.png" },
-  dark:   { bg: [0x00, 0x14, 0x40], fg: [0xff, 0xff, 0xff], file: "icon_dark.png" },
+  light:  { bg: [0xc8, 0x10, 0x2e], fg: [0xff, 0xff, 0xff], file: "icon_1024.png" },
+  dark:   { bg: [0xd2, 0x1e, 0x3c], fg: [0xff, 0xff, 0xff], file: "icon_dark.png" },
   tinted: { bg: [0x00, 0x00, 0x00], fg: [0xd8, 0xd8, 0xd8], file: "icon_tinted.png" },
 };
 
 // ---- the logo, on its 24x24 grid ------------------------------------------
-// These numbers are the reference geometry documented in
-// ios/Pulse/Design/Theme.swift (PulseLogoGeometry) and reproduced in
-// api/public/icon.svg. Change one, change all three.
-const HEAD = { x: 12, y: 8.8, r: 5.6 };
-const POINT = { x: 12, y: 20.8 };
-const COUNTER_R = 2.4;
+// "Proximity": a filled dot with two rising arcs above it. These numbers are
+// the reference geometry documented in ios/Pulse/Design/Theme.swift
+// (PulseLogoGeometry) and reproduced in ios/tools/make_icon.swift and
+// api/public/icon.svg. Change one, change all four.
+//
+//   dot     centre (12, 17) radius 2.6, filled
+//   arc 1   (7.6, 12.6) to (16.4, 12.6)  on radius 6.2
+//   arc 2   (4.2, 8.9)  to (19.8, 8.9)   on radius 11
+//   both arcs stroked at 2.1 with round caps
+const DOT = { x: 12, y: 17, r: 2.6 };
+const STROKE = 2.1;
+const CAP = STROKE / 2;
 
-// The tail is the triangle between the point and the two places where a line
-// from the point grazes the head. Because those lines are tangents, the
-// triangle meets the circle without a kink, and the union of the two is the
-// pin silhouette. Testing "inside circle or inside triangle" therefore gives
-// exactly the same shape as the arc-and-lines outline the other two
-// implementations draw, without any winding rules to get wrong.
-const TANGENT_L = { x: 7.047, y: 11.413 };
-const TANGENT_R = { x: 16.953, y: 11.413 };
-
-/// Which side of the line a->b the point (x,y) falls on. Sign only.
-function side(x, y, a, b) {
-  return (b.x - a.x) * (y - a.y) - (b.y - a.y) * (x - a.x);
+/// Polar angle of p about c in degrees, normalised to 0 up to 360. Positive y
+/// is downward here, the same as the SVG and the SwiftUI shape, so 270 is
+/// straight up and a sweep over the top is an increasing range.
+function angleOf(p, c) {
+  const a = (Math.atan2(p.y - c.y, p.x - c.x) * 180) / Math.PI;
+  return a < 0 ? a + 360 : a;
 }
 
-function inTriangle(x, y, a, b, c) {
-  const d1 = side(x, y, a, b);
-  const d2 = side(x, y, b, c);
-  const d3 = side(x, y, c, a);
-  const neg = d1 < 0 || d2 < 0 || d3 < 0;
-  const pos = d1 > 0 || d2 > 0 || d3 > 0;
-  return !(neg && pos);
+/// The minor arc of `radius` running from `from` to `to` and bulging upward,
+/// which is how the handoff's two SVG arc commands resolve. Both chords here
+/// are horizontal, so the centre sits directly below the chord's midpoint.
+function makeArc(from, to, radius) {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const half = Math.sqrt((dx * dx + dy * dy) / 4);
+  const drop = Math.sqrt(radius * radius - half * half);
+  const c = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 + drop };
+  return { c, r: radius, a0: angleOf(from, c), a1: angleOf(to, c), from, to };
+}
+
+const ARCS = [
+  makeArc({ x: 7.6, y: 12.6 }, { x: 16.4, y: 12.6 }, 6.2),
+  makeArc({ x: 4.2, y: 8.9 }, { x: 19.8, y: 8.9 }, 11),
+];
+
+/// Distance from (x,y) to the arc's centreline. Inside the angular range that
+/// is the difference between the point's radius and the arc's; outside it the
+/// nearest endpoint wins, which is exactly what a round cap is. Sampling this
+/// distance field avoids approximating the curve with segments, so the arcs
+/// stay true circles at any canvas size.
+function arcDistance(x, y, arc) {
+  const dx = x - arc.c.x;
+  const dy = y - arc.c.y;
+  let t = (Math.atan2(dy, dx) * 180) / Math.PI;
+  if (t < 0) t += 360;
+  if (t >= arc.a0 && t <= arc.a1) return Math.abs(Math.hypot(dx, dy) - arc.r);
+  return Math.min(
+    Math.hypot(x - arc.from.x, y - arc.from.y),
+    Math.hypot(x - arc.to.x, y - arc.to.y),
+  );
 }
 
 /// True when the grid point (x,y) is inside the logo.
 function inMark(x, y) {
-  const dHead = Math.hypot(x - HEAD.x, y - HEAD.y);
-  if (dHead <= COUNTER_R) return false;          // the knocked-out counter
-  if (dHead <= HEAD.r) return true;              // the head
-  return inTriangle(x, y, TANGENT_L, POINT, TANGENT_R);   // the tail
+  if (Math.hypot(x - DOT.x, y - DOT.y) <= DOT.r) return true;
+  for (const arc of ARCS) {
+    if (arcDistance(x, y, arc) <= CAP) return true;
+  }
+  return false;
 }
 
 /// Renders one variant to raw RGB bytes (3 per pixel, no alpha).
@@ -77,7 +106,7 @@ function render({ bg, fg }) {
 
   for (let py = 0; py < SIZE; py++) {
     for (let pxi = 0; pxi < SIZE; pxi++) {
-      // Coverage by supersampling: how many of the SS×SS subsamples land
+      // Coverage by supersampling: how many of the SS by SS subsamples land
       // inside the mark. That fraction is the antialiasing.
       let hits = 0;
       for (let sy = 0; sy < SS; sy++) {

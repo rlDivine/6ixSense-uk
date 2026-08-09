@@ -229,6 +229,21 @@ final class AppState: NSObject, ObservableObject {
         !preferredCategories.isEmpty && preferredCategories.count < Preferences.all.count
     }
 
+    /// Turn one interest on or off. Persisted on every tap, because onboarding
+    /// can be finished and the app killed before anything else writes.
+    func togglePreference(_ id: String) {
+        if preferredCategories.contains(id) { preferredCategories.remove(id) }
+        else { preferredCategories.insert(id) }
+        persist()
+    }
+
+    /// Back to showing everything.
+    func clearPreferences() {
+        guard !preferredCategories.isEmpty else { return }
+        preferredCategories.removeAll()
+        persist()
+    }
+
     /// True if the event matches the user's chosen interests (or if none chosen).
     func matchesPreferences(_ e: Event) -> Bool {
         guard !preferredCategories.isEmpty else { return true }

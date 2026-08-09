@@ -1,5 +1,9 @@
 import SwiftUI
 
+/// One field that takes a title, a venue, a category, a date phrase or a place.
+/// The empty state is where that gets explained: the example chips are the
+/// documentation for the parser, so nobody has to guess that "25/7" or "next
+/// friday" will work.
 struct SearchView: View {
     @EnvironmentObject var app: AppState
     @State private var selected: Event?
@@ -7,13 +11,16 @@ struct SearchView: View {
     @State private var locating = false
     /// Shown when a typed address could not be found.
     @State private var addressMiss: String?
-    private let popular = ["Music", "Food & Drink", "Pop-up", "Free", "Today", "This weekend"]
+
+    /// One of each kind the parser understands: a date phrase, a price filter
+    /// and a place. Ordered so the first row is short and the second reads as
+    /// the two longer ideas.
+    private let examples = ["this weekend", "free", "25/7", "gigs in Leeds", "next friday"]
 
     var body: some View {
         ZStack {
             Tok.bg.ignoresSafeArea()
             VStack(spacing: 0) {
-                searchField
                 if app.placeOverride != nil { placeChip }
                 if app.search.trimmingCharacters(in: .whitespaces).isEmpty {
                     suggestions
@@ -22,38 +29,71 @@ struct SearchView: View {
                 }
             }
         }
+        .safeAreaInset(edge: .top, spacing: 0) { chrome }
         .sheet(item: $selected) { EventDetailView(event: $0) }
     }
 
+    private var chrome: some View {
+        VStack(spacing: 0) {
+            BrandStrip()
+            searchField
+        }
+        .padding(.bottom, 11)
+        .topGlass(heavy: true)
+    }
+
     private var searchField: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass").foregroundStyle(Tok.muted)
-            TextField("Search events, venues, an address, or a date…", text: $app.search)
-                .textInputAutocapitalization(.never).autocorrectionDisabled()
+        HStack(spacing: 9) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Tok.muted)
+            TextField("Search events, venues, a date or a place", text: $app.search)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .font(.system(size: 15))
                 .foregroundStyle(Tok.text)
                 .submitLabel(.search)
+            if !app.search.isEmpty {
+                Button { app.search = "" } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 15))
+                        .foregroundStyle(Tok.muted)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear the search")
+            }
         }
-        .padding(.horizontal, 12).padding(.vertical, 11)
-        .background(Tok.panel, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Tok.hairline, lineWidth: 1))
-        .padding(14)
+        .padding(.horizontal, 13)
+        .padding(.vertical, 12)
+        .background(Tok.panel2, in: RoundedRectangle(cornerRadius: 13))
+        .overlay(RoundedRectangle(cornerRadius: 13).stroke(Tok.hairline, lineWidth: 1))
+        .padding(.horizontal, 16)
     }
 
     private var suggestions: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Popular").font(.system(size: 12, weight: .semibold)).foregroundStyle(Tok.muted)
-            FlexWrap(popular) { c in
-                Button { app.search = c } label: {
-                    Text(c).font(.system(size: 13)).foregroundStyle(Tok.text)
-                        .padding(.horizontal, 12).padding(.vertical, 7)
-                        .background(Tok.chip, in: Capsule())
+        VStack(alignment: .leading, spacing: 11) {
+            Text("TRY")
+                .font(.system(size: 10.5, weight: .bold))
+                .kerning(0.85)
+                .foregroundStyle(Tok.faint)
+            FlexWrap(examples) { q in
+                Button { app.search = q } label: {
+                    Text(q)
+                        .font(.system(size: 13.5))
+                        .foregroundStyle(Tok.text)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                        .background(Tok.panel2, in: Capsule())
                         .overlay(Capsule().stroke(Tok.hairline, lineWidth: 1))
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Search for \(q)")
             }
-            Spacer()
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 18)
-        .padding(.top, 2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
     }
 
     @ViewBuilder private var results: some View {
@@ -66,18 +106,27 @@ struct SearchView: View {
             if outcome.dateQuery?.rest.isEmpty != true { addressRow }
             if hits.isEmpty {
                 VStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass").font(.system(size: 34)).foregroundStyle(Tok.muted)
-                    Text("No matches").font(.system(size: 17, weight: .bold)).foregroundStyle(Tok.text)
-                    Text(outcome.dateQuery != nil ? "No events on that date." : "Try a venue, artist, category, a date like \"this weekend\", or an address.")
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 34)).foregroundStyle(Tok.muted)
+                    Text("No matches")
+                        .font(.system(size: 17, weight: .bold)).foregroundStyle(Tok.text)
+                    Text(outcome.dateQuery != nil
+                         ? "No events on that date."
+                         : "Try a venue, an artist, a category, a date like \"this weekend\", or a place.")
                         .font(.system(size: 13.5)).foregroundStyle(Tok.muted)
-                }.padding(40); Spacer()
+                        .multilineTextAlignment(.center)
+                }
+                .padding(40)
+                Spacer(minLength: 0)
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 12) {
+                    LazyVStack(spacing: 10) {
                         ForEach(hits) { e in
-                            Button { selected = e } label: { EventCard(event: e) }.buttonStyle(.plain)
+                            Button { selected = e } label: { EventCard(event: e) }
+                                .buttonStyle(.plain)
                         }
-                    }.padding(.horizontal, 14).padding(.bottom, 40)
+                    }
+                    .padding(.horizontal, 16).padding(.bottom, 28)
                 }
             }
         }
@@ -92,21 +141,21 @@ struct SearchView: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: locating ? "clock" : "mappin.and.ellipse")
-                    .font(.system(size: 14, weight: .semibold)).foregroundStyle(Tok.accent)
+                    .font(.system(size: 14, weight: .semibold)).foregroundStyle(Tok.link)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(locating ? "Finding “\(query)”…" : "Search near “\(query)”")
+                    Text(locating ? "Finding \"\(query)\"" : "Search near \"\(query)\"")
                         .font(.system(size: 14, weight: .semibold)).foregroundStyle(Tok.text)
                         .lineLimit(1)
                     Text(addressMiss == query
-                         ? "Couldn't find that address in the UK."
-                         : "Show events around this address instead")
+                         ? "Could not find that address in the UK."
+                         : "Show events around this place instead")
                         .font(.system(size: 12))
-                        .foregroundStyle(addressMiss == query ? Tok.link : Tok.muted)
+                        .foregroundStyle(addressMiss == query ? Tok.accent : Tok.muted)
                         .lineLimit(1)
                 }
                 Spacer(minLength: 0)
                 if !locating {
-                    Image(systemName: "arrow.right")
+                    Image(systemName: "chevron.right")
                         .font(.system(size: 12, weight: .bold)).foregroundStyle(Tok.muted)
                 }
             }
@@ -119,7 +168,7 @@ struct SearchView: View {
         // Bottom padding matters as much as top here: without it the first
         // result card butts straight up against this row and the two read as
         // one block.
-        .padding(.horizontal, 14).padding(.top, 8).padding(.bottom, 12)
+        .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 12)
     }
 
     /// The standing reminder that the feed is centred somewhere the user chose,
@@ -131,16 +180,17 @@ struct SearchView: View {
                     .font(.system(size: 13, weight: .semibold)).foregroundStyle(Tok.text)
                     .lineLimit(1)
                 Button { Task { await app.clearOverride() } } label: {
-                    Image(systemName: "xmark").font(.system(size: 10, weight: .bold)).foregroundStyle(Tok.muted)
+                    Image(systemName: "xmark").font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(Tok.muted)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Stop searching near \(o.label)")
             }
             .padding(.horizontal, 13).padding(.vertical, 7)
-            .background(Tok.chip, in: Capsule())
-            .overlay(Capsule().stroke(Tok.accent.opacity(0.5), lineWidth: 1))
+            .background(Tok.panel2, in: Capsule())
+            .overlay(Capsule().stroke(Tok.hairline, lineWidth: 1))
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 14).padding(.bottom, 12)
+            .padding(.horizontal, 16).padding(.top, 12)
         }
     }
 
@@ -160,20 +210,25 @@ struct SearchView: View {
 
     private func dateChip(_ dq: DateQuery) -> some View {
         HStack(spacing: 6) {
-            Label(dq.label, systemImage: "calendar").font(.system(size: 13, weight: .semibold)).foregroundStyle(Tok.text)
+            Label(dq.label, systemImage: "calendar")
+                .font(.system(size: 13, weight: .semibold)).foregroundStyle(Tok.text)
             Button { app.search = dq.rest } label: {
-                Image(systemName: "xmark").font(.system(size: 10, weight: .bold)).foregroundStyle(Tok.muted)
+                Image(systemName: "xmark").font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(Tok.muted)
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Drop the date from this search")
         }
         .padding(.horizontal, 13).padding(.vertical, 7)
-        .background(Tok.chip, in: Capsule())
+        .background(Tok.panel2, in: Capsule())
         .overlay(Capsule().stroke(Tok.hairline, lineWidth: 1))
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 14).padding(.top, 10).padding(.bottom, 2)
+        .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 2)
     }
 }
 
-/// Minimal wrapping HStack for chips.
+/// Minimal wrapping HStack for chips. Three to a row, which is what the two
+/// short examples plus one long one come out at.
 struct FlexWrap<Item: Hashable, Content: View>: View {
     let items: [Item]
     let content: (Item) -> Content

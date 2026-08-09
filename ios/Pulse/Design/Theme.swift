@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 // MARK: - Colour tokens
@@ -74,6 +75,10 @@ enum Tok {
 // festivals, blue for music, with muted supporting tones for the rest. No
 // glyphs live here. Categories are drawn with SF Symbols, so nothing in the
 // interface depends on an emoji font.
+//
+// The keys are the canonical vocabulary the feed emits. The API folds every
+// source's own wording onto that list once, in api/sources/util.js, so a
+// listing arrives here already spelled the way this table spells it.
 
 struct CatStyle {
     /// Theme-adaptive, for anything drawn on the app's own surface. The dark
@@ -114,22 +119,32 @@ struct CatStyle {
 }
 
 enum Categories {
+    /// Used for "Things to do", the feed's generic bucket, and for any wording
+    /// the canonicaliser has not seen yet. A neutral slate rather than a hue,
+    /// so an uncategorised listing never borrows another category's meaning.
+    static let fallback = CatStyle(dark: 0x98A2BC, light: 0x5A6580)
+
+    /// Keys are lowercased because `style(_:)` lowercases what it is given.
+    /// "Live music" deliberately shares the Music hue: it is a sub-type of it,
+    /// not a rival to it, and giving it its own blue only makes two categories
+    /// that look almost the same.
     static let map: [String: CatStyle] = [
-        "pop-up": .init(dark: 0xC08CE8, light: 0x7A5BA6),
-        "food & drink": .init(dark: 0xE0913F, light: 0xB5651D),
-        "festival": .init(dark: 0xF44F63, light: 0xC8102E),
-        "music": .init(dark: 0x6E9BF0, light: 0x2E5AAC),
-        "live music": .init(dark: 0x8FBCF5, light: 0x4A7FD4),
-        "market": .init(dark: 0x45C4A5, light: 0x2E7D6B),
-        "comedy": .init(dark: 0xEE6E9C, light: 0xB03060),
-        "arts": .init(dark: 0x9B87EC, light: 0x6B4FA0),
-        "film": .init(dark: 0xEE7093, light: 0xA03A5C),
-        "tours": .init(dark: 0x5FC0D6, light: 0x3E7C8C),
-        "sports": .init(dark: 0x4FBE85, light: 0x1F5C3D),
-        "family": .init(dark: 0xEFA05C, light: 0xC06A2E),
+        "music":      .init(dark: 0x7BA4F2, light: 0x2563C9),
+        "live music": .init(dark: 0x7BA4F2, light: 0x2563C9),
+        "clubs":      .init(dark: 0xAC8BF2, light: 0x6D3FC4),
+        "festivals":  .init(dark: 0xF4707F, light: 0xC8102E),
+        "comedy":     .init(dark: 0xE58FCE, light: 0xB23A8C),
+        "football":   .init(dark: 0x4FC78C, light: 0x17794A),
+        "sport":      .init(dark: 0x5FC9BB, light: 0x2B7A6F),
+        "markets":    .init(dark: 0xE0A75C, light: 0xA5651B),
+        "museums":    .init(dark: 0x4FB8D4, light: 0x0F6F86),
+        "theatre":    .init(dark: 0xE07FA5, light: 0x9C2F5E),
+        "film":       .init(dark: 0x949AE8, light: 0x4A4F9E),
+        "food":       .init(dark: 0xF0946A, light: 0xB5541F),
+        "family":     .init(dark: 0xCCB84F, light: 0x7A6A12),
     ]
     static func style(_ category: String) -> CatStyle {
-        map[category.lowercased()] ?? .init(dark: 0x98A2BC, light: 0x5A6580)
+        map[category.lowercased()] ?? fallback
     }
     static func wash(_ category: String) -> Color {
         style(category).wash
@@ -151,90 +166,186 @@ struct CategoryGlyph: View {
 }
 
 extension Categories {
-    /// SF Symbol for native map Markers (which can't render emoji).
+    /// SF Symbol for the card placeholder and for native map markers, which
+    /// cannot render emoji. One case per canonical category, then a tolerant
+    /// chain for anything the canonicaliser has not folded yet: a source can
+    /// always invent a new word, and a missing glyph is worse than a loose one.
     static func symbol(_ category: String) -> String {
         let c = category.lowercased()
         switch c {
-        case "pop-up":        return "gift.fill"
-        case "food & drink":  return "fork.knife"
-        case "festival":      return "party.popper.fill"
-        case "live music":    return "guitars.fill"
-        case "market":        return "bag.fill"
-        case "comedy":        return "theatermasks.fill"
-        case "film":          return "film.fill"
-        case "tours":         return "figure.walk"
-        case "family":        return "balloon.2.fill"
+        case "music":        return "music.note"
+        case "live music":   return "guitars.fill"
+        case "clubs":        return "figure.socialdance"
+        case "festivals":    return "party.popper.fill"
+        case "comedy":       return "music.mic"
+        case "football":     return "soccerball"
+        case "sport":        return "sportscourt.fill"
+        case "markets":      return "bag.fill"
+        case "museums":      return "building.columns.fill"
+        case "theatre":      return "theatermasks.fill"
+        case "film":         return "film.fill"
+        case "food":         return "fork.knife"
+        case "family":       return "balloon.2.fill"
+        case "things to do": return "sparkles"
         default:
-            if c.contains("music") || c.contains("concert") { return "music.note" }
-            if c.contains("sport") || c.contains("football") || c.contains("rugby")
-                || c.contains("cricket") || c.contains("racing") { return "sportscourt.fill" }
-            if c.contains("art") || c.contains("theat") { return "paintpalette.fill" }
-            if c.contains("comedy") { return "theatermasks.fill" }
+            // Ordered so the narrower word wins: "club night" must not be
+            // caught by the music test, and "football" must not be caught by
+            // the general sport one.
+            if c.contains("club") || c.contains("night") || c.contains("rave") { return "figure.socialdance" }
+            if c.contains("festival") || c.contains("carnival") { return "party.popper.fill" }
+            if c.contains("comedy") || c.contains("stand-up") || c.contains("standup") { return "music.mic" }
+            if c.contains("football") || c.contains("soccer") { return "soccerball" }
+            if c.contains("sport") || c.contains("rugby") || c.contains("cricket")
+                || c.contains("racing") || c.contains("match") || c.contains("fixture") { return "sportscourt.fill" }
+            if c.contains("music") || c.contains("concert") || c.contains("gig") { return "music.note" }
+            if c.contains("market") || c.contains("pop-up") || c.contains("popup") { return "bag.fill" }
+            if c.contains("museum") || c.contains("exhibit") || c.contains("gallery")
+                || c.contains("heritage") { return "building.columns.fill" }
+            if c.contains("theat") || c.contains("art") { return "theatermasks.fill" }
+            if c.contains("film") || c.contains("cinema") || c.contains("screening") { return "film.fill" }
+            if c.contains("food") || c.contains("drink") { return "fork.knife" }
+            if c.contains("family") || c.contains("kid") || c.contains("child") { return "balloon.2.fill" }
+            if c.contains("tour") || c.contains("walk") || c.contains("outdoor") { return "figure.walk" }
             if c.contains("free") { return "ticket.fill" }
-            return "mappin"
+            return "sparkles"
         }
     }
 }
 
-// MARK: - Pulse logo (placeholder)
+// MARK: - Pulse logo
 //
-// A flat map pin with a knocked-out centre. Deliberately plain: this is a
-// stand-in until a real identity exists, so it is built to be legible at 20pt
-// in a header and at 1024px on the home screen, and to be thrown away without
-// anything else needing to change.
+// "Proximity": a filled dot with two rising arcs above it. The dot is the
+// person, the arcs are the two axes the product actually ranks on, close and
+// soon. There is no map pin in it, which is the point: the pin said "map app"
+// and said nothing about what this one does. It also holds up better than a
+// pin at 18pt, because three separated shapes survive shrinking where a
+// silhouette with a knocked-out counter does not.
 //
-// The geometry lives on a 24x24 grid and is mirrored in two other places:
-// ios/tools/make_icon.js (which generates the app icon PNGs) and
-// api/public/icon.svg (the web mark). The three must be kept in step, so the
-// numbers below are the reference.
+// The geometry lives on a 24x24 grid and is mirrored in three other places:
+// ios/tools/make_icon.js (which rasterises the app icon PNGs),
+// ios/tools/make_icon.swift (its CoreGraphics twin) and api/public/icon.svg
+// (the web and PWA mark). All four must be kept in step, so the numbers below
+// are the reference.
 //
-//   head centre   (12, 8.8)   radius 5.6
-//   point         (12, 20.8)
-//   counter       (12, 8.8)   radius 2.4
+//   dot     centre (12, 17)   radius 2.6, filled
+//   arc 1   (7.6, 12.6) to (16.4, 12.6)  on radius 6.2
+//   arc 2   (4.2, 8.9)  to (19.8, 8.9)   on radius 11
+//   both arcs stroked at 2.1 with round caps
 //
-// The tail is bounded by the two lines from the point that are tangent to the
-// head, which is what keeps the join between circle and tail smooth rather
-// than kinked. Those tangent points fall at (7.047, 11.413) and
-// (16.953, 11.413).
+// Each arc is the minor arc that bulges upward, which is how the handoff's two
+// SVG arc commands resolve. Both chords are horizontal, so each centre sits
+// directly below its chord's midpoint. They land at (12, 16.968) and
+// (12, 16.656), near enough to the dot that the mark reads as concentric.
+//
+// This is a stroked mark, but `Shape` has to hand back one fillable `Path`, so
+// the two strokes are converted to closed outlines here: outer edge forward,
+// round cap, inner edge back, round cap. The three subpaths do not touch, so
+// the fill rule makes no difference to the result.
 
 enum PulseLogoGeometry {
-    static let headCentre = CGPoint(x: 12, y: 8.8)
-    static let headRadius: CGFloat = 5.6
-    static let point = CGPoint(x: 12, y: 20.8)
-    static let counterRadius: CGFloat = 2.4
+    static let dotCentre = CGPoint(x: 12, y: 17)
+    static let dotRadius: CGFloat = 2.6
+    static let strokeWidth: CGFloat = 2.1
 
-    /// Angles of the two tangent points, measured in the view's own coordinate
-    /// space (y increasing downward), so they can be handed straight to addArc.
-    static let tangentStart = Angle(degrees: 152.18)   // left tangent point
-    static let tangentEnd = Angle(degrees: 387.82)     // right tangent point, gone the long way round the top
+    /// One of the two rising arcs, resolved from its two endpoints and radius
+    /// so that this file and the two icon generators all start from the same
+    /// four numbers rather than from transcribed angles.
+    struct Arc {
+        let centre: CGPoint
+        let radius: CGFloat
+        /// Degrees in the view's own space, where y increases downward, so 270
+        /// is straight up. The sweep runs from `startDegrees` to `endDegrees`
+        /// in the direction of increasing angle.
+        let startDegrees: Double
+        let endDegrees: Double
+
+        init(from: CGPoint, to: CGPoint, radius: CGFloat) {
+            let dx = to.x - from.x
+            let dy = to.y - from.y
+            let half = ((dx * dx + dy * dy) / 4).squareRoot()
+            // Positive y is downward, so adding the sagitta puts the centre
+            // below the chord and leaves the minor arc bulging upward.
+            let drop = (radius * radius - half * half).squareRoot()
+            let c = CGPoint(x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 + drop)
+            self.centre = c
+            self.radius = radius
+            self.startDegrees = Arc.angle(of: from, about: c)
+            self.endDegrees = Arc.angle(of: to, about: c)
+        }
+
+        /// Polar angle of `p` about `c`, normalised to 0 up to 360 so that a
+        /// sweep over the top is an increasing range rather than one that
+        /// wraps through zero.
+        static func angle(of p: CGPoint, about c: CGPoint) -> Double {
+            let a = atan2(Double(p.y - c.y), Double(p.x - c.x)) * 180 / Double.pi
+            return a < 0 ? a + 360 : a
+        }
+
+        /// A point at `radius` and `degrees` from `centre`, for a centre and
+        /// radius already scaled into the destination rect.
+        static func point(about c: CGPoint, radius: CGFloat, degrees: Double) -> CGPoint {
+            let a = degrees * Double.pi / 180
+            return CGPoint(x: c.x + radius * CGFloat(cos(a)),
+                           y: c.y + radius * CGFloat(sin(a)))
+        }
+    }
+
+    static let arcs: [Arc] = [
+        Arc(from: CGPoint(x: 7.6, y: 12.6), to: CGPoint(x: 16.4, y: 12.6), radius: 6.2),
+        Arc(from: CGPoint(x: 4.2, y: 8.9), to: CGPoint(x: 19.8, y: 8.9), radius: 11),
+    ]
 
     /// Builds the logo inside `rect`, fitted to a 24x24 grid and centred.
-    /// The result is one closed outline plus the counter, so it must be filled
-    /// even-odd for the counter to read as a hole.
+    /// The result is three closed subpaths that can simply be filled.
     static func path(in rect: CGRect) -> Path {
         let s = min(rect.width / 24, rect.height / 24)
-        let ox = rect.midX - 12 * s, oy = rect.midY - 12 * s
-        func p(_ pt: CGPoint) -> CGPoint { CGPoint(x: ox + pt.x * s, y: oy + pt.y * s) }
+        let ox = rect.midX - 12 * s
+        let oy = rect.midY - 12 * s
+        func place(_ pt: CGPoint) -> CGPoint { CGPoint(x: ox + pt.x * s, y: oy + pt.y * s) }
 
         var path = Path()
-        // Head, entered at the left tangent point and swept over the top to the
-        // right one. clockwise: false traverses in the direction of increasing
-        // angle, which in this y-down space is visually clockwise.
-        path.addArc(center: p(headCentre), radius: headRadius * s,
-                    startAngle: tangentStart, endAngle: tangentEnd, clockwise: false)
-        path.addLine(to: p(point))
-        path.closeSubpath()
 
-        // Counter.
-        let c = p(headCentre), r = counterRadius * s
-        path.addEllipse(in: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r))
+        let dc = place(dotCentre)
+        let dr = dotRadius * s
+        path.addEllipse(in: CGRect(x: dc.x - dr, y: dc.y - dr, width: 2 * dr, height: 2 * dr))
+
+        let cap = strokeWidth / 2 * s
+        for arc in arcs {
+            let c = place(arc.centre)
+            let mid = arc.radius * s
+            let start = Angle(degrees: arc.startDegrees)
+            let end = Angle(degrees: arc.endDegrees)
+            let capStart = Arc.point(about: c, radius: mid, degrees: arc.startDegrees)
+            let capEnd = Arc.point(about: c, radius: mid, degrees: arc.endDegrees)
+
+            // Outer edge, forward. clockwise: false traverses in the direction
+            // of increasing angle, which in this y-down space is visually
+            // clockwise, so the sweep goes over the top.
+            path.move(to: Arc.point(about: c, radius: mid + cap, degrees: arc.startDegrees))
+            path.addArc(center: c, radius: mid + cap,
+                        startAngle: start, endAngle: end, clockwise: false)
+            // Round cap at the finishing end, bulging past it.
+            path.addArc(center: capEnd, radius: cap,
+                        startAngle: end, endAngle: Angle(degrees: arc.endDegrees + 180),
+                        clockwise: false)
+            // Inner edge, back the way we came.
+            path.addArc(center: c, radius: mid - cap,
+                        startAngle: end, endAngle: start, clockwise: true)
+            // Round cap at the starting end, closing the outline.
+            path.addArc(center: capStart, radius: cap,
+                        startAngle: Angle(degrees: arc.startDegrees + 180),
+                        endAngle: Angle(degrees: arc.startDegrees + 360),
+                        clockwise: false)
+            path.closeSubpath()
+        }
         return path
     }
 }
 
 struct PulseLogo: Shape {
-    /// Even-odd is what turns the counter into a hole rather than a second
-    /// filled disc.
+    /// The dot and the two arc outlines are disjoint, so even-odd and non-zero
+    /// give the same result. Kept as a named style because the view passes it
+    /// and because it is the safe rule if the geometry ever gains a hole.
     static let fillStyle = FillStyle(eoFill: true)
     func path(in rect: CGRect) -> Path { PulseLogoGeometry.path(in: rect) }
 }

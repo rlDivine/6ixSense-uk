@@ -54,10 +54,84 @@ extension EventService.Sort {
     }
 }
 
-// MARK: - Sidebar primitives (HANDOFF.md §6.9)
+// MARK: - Imminence
+
+enum PadWhen {
+    /// True when the event starts today, in the device's own timezone.
+    ///
+    /// Computed here rather than read off `Fmt.when`, so the three iPad files
+    /// depend only on the formatter's plain-string helpers and not on the shape
+    /// of a tuple that belongs to the card.
+    static func isToday(_ date: Date?) -> Bool {
+        guard let date else { return false }
+        return EventService.Range.deviceCalendar.isDate(date, inSameDayAs: .now)
+    }
+}
+
+// MARK: - Grid geometry (handoff section 5)
+
+/// Everything the iPad grid needs in order to lay itself out, derived from the
+/// width the grid was actually handed and from nothing else.
+///
+/// Not the device model, not `UIScreen`, not the size class. On iPadOS the app
+/// can be two thirds of the screen in Split View, a floating panel in Slide
+/// Over, or any width at all under Stage Manager, and the only honest input is
+/// the width the layout system just proposed. A rotation re-proposes a new
+/// width and this simply runs again, which is why nothing here needs an
+/// orientation observer and why orientation must never be locked.
+struct GridMetrics {
+    /// Padding either side of the grid, inside the content column.
+    static let horizontalPadding: CGFloat = 22
+    /// Gap between cells, on both axes.
+    static let spacing: CGFloat = 18
+    /// Roughly one column per this much available width. Tuned so a 1180pt
+    /// landscape iPad lands on three columns with the detail pane closed
+    /// (896pt of content) and two with it open (520pt), which is the handoff's
+    /// specified behaviour.
+    static let widthPerColumn: CGFloat = 300
+    /// Below this *cell* width the editorial card (option 1d) stops working: an
+    /// 84pt thumbnail plus the 36pt bookmark gutter leaves about 70pt of text,
+    /// and the footer drops price and source. At or under it the grid switches
+    /// to the index card (option 1f), which spends the whole cell on the title
+    /// and the footer and carries a 4pt category spine instead of a photo.
+    static let compactCardBelow: CGFloat = 260
+
+    /// The width this was computed from, kept for callers that want to reason
+    /// about the column rather than the cell.
+    let available: CGFloat
+    let columns: Int
+    /// The width one card will actually be drawn at. This, not the screen and
+    /// not the column, is what decides which card variant the grid uses.
+    let cellWidth: CGFloat
+
+    init(available: CGFloat) {
+        let w = max(0, available)
+        let n = max(1, min(4, Int((w / Self.widthPerColumn).rounded())))
+        let usable = max(0, w - Self.horizontalPadding * 2 - Self.spacing * CGFloat(n - 1))
+        self.available = w
+        self.columns = n
+        self.cellWidth = usable / CGFloat(n)
+    }
+
+    /// True when the grid should render the index card rather than the
+    /// editorial one. Two up beside an open detail pane on a 1180pt iPad gives
+    /// a cell of about 229pt and lands here; three up with the pane closed
+    /// gives about 272pt and does not.
+    var usesCompactCard: Bool { cellWidth < Self.compactCardBelow }
+
+    var gridItems: [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: Self.spacing), count: columns)
+    }
+}
+
+// MARK: - Sidebar primitives (handoff section 5)
 
 /// A sidebar row: 42pt tall inside a 44pt hit area, leading icon or colour dot,
 /// title, and an optional live count badge.
+///
+/// The selected row is `Tok.activeBg` with a `Tok.activeFg` label. It is never
+/// a hardcoded white: on dark the selected fill is near white and a white label
+/// on it is invisible, which is a bug this file has shipped before.
 struct SideRow: View {
     var icon: String? = nil
     var dot: Color? = nil
@@ -97,6 +171,11 @@ struct SideRow: View {
     }
 }
 
+/// The live count on a sidebar row.
+///
+/// On a selected row the pill flips to a translucent version of the row's own
+/// foreground, which on light is white on navy and on dark is near black on
+/// near white. Both stay legible, and neither hardcodes a colour.
 struct CountBadge: View {
     let count: Int
     var active: Bool = false
@@ -106,128 +185,62 @@ struct CountBadge: View {
             .monospacedDigit()
             .foregroundStyle(active ? Tok.activeFg : Tok.muted)
             .padding(.horizontal, 8).padding(.vertical, 3)
-            .background(active ? Tok.activeFg.opacity(0.24) : Tok.panel2, in: Capsule())
+            .frame(minWidth: 28)
+            .background(active ? Tok.activeFg.opacity(0.22) : Tok.panel2, in: Capsule())
     }
 }
 
+/// Uppercase section label above the Sort, When and Category blocks.
+/// `Tok.muted` rather than `Tok.faint`, because the sidebar sits on a material
+/// and the faintest of the three text weights is not solved against one.
 struct SidebarSectionHeader: View {
     let text: String
     var body: some View {
-        Text(text)
-            .font(.system(size: 11, weight: .heavy))
-            .kerning(0.8)
+        Text(text.uppercased())
+            .font(.system(size: 10.5, weight: .heavy))
+            .kerning(0.85)
             .foregroundStyle(Tok.muted)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 12)
+            .padding(.top, 12)
             .padding(.bottom, 6)
+            .accessibilityAddTraits(.isHeader)
     }
 }
 
-// MARK: - Grid card (HANDOFF.md §6.9, "adaptive grid")
+// MARK: - Grid cell
 
+/// One cell of the iPad grid.
+///
+/// The card itself is `EventCard`, the same component the phone list uses, so
+/// there is exactly one card in the app rather than an iPad copy that drifts.
+/// `compact` selects the index variant, and the caller decides that from the
+/// cell width, never from the device.
+///
+/// Deliberately not wrapped in a `Button`. `EventCard` carries its own bookmark
+/// button, and a control nested inside another control either swallows the
+/// inner tap or collapses two accessibility elements into one. The tap gesture
+/// sits alongside the bookmark instead, which is how the map rail row already
+/// works in this codebase.
 struct IPadEventCard: View {
+    /// Matches the radius `EventCard` clips itself to, so the selection ring
+    /// sits on the card's own edge rather than beside it.
+    private static let radius: CGFloat = 14
+
     let event: Event
+    var compact: Bool = false
     var highlighted: Bool = false
-    @EnvironmentObject var app: AppState
+    let open: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            cover
-            VStack(alignment: .leading, spacing: 6) {
-                Text(event.title)
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Tok.text)
-                    // Always reserve both lines so a one-line title doesn't make
-                    // its card shorter than its row neighbours.
-                    .lineLimit(2, reservesSpace: true)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("\(Fmt.time(event.startDate)) · \(event.venue ?? "Venue TBA")")
-                    .font(.system(size: 13.5))
-                    .foregroundStyle(Tok.muted)
-                    .lineLimit(1)
-                tags
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 14)
-            .padding(.top, 12)
-            .padding(.bottom, 14)
-        }
-        // Fill the grid row's height so every card in a row draws the same box,
-        // instead of short cards floating with a ragged bottom edge.
-        .frame(maxHeight: .infinity, alignment: .top)
-        .background(Tok.panel, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(highlighted ? Tok.accent : Tok.hairline, lineWidth: highlighted ? 2 : 1)
-        )
-        .shadow(color: .black.opacity(0.07), radius: 8, y: 3)
-        .contentShape(RoundedRectangle(cornerRadius: 16))
-    }
-
-    private var cover: some View {
-        let when = Fmt.when(event.startDate)
-        let glyph = CategoryGlyph(category: event.category, size: 36)
-        // The flat wash has no intrinsic size, so it is what decides the media
-        // box rather than the remote photo. The image sits in an overlay, which is sized by
-        // its parent, so a large `scaledToFill` photo can no longer widen the
-        // card past its grid column (which made cards bleed into each other and
-        // off the right edge in the two-column portrait layout).
-        return Categories.wash(event.category)
-            .frame(maxWidth: .infinity)
-            .frame(height: 150)
-            .overlay {
-                if let url = event.imageURL {
-                    AsyncImage(url: url) { phase in
-                        if let image = phase.image { image.resizable().aspectRatio(contentMode: .fill) }
-                        else { glyph }
-                    }
-                } else {
-                    glyph
-                }
-            }
-            // Clip the media (and any oversized photo) before the bookmark is
-            // added, so the button can still overhang the bottom edge.
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .overlay(alignment: .topLeading) {
-            Text(when.text.uppercased())
-                .font(.system(size: 10, weight: .bold)).kerning(0.7).foregroundStyle(.white)
-                .padding(.horizontal, 9).padding(.vertical, 5)
-                .background(Color.black.opacity(0.72), in: Capsule())
-                .padding(10)
-        }
-        .overlay(alignment: .topTrailing) {
-            Text(Fmt.distance(event.distanceKm))
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 9).padding(.vertical, 5)
-                .background(Color.black.opacity(0.72), in: Capsule())
-                .padding(10)
-        }
-        .overlay(alignment: .bottomTrailing) {
-            Button { app.toggleSave(event) } label: {
-                Image(systemName: app.isSaved(event) ? "bookmark.fill" : "bookmark")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(app.isSaved(event) ? .white : Tok.text)
-                    .frame(width: 44, height: 44)
-                    .background(app.isSaved(event) ? Tok.accentFill : Tok.panel, in: Circle())
-                    .shadow(color: .black.opacity(0.22), radius: 5, y: 2)
-            }
-            .buttonStyle(.plain)
-            .padding(.trailing, 10)
-            .offset(y: 22)
-            .accessibilityLabel(app.isSaved(event) ? "Remove from saved" : "Save event")
-        }
-        .padding(.bottom, 10)   // room for the bookmark to overhang
-    }
-
-    private var tags: some View {
-        HStack(spacing: 6) {
-            TagChip(text: event.category, kind: .category)
-            TagChip(text: Fmt.relDay(event.startDate), kind: .neutral)
-            if event.isFree && event.category != "Free" { TagChip(text: "Free", kind: .free) }
-            if let p = event.price, !p.isEmpty, !event.isFree { TagChip(text: p, kind: .neutral) }
-        }
-        .padding(.top, 2)
+        EventCard(event: event, compact: compact)
+            .overlay(
+                RoundedRectangle(cornerRadius: Self.radius)
+                    .stroke(highlighted ? Tok.accent : Color.clear, lineWidth: 2)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: Self.radius))
+            .onTapGesture(perform: open)
+            .accessibilityElement(children: .contain)
+            .accessibilityAction(named: Text("Open event"), open)
     }
 }

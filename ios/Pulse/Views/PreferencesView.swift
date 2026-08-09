@@ -1,6 +1,10 @@
 import SwiftUI
 
-/// Edit interests any time after onboarding. Changes apply to the feed + map
+/// Settings. Reached from the gear in the brand strip on Discover, Saved and
+/// Search, which is where it moved to when Map took its place in the tab bar.
+///
+/// Two things live here: which town the feed is built around, and which
+/// interests it is narrowed to. Changes apply to the feed and the map
 /// immediately (preferredCategories is @Published and persisted on each toggle).
 struct PreferencesView: View {
     @EnvironmentObject var app: AppState
@@ -32,7 +36,7 @@ struct PreferencesView: View {
             }
             .background(Tok.bg.ignoresSafeArea())
             .task { await app.loadRegions() }
-            .navigationTitle("Preferences")
+            .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

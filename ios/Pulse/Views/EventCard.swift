@@ -1,96 +1,201 @@
 import SwiftUI
 
-/// The most-used component. A row rather than a poster: thumbnail on the left,
-/// then an overline saying when, the title, the venue, and a quiet footer of
-/// category, distance, price and source.
+/// The most-used component in the app. A row rather than a poster: a thumbnail
+/// on the left, then an overline saying when, the title, the venue, and a quiet
+/// footer of category, distance, price and source.
 ///
-/// The date used to sit in a badge stuck on the corner of the thumbnail and the
-/// distance used to be a large number in its own column. Both competed with the
-/// title for attention while telling you less than the overline does.
+/// Two treatments live here.
+///
+/// * The default (option 1d in the handoff) is the editorial row with an 84pt
+///   thumbnail. The category wash and glyph sit *underneath* the photo, so an
+///   image that never loads leaves the mark showing rather than an empty box.
+/// * `compact` (option 1f, the index row) drops the thumbnail entirely and puts
+///   a 4pt category spine down the leading edge instead. The title gets the
+///   whole width. The iPad grid asks for this when its cells are narrow, and it
+///   is also used automatically for an event with no usable photo, because a
+///   tinted square carries less than the extra width does.
 struct EventCard: View {
     let event: Event
+    /// Option 1f. Callers with narrow cells (the iPad two up grid) pass true.
+    var compact: Bool = false
+
     @EnvironmentObject var app: AppState
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    /// An event with no photo has nothing for the thumbnail to hold, so it gets
+    /// the index treatment whether or not the caller asked for it.
+    private var usesIndex: Bool { compact || event.imageURL == nil }
+
+    private var catColor: Color { Categories.style(event.category).color }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 13) {
-            thumb
-            VStack(alignment: .leading, spacing: 3) {
-                when
-                Text(event.title)
-                    .font(.system(size: 16, weight: .semibold))
-                    .kerning(-0.15)
-                    .lineSpacing(1)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                    .foregroundStyle(Tok.text)
-                Text(event.venue?.isEmpty == false ? event.venue! : app.placeName)
-                    .font(.system(size: 13))
-                    .foregroundStyle(Tok.muted)
-                    .lineLimit(1)
-                footer
-            }
-            Spacer(minLength: 0)
+        // The bookmark is a sibling laid over the card, never a child of the
+        // card's own tap target. The text column reserves 36pt on the right so
+        // the title can never run underneath it.
+        ZStack(alignment: .topTrailing) {
+            surface
             bookmark
         }
-        .padding(12)
-        .background(Tok.panel, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Tok.hairline, lineWidth: 1))
     }
 
-    /// "Today, 19:00" in the accent, "Sat, 8 Aug, 19:00" in the quiet grey.
-    /// Imminence is the one thing in a list worth colouring.
-    private var when: some View {
-        let w = Fmt.when(event.startDate)
-        return Text(w.text.uppercased())
-            .font(.system(size: 10.5, weight: .bold))
-            .kerning(0.8)
-            .foregroundStyle(w.soon ? Tok.accent : Tok.faint)
-            .lineLimit(1)
+    // MARK: Container
+
+    private var surface: some View {
+        HStack(alignment: .top, spacing: 13) {
+            if !usesIndex { thumb }
+            textColumn
+        }
+        .padding(12)
+        .padding(.leading, usesIndex ? 4 : 0)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Tok.panel)
+        .overlay(alignment: .leading) { spine }
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Tok.hairline, lineWidth: 1))
+    }
+
+    /// The 4pt category bar that stands in for the thumbnail on an index row.
+    @ViewBuilder private var spine: some View {
+        if usesIndex {
+            Rectangle().fill(catColor).frame(width: 4)
+        }
     }
 
     private var thumb: some View {
         ZStack {
             Categories.wash(event.category)
-            CategoryGlyph(category: event.category, size: 22).opacity(0.75)
-            // The photo sits on top of the mark, so a URL that fails to load
-            // leaves the mark showing rather than an empty square.
+            CategoryGlyph(category: event.category, size: 26)
+            // The photo sits on top of the wash and the mark, so a URL that
+            // fails to load leaves the mark showing rather than a blank square.
             if let url = event.imageURL {
                 AsyncImage(url: url) { phase in
-                    if let image = phase.image { image.resizable().scaledToFill() }
-                    else { Color.clear }
+                    if let image = phase.image {
+                        image.resizable().scaledToFill()
+                    } else {
+                        Color.clear
+                    }
                 }
             }
         }
-        .frame(width: 78, height: 78)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .frame(width: 84, height: 84)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .accessibilityHidden(true)
     }
 
-    /// Category, distance, price and source, separated by dots. Quiet by
-    /// design: it is reference detail, not something to scan.
+    // MARK: Text column
+
+    private var textColumn: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            overline
+            Text(event.title)
+                .font(.system(size: usesIndex ? 17 : 16, weight: .semibold))
+                .kerning(-0.2)
+                .lineSpacing(1)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .foregroundStyle(Tok.text)
+            Text(venueText)
+                .font(.system(size: 13.5))
+                .foregroundStyle(Tok.muted)
+                .lineLimit(1)
+            footer
+        }
+        .padding(.trailing, 36)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var venueText: String {
+        if let v = event.venue, !v.isEmpty { return v }
+        return app.placeName
+    }
+
+    /// "TODAY, 19:00" in the accent, "SAT, 8 AUG, 19:00" in the quiet grey.
+    /// Imminence is the one thing in a list worth colouring. On an index row the
+    /// category joins it here, because the footer has no dot to carry it.
+    private var overline: some View {
+        let w = Fmt.when(event.startDate)
+        return HStack(spacing: 8) {
+            Text(w.text.uppercased())
+                .font(.system(size: 10.5, weight: .bold))
+                .kerning(0.84)
+                .foregroundStyle(w.soon ? Tok.accent : Tok.faint)
+            if usesIndex && showsCategoryName {
+                Text(event.category.uppercased())
+                    .font(.system(size: 10.5, weight: .bold))
+                    .kerning(0.84)
+                    .foregroundStyle(catColor)
+            }
+        }
+        .lineLimit(1)
+    }
+
+    // MARK: Footer
+    //
+    // Category dot, category, distance, price, source, separated by dots.
+    // Quiet by design: it is reference detail, not something to scan. The
+    // source is the quietest thing on the card, because it is a trust signal
+    // and not a headline.
+    //
+    // Dynamic Type breaks this line first, so at the accessibility sizes it
+    // gives up the source, then the category name, and keeps distance and
+    // price, which are the two facts a person is actually comparing.
+
+    /// The source goes at the first accessibility size.
+    private var showsSource: Bool { !typeSize.isAccessibilitySize }
+    /// The category name goes a couple of steps later. The dot stays, so the
+    /// colour still says which category it is.
+    private var showsCategoryName: Bool { typeSize < .accessibility3 }
+    /// An index row prints the category on the overline instead.
+    private var showsCategoryDot: Bool { !usesIndex }
+
+    private struct Meta: Identifiable {
+        let id: Int
+        let text: String
+        /// Free is a strong signal, so it gets weight and the primary ink
+        /// rather than being spent as another red mark.
+        let strong: Bool
+        /// The source, held back a little.
+        let quiet: Bool
+    }
+
+    private var metaItems: [Meta] {
+        var out: [Meta] = []
+        if let km = event.distanceKm {
+            out.append(Meta(id: out.count, text: Fmt.distance(km), strong: false, quiet: false))
+        }
+        if event.isFree {
+            out.append(Meta(id: out.count, text: "Free", strong: true, quiet: false))
+        } else if let p = event.price, !p.isEmpty {
+            out.append(Meta(id: out.count, text: p, strong: false, quiet: false))
+        }
+        if showsSource && !event.source.isEmpty {
+            out.append(Meta(id: out.count, text: event.source, strong: false, quiet: true))
+        }
+        return out
+    }
+
     private var footer: some View {
         HStack(spacing: 6) {
-            HStack(spacing: 5) {
-                Circle()
-                    .fill(Categories.style(event.category).color)
-                    .frame(width: 6, height: 6)
-                Text(event.category)
-                    .font(.system(size: 11.5, weight: .semibold))
-                    .foregroundStyle(Tok.muted)
+            if showsCategoryDot {
+                HStack(spacing: 5) {
+                    Circle().fill(catColor).frame(width: 6, height: 6)
+                    if showsCategoryName {
+                        Text(event.category)
+                            .font(.system(size: 11.5))
+                            .foregroundStyle(Tok.faint)
+                    }
+                }
             }
-            if event.distanceKm != nil {
-                separator
-                Text(Fmt.distance(event.distanceKm)).font(.system(size: 11.5)).foregroundStyle(Tok.faint)
+            ForEach(metaItems) { item in
+                if item.id > 0 || showsCategoryDot { separator }
+                Text(item.text)
+                    .font(.system(size: 11.5, weight: item.strong ? .semibold : .regular))
+                    .foregroundStyle(item.strong ? Tok.text : Tok.faint)
+                    .opacity(item.quiet ? 0.75 : 1)
             }
-            if event.isFree {
-                separator
-                Text("Free").font(.system(size: 11.5, weight: .bold)).foregroundStyle(Tok.accent)
-            } else if let p = event.price, !p.isEmpty {
-                separator
-                Text(p).font(.system(size: 11.5)).foregroundStyle(Tok.faint)
-            }
-            separator
-            Text(event.source).font(.system(size: 11.5)).foregroundStyle(Tok.faint).lineLimit(1)
         }
+        .lineLimit(1)
         .padding(.top, 4)
     }
 
@@ -98,14 +203,25 @@ struct EventCard: View {
         Circle().fill(Tok.faint).frame(width: 2, height: 2).opacity(0.7)
     }
 
+    // MARK: Bookmark
+
     private var bookmark: some View {
-        Button { app.toggleSave(event) } label: {
-            Image(systemName: app.isSaved(event) ? "bookmark.fill" : "bookmark")
-                .font(.system(size: 16))
-                .foregroundStyle(app.isSaved(event) ? Tok.accent : Tok.faint)
+        let saved = app.isSaved(event)
+        return Button {
+            app.toggleSave(event)
+        } label: {
+            Image(systemName: saved ? "bookmark.fill" : "bookmark")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(saved ? Tok.accent : Tok.faint)
+                .frame(width: 36, height: 36)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(app.isSaved(event) ? "Remove from saved" : "Save event")
+        .accessibilityLabel(saved ? "Remove \(event.title) from saved" : "Save \(event.title)")
+        .accessibilityValue(saved ? "Saved" : "Not saved")
+        .accessibilityAddTraits(saved ? AccessibilityTraits.isSelected : [])
+        .padding(.top, 4)
+        .padding(.trailing, 4)
     }
 }
 
@@ -127,7 +243,7 @@ struct TagChip: View {
     private var fg: Color {
         switch kind {
         case .category: Tok.text
-        case .free: Tok.accent
+        case .free: Tok.freeFg
         case .neutral: Tok.muted
         }
     }
@@ -135,7 +251,7 @@ struct TagChip: View {
     private var stroke: Color {
         switch kind {
         case .category: Tok.hairline
-        case .free: Tok.accent
+        case .free: Tok.freeFg
         case .neutral: .clear
         }
     }
