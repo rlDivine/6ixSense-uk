@@ -1,0 +1,49 @@
+# Render blueprint for the Pulse UK backend.
+#
+# This file has to live at the REPOSITORY ROOT: Render's Blueprint flow only
+# looks here, and it will not find a render.yaml nested inside a subdirectory.
+# The service itself is in api/, so both Docker paths point down into it.
+#
+# In Render: New, then Blueprint, then connect this repo and pick the branch.
+# Everything below is applied automatically. The three API keys are the only
+# things you set by hand, in the dashboard, after the first deploy.
+services:
+  - type: web
+    name: pulse-uk-api
+    runtime: docker
+
+    # Free spins down after about 15 minutes idle, and the next request pays a
+    # 30 to 60 second cold start. Change to `starter` (about $7/mo) before you
+    # ship the app, so a user's first tap is not a minute of waiting.
+    plan: free
+
+    # The closest Render region to the UK, which keeps latency down for British
+    # users and for the eventbrite.co.uk fetches.
+    region: frankfurt
+
+    # Both relative to the repository root. dockerContext is what makes the
+    # Dockerfile's `COPY . .` copy the api directory rather than the whole repo,
+    # so the iOS app never ends up inside the image.
+    dockerfilePath: ./api/Dockerfile
+    dockerContext: ./api
+
+    # Never scrapes, so it is safe to hit as often as Render likes.
+    healthCheckPath: /healthz
+
+    # Redeploys on every push to the branch you connect.
+    autoDeploy: true
+
+    # $PORT is injected by Render and server.js already reads it, so the service
+    # starts with no configuration at all. The keys below are optional: each
+    # source is skipped when its key is unset, and the app still works from
+    # Eventbrite UK and the built-in venue guide.
+    #
+    # sync: false means "ask me for this in the dashboard, and never overwrite
+    # it from this file", which is what you want for a secret.
+    envVars:
+      - key: TM_API_KEY
+        sync: false
+      - key: SKIDDLE_API_KEY
+        sync: false
+      - key: THESPORTSDB_KEY
+        sync: false
