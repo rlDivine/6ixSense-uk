@@ -116,6 +116,12 @@ export function makeEvent({
   image = "",
   source = "",
   price = "",
+  // Most sources give the client nothing to say beyond the fields above, and
+  // the client already falls back to "tap Get tickets" when this is blank.
+  // PredictHQ is the first source that sometimes has real prose (for expos,
+  // festivals and community listings), and it is also the source most likely
+  // to have no ticket link at all, so a real description is worth carrying.
+  description = "",
 }) {
   return {
     id: String(id),
@@ -130,6 +136,7 @@ export function makeEvent({
     image: safeUrl(image),
     source,
     price,
+    description: decodeEntities(description).trim(),
   };
 }
 

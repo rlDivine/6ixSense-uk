@@ -15,6 +15,12 @@ struct Event: Identifiable, Codable, Hashable {
     let image: String?
     let source: String
     let price: String?
+    // Most sources give the client nothing to say here, and the detail screen
+    // already builds a summary from what it does know. PredictHQ is the first
+    // source that sometimes carries real prose, worth showing ahead of the
+    // built-in summary precisely because that source has no url to fall back
+    // on. Optional and absent on older cached JSON, so decoding never breaks.
+    let description: String?
 
     // MARK: Derived helpers
 

@@ -20,7 +20,7 @@ and dark themes.
 Add free keys for the full live feed:
 
 ```bash
-TM_API_KEY=... SKIDDLE_API_KEY=... THESPORTSDB_KEY=... npm start
+TM_API_KEY=... SKIDDLE_API_KEY=... THESPORTSDB_KEY=... PREDICTHQ_API_KEY=... npm start
 ```
 
 `server.js` also reads an `api/.env` file if one is present, so the keys can go
@@ -71,17 +71,21 @@ Every UK region reports `"unit": "mi"`, so both clients display miles.
 | **Ticketmaster Discovery** | Free key (`TM_API_KEY`) | REST, pinned to `countryCode=GB` | Concerts, theatre, comedy, arena sport |
 | **Skiddle** | Free key (`SKIDDLE_API_KEY`) | REST, queried by lat/lng | UK-only listings: gigs, club nights, festivals, comedy, food |
 | **Football fixtures** | Free key (`THESPORTSDB_KEY`) | TheSportsDB REST | Premier League, Championship, League One, League Two and the Scottish Premiership |
+| **PredictHQ** | Free key (`PREDICTHQ_API_KEY`) | REST, `within` radius search, `country=GB` | Concerts, festivals, performing arts, expos, community listings, sport |
 | **Eventbrite UK** | No | `eventbrite.co.uk` discovery pages, embedded JSON-LD, 11 pages per town | Music, food, comedy, arts, film, sport, family, festivals, pop-ups, free events |
 | **Local guide** | No | Built in | Real UK venues with regular programming |
 
 Ticketmaster is pinned to GB so a radius search from the Kent coast or Northern
 Ireland cannot pull in French or Irish listings. Skiddle takes its radius in
 miles rather than kilometres, which the source converts and then caps at 30
-miles, because the API rejects very large radii. Eventbrite is a per-town
-scrape of eleven discovery pages, ten verticals plus the general feed, and a
-town with no Eventbrite page contributes nothing rather than failing the
-request. The guide is national, and each region takes the slice inside its own
-radius.
+miles, because the API rejects very large radii. PredictHQ carries no ticket
+link and no image, since it is a demand-intelligence feed rather than a
+ticketing one, so those cards fall back to the category mark; it sometimes
+carries a real description, which is used ahead of the generic fallback text
+for exactly that reason. Eventbrite is a per-town scrape of eleven discovery
+pages, ten verticals plus the general feed, and a town with no Eventbrite page
+contributes nothing rather than failing the request. The guide is national,
+and each region takes the slice inside its own radius.
 
 Every keyed source returns nothing when its key is unset, so the whole thing
 works with none configured. `GET /api/status` reports which keys are present,

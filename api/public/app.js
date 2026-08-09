@@ -635,6 +635,17 @@ function openDetail(id) {
   if (!e) return;
   const on = state.saved[e.id];
   const hero = e.image ? `<img src="${esc(safeHref(e.image))}" onerror="this.remove()"/>` : "";
+  const ticketUrl = safeHref(e.url);
+  // Not every source carries a booking link. PredictHQ, for one, is an events
+  // intelligence feed rather than a ticketing one, so this is a real case, not
+  // a defensive one. An anchor pointed at "#" looks clickable and does nothing,
+  // which is worse than not offering the action at all.
+  const cta = ticketUrl
+    ? `<div class="cta"><a href="${esc(ticketUrl)}" target="_blank" rel="noopener">Get tickets and details ${uiIcon("external", 15)}</a></div>`
+    : "";
+  const descFallback = ticketUrl
+    ? "Tap “Get tickets and details” for the full description and tickets from the source."
+    : "No further detail was given for this listing.";
   $("#detail").innerHTML = `
     <div class="hero" style="background:${wash(e.category)}">${catIcon(e.category, 54)}${hero}
       <button class="hbtn back" id="detailBack" aria-label="Back">${uiIcon("back", 20)}</button>
@@ -643,7 +654,7 @@ function openDetail(id) {
     <div class="dscroll">
       <div class="badges"><span class="tag cat">${esc(e.category)}</span>${freeTag(e)}<span class="badge-src">via ${esc(e.source)}</span></div>
       <h2>${esc(e.title)}</h2>
-      <p class="desc">${esc(e.description || "Tap “Get tickets and details” for the full description and tickets from the source.")}</p>
+      <p class="desc">${esc(e.description || descFallback)}</p>
       <div class="facts">
         <div class="fact"><div class="k">When</div><div class="v">${e.start ? new Date(e.start).toLocaleDateString("en-GB", { month: "short", day: "numeric" }) + " · " + timeStr(e.start) : "TBA"}</div></div>
         <div class="fact"><div class="k">Distance</div><div class="v">${distStr(e.distanceKm)}</div></div>
@@ -661,7 +672,7 @@ function openDetail(id) {
         <button class="sa" id="saSave">${on ? `Saved ${uiIcon("check", 14)}` : "Save"}</button>
       </div>
     </div>
-    <div class="cta"><a href="${esc(safeHref(e.url) || "#")}" target="_blank" rel="noopener">Get tickets and details ${uiIcon("external", 15)}</a></div>`;
+    ${cta}`;
   $("#detail").classList.remove("hidden");
 
   // Same guard as initMap: Leaflet comes off a CDN, and losing the venue

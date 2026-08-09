@@ -8,6 +8,7 @@ import { fetchSkiddle } from "./sources/skiddle.js";
 import { fetchSportsFixtures } from "./sources/sportsfixtures.js";
 import { fetchCurated } from "./sources/curated.js";
 import { fetchEventbrite } from "./sources/eventbrite.js";
+import { fetchPredictHQ } from "./sources/predicthq.js";
 import {
   CITIES,
   DEFAULT_REGION,
@@ -52,6 +53,10 @@ const SOURCE_IMPL = {
     label: "Football fixtures",
     run: (r) => fetchSportsFixtures({ lat: r.lat, lng: r.lng, radiusKm: r.radiusKm }),
   },
+  predicthq: {
+    label: "PredictHQ",
+    run: (r) => fetchPredictHQ({ lat: r.lat, lng: r.lng, radiusKm: r.radiusKm }),
+  },
   eventbrite: { label: "Eventbrite", run: (r) => fetchEventbrite(r.eventbrite) },
   curated: {
     label: "Local guide",
@@ -66,6 +71,7 @@ function keyStatus() {
     TM_API_KEY: !!process.env.TM_API_KEY,
     SKIDDLE_API_KEY: !!process.env.SKIDDLE_API_KEY,
     THESPORTSDB_KEY: !!process.env.THESPORTSDB_KEY,
+    PREDICTHQ_API_KEY: !!process.env.PREDICTHQ_API_KEY,
   };
 }
 

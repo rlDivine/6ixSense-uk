@@ -5,7 +5,7 @@
 # The service itself is in api/, so both Docker paths point down into it.
 #
 # In Render: New, then Blueprint, then connect this repo and pick the branch.
-# Everything below is applied automatically. The three API keys are the only
+# Everything below is applied automatically. The four API keys are the only
 # things you set by hand, in the dashboard, after the first deploy.
 services:
   - type: web
@@ -46,4 +46,8 @@ services:
       - key: SKIDDLE_API_KEY
         sync: false
       - key: THESPORTSDB_KEY
+        sync: false
+      # Sent as an Authorization: Bearer header, not a query parameter, despite
+      # the _KEY suffix kept for consistency with the three above.
+      - key: PREDICTHQ_API_KEY
         sync: false

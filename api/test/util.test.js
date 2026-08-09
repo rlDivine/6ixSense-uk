@@ -112,6 +112,7 @@ test("makeEvent fills every field with a safe default", () => {
     image: "",
     source: "",
     price: "",
+    description: "",
   });
 });
 
@@ -133,6 +134,14 @@ test("makeEvent decodes entities in the text fields", () => {
   assert.equal(e.category, "Food");
   assert.equal(e.venue, "Ronnie Scott's");
   assert.equal(e.address, "47 Frith St & Soho");
+});
+
+test("makeEvent decodes and trims the description, most sources never set one", () => {
+  assert.equal(makeEvent({ id: 1 }).description, "");
+  assert.equal(
+    makeEvent({ id: 1, description: "  Fish &amp; chips, live music.  " }).description,
+    "Fish & chips, live music."
+  );
 });
 
 test("makeEvent coerces coordinates and keeps zero", () => {

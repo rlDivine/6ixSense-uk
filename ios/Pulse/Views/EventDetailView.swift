@@ -125,13 +125,25 @@ struct EventDetailView: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// The feed does not carry a description, so this says what Pulse actually
-    /// knows and points at the listing for the rest, rather than inventing copy.
+    /// Most sources carry no description, so this says what Pulse actually
+    /// knows and points at the listing for the rest, rather than inventing
+    /// copy. A source that does carry one (PredictHQ, for some categories) is
+    /// worth more here than usual, precisely because that source often has no
+    /// url to fall back on.
+    ///
+    /// Not every source carries a booking link, so the constructed fallback's
+    /// last line only promises a listing when `event.webURL` is actually there
+    /// to open.
     private var summary: String {
+        if let d = event.description?.trimmingCharacters(in: .whitespacesAndNewlines), !d.isEmpty {
+            return d
+        }
         var parts: [String] = []
         parts.append(sourceName.isEmpty ? "Listed on a partner feed." : "Listed on \(sourceName).")
         if let v = event.venue, !v.isEmpty { parts.append("On at \(v).") }
-        parts.append("Open the full listing for the line up, the running times and tickets.")
+        if event.webURL != nil {
+            parts.append("Open the full listing for the line up, the running times and tickets.")
+        }
         return parts.joined(separator: " ")
     }
 

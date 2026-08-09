@@ -7,32 +7,39 @@ pulls from one shared server. Your Mac is no longer involved.
 - **Dockerfile**: slim Node 20 image, runs `node server.js`. No headless
   browser, because every source is plain HTTP or JSON, so it fits comfortably
   in 512 MB.
-- **render.yaml**: Render blueprint (free plan, Frankfurt, health check at `/healthz`)
 - **.dockerignore**: keeps the image small
 
+The blueprint itself, **render.yaml**, lives at the repository root, not in
+here: Render's Blueprint flow only reads it from the root, and a copy inside
+`api/` would never be found.
+
 ## One-time setup
-1. Push this repo to GitHub.
+1. Push this repo to GitHub, branch `main`.
 2. Go to <https://dashboard.render.com> and choose **New**, then **Blueprint**.
-3. Connect your GitHub and pick the repo. Render reads `api/render.yaml` and
-   creates the **pulse-uk-api** web service.
-   *(Set the blueprint's root directory to `api/`. This repo also holds the
-   iOS app, which Render should not try to build.)*
-4. Click **Apply**. First build takes ~2 min.
-5. When it's live, copy the URL (e.g. `https://pulse-uk-api.onrender.com`).
+3. Connect your GitHub and pick the repo and the `main` branch. Render reads
+   `render.yaml` **from the repository root** and creates the **pulse-uk-api**
+   web service. `dockerContext` in that file points down into `api/`, so the
+   image only ever contains the backend, not the iOS app.
+4. Render prompts for the three keys below; paste them in, or leave them blank
+   and set them later in **Environment**.
+5. Click **Apply**. First build takes ~2 min.
+6. When it's live, copy the URL (e.g. `https://pulse-uk-api.onrender.com`).
 
 ## Add the API keys
 In the Render dashboard, open the service, then **Environment**, and add:
 
 ```
-TM_API_KEY       = your key from developer.ticketmaster.com
-SKIDDLE_API_KEY  = your key from skiddle.com/api
-THESPORTSDB_KEY  = your key from thesportsdb.com/api.php
+TM_API_KEY         = your key from developer.ticketmaster.com
+SKIDDLE_API_KEY    = your key from skiddle.com/api
+THESPORTSDB_KEY    = your key from thesportsdb.com/api.php
+PREDICTHQ_API_KEY  = your access token from control.predicthq.com
 ```
 
-All three are free and signup is instant for each. Without them the app still
-works, falling back to Eventbrite UK and the built-in venue guide, but the feed
-is far thinner. Skiddle is the one to set first: it is UK-only, so its coverage
-of British gigs and nightlife runs deeper than a global service's.
+All four are free and signup is instant for each (PredictHQ's token generates
+immediately once you have an account). Without them the app still works,
+falling back to Eventbrite UK and the built-in venue guide, but the feed is far
+thinner. Skiddle is the one to set first: it is UK-only, so its coverage of
+British gigs and nightlife runs deeper than a global service's.
 
 `GET /api/status` reports which keys the running instance can see, which is the
 quickest way to check a deploy picked them up.

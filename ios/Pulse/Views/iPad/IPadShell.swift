@@ -805,8 +805,19 @@ struct IPadDetailBody: View {
             .accessibilityHidden(true)
     }
 
+    /// Prefers a real description when the source gave one (PredictHQ, for
+    /// some categories), which matters more here than usual since that source
+    /// often has no url to send the reader to instead. The constructed
+    /// fallback only promises a listing when there is actually a link.
     private var blurb: String {
-        "The full listing, the line up and tickets are on \(event.source)."
+        if let d = event.description?.trimmingCharacters(in: .whitespacesAndNewlines), !d.isEmpty {
+            return d
+        }
+        guard event.webURL != nil else { return "No further detail was given for this listing." }
+        let source = event.source.trimmingCharacters(in: .whitespacesAndNewlines)
+        return source.isEmpty
+            ? "The full listing, the line up and tickets are on the source site."
+            : "The full listing, the line up and tickets are on \(source)."
     }
 
     private var categoryLine: some View {

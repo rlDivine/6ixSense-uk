@@ -33,7 +33,7 @@ The app works immediately with no API key. Add free keys for the full live
 feed:
 
 ```bash
-TM_API_KEY=... SKIDDLE_API_KEY=... THESPORTSDB_KEY=... npm start
+TM_API_KEY=... SKIDDLE_API_KEY=... THESPORTSDB_KEY=... PREDICTHQ_API_KEY=... npm start
 ```
 
 ## What "UK only" means here
@@ -78,6 +78,7 @@ capital.
 | **Ticketmaster Discovery** | Free key (`TM_API_KEY`) | REST, `countryCode=GB` | Concerts, theatre, comedy, arena sport |
 | **Skiddle** | Free key (`SKIDDLE_API_KEY`) | REST, queried by lat/lng | UK-only listings: gigs, club nights, festivals, comedy, food. Coordinates and prices in pounds on every result |
 | **Football fixtures** | Free key (`THESPORTSDB_KEY`) | TheSportsDB REST | Upcoming fixtures in the Premier League, Championship, League One, League Two and the Scottish Premiership |
+| **PredictHQ** | Free key (`PREDICTHQ_API_KEY`) | REST, `within` radius search, `country=GB` | Concerts, festivals, performing arts, expos, community listings, sport |
 | **Eventbrite UK** | No | `eventbrite.co.uk` discovery pages, JSON-LD, 11 pages per town | Music, food, comedy, arts, film, sport, family, festivals, pop-ups, free events |
 | **Local guide** | No | Built in | Real UK venues with regular programming |
 
@@ -86,7 +87,11 @@ works with none of them configured. Skiddle is the one worth setting first: it
 is UK-only by design, so its coverage of British nightlife and gigs runs deeper
 than a global service's. Football is the biggest category the ticketing sources
 miss, because most clubs sell through their own box office rather than through
-Ticketmaster.
+Ticketmaster. PredictHQ is the one source with no ticket link and no image of
+its own, so those cards fall back to the category mark like any other listing
+with a missing photo; what it adds is the long tail of expos and community
+events the ticketing sources never carry, plus, sometimes, a real description
+rather than the generic fallback text.
 
 ## Design
 

@@ -13,14 +13,22 @@ import { distanceKm } from "./util.js";
 // - ticketmaster: queried by lat/lng, scoped to countryCode=GB
 // - skiddle:      UK listings service, queried by lat/lng (needs a free key)
 // - fixtures:     upcoming football fixtures (needs a free key)
+// - predicthq:    events intelligence feed, concerts to community listings
+//                 (needs a free key)
 // - eventbrite:   scraped per eventbrite.co.uk town slug
 // - curated:      built-in guide of UK venues near the region
 //
-// Every UK region runs all five. The keyed sources return nothing at all when
+// Every UK region runs all six. The keyed sources return nothing at all when
 // their key is unset, so the app still works with none configured. Eventbrite
 // is a per-town scrape, and a town with no Eventbrite page simply contributes
 // nothing rather than failing the request.
-const UK_SOURCES = ["ticketmaster", "skiddle", "fixtures", "eventbrite", "curated"];
+//
+// Order here is also de-dupe priority: server.js collapses events that share a
+// title and a day, keeping whichever source hit first. Ticketmaster and
+// Skiddle carry a real ticket link and price, so they are listed ahead of
+// PredictHQ, which carries neither, so that a duplicate resolves to the more
+// useful copy of the two.
+const UK_SOURCES = ["ticketmaster", "skiddle", "fixtures", "predicthq", "eventbrite", "curated"];
 
 // A UK region. Every entry carries the county / council area / principal area
 // it sits in, and the nation, so the app's picker can group several hundred
