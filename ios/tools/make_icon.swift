@@ -80,13 +80,15 @@ func ang(_ q: CGPoint, _ c: CGPoint) -> CGFloat {
     CGFloat(atan2(Double(q.y - c.y), Double(q.x - c.x)))
 }
 
-/// The pulse trace, as the closed outline of a stroke so it can be a hole.
+/// The pulse trace, as a centreline stroked at a constant width. The handoff
+/// supplies a ready made outline, but that outline is not a constant width
+/// stroke: its left tail is 0.2 units thick and its right bar is 1.4, so it
+/// read as a hairline running into a block.
 let trace: [CGPoint] = [
-    CGPoint(x: 7,    y: 10.7), CGPoint(x: 9.6,  y: 10.7), CGPoint(x: 11,   y: 7.3),
-    CGPoint(x: 13.1, y: 12.9), CGPoint(x: 14.3, y: 10.2), CGPoint(x: 17.1, y: 10.2),
-    CGPoint(x: 17.1, y: 8.8),  CGPoint(x: 13,   y: 8.8),  CGPoint(x: 12.3, y: 10.3),
-    CGPoint(x: 10.2, y: 4.8),  CGPoint(x: 7.8,  y: 10.5), CGPoint(x: 7,    y: 10.5),
+    CGPoint(x: 6.6,  y: 10.2), CGPoint(x: 9.4,  y: 10.2), CGPoint(x: 10.9, y: 6.2),
+    CGPoint(x: 12.9, y: 12.6), CGPoint(x: 14,   y: 9.4),  CGPoint(x: 17.4, y: 9.4),
 ]
+let traceWidth: CGFloat = 1.5
 
 let fgColor = CGColor(srgbRed: fg.0, green: fg.1, blue: fg.2, alpha: 1)
 
@@ -107,9 +109,13 @@ mark.addArc(center: p(headCentre.x, headCentre.y), radius: headRadius * s,
             startAngle: rad(0), endAngle: rad(-90), clockwise: true)
 mark.closeSubpath()
 
-mark.move(to: p(trace[0].x, trace[0].y))
-for point in trace.dropFirst() { mark.addLine(to: p(point.x, point.y)) }
-mark.closeSubpath()
+// The trace is a stroke, so it goes in as its own outline. Filled even-odd
+// alongside the pin that outline becomes a hole rather than a mark.
+let traceLine = CGMutablePath()
+traceLine.move(to: p(trace[0].x, trace[0].y))
+for point in trace.dropFirst() { traceLine.addLine(to: p(point.x, point.y)) }
+mark.addPath(traceLine.copy(strokingWithWidth: traceWidth * s,
+                            lineCap: .round, lineJoin: .round, miterLimit: 10))
 
 ctx.setFillColor(fgColor)
 ctx.addPath(mark)

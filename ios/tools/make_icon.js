@@ -80,12 +80,35 @@ const OUTLINE = [
   ...arcPoints(HEAD, HEAD.r, 0, -90, 1000),
 ];
 
-/// The pulse trace, as the closed outline of a stroke so it can be a hole.
+/// The pulse trace, as a centreline stroked at a constant width. The handoff
+/// supplies a ready made outline, but that outline is not a constant width
+/// stroke: its left tail is 0.2 units thick and its right bar is 1.4, so it
+/// read as a hairline running into a block. A stroked centreline is what it
+/// was meant to be, and a distance field gives the round caps and joins for
+/// free without flattening anything.
 const TRACE = [
-  { x: 7, y: 10.7 }, { x: 9.6, y: 10.7 }, { x: 11, y: 7.3 }, { x: 13.1, y: 12.9 },
-  { x: 14.3, y: 10.2 }, { x: 17.1, y: 10.2 }, { x: 17.1, y: 8.8 }, { x: 13, y: 8.8 },
-  { x: 12.3, y: 10.3 }, { x: 10.2, y: 4.8 }, { x: 7.8, y: 10.5 }, { x: 7, y: 10.5 },
+  { x: 6.6, y: 10.2 }, { x: 9.4, y: 10.2 }, { x: 10.9, y: 6.2 },
+  { x: 12.9, y: 12.6 }, { x: 14, y: 9.4 }, { x: 17.4, y: 9.4 },
 ];
+const TRACE_HALF = 1.5 / 2;
+
+/// Distance from (x,y) to the segment ab.
+function segDistance(x, y, a, b) {
+  const vx = b.x - a.x, vy = b.y - a.y;
+  const len2 = vx * vx + vy * vy;
+  let t = len2 === 0 ? 0 : ((x - a.x) * vx + (y - a.y) * vy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(x - (a.x + t * vx), y - (a.y + t * vy));
+}
+
+/// Within half a stroke width of the centreline. Clamping t to the segment is
+/// exactly what a round cap and a round join are, so nothing else is needed.
+function onTrace(x, y) {
+  for (let i = 1; i < TRACE.length; i++) {
+    if (segDistance(x, y, TRACE[i - 1], TRACE[i]) <= TRACE_HALF) return true;
+  }
+  return false;
+}
 
 /// The x positions where the horizontal line at `y` crosses `poly`, sorted.
 /// Computing these once per scanline is what keeps this tractable: a per pixel
@@ -127,7 +150,6 @@ function render({ bg, fg }) {
     const gy = (cyp - centre) / scale + 12;
     const outline = crossings(gy, OUTLINE);
     if (outline.length === 0) continue;
-    const trace = crossings(gy, TRACE);
     // Nothing outside the outline's own span can be inside it.
     const lo = Math.max(0, Math.floor((outline[0] - 12) * scale + centre) - 1);
     const hi = Math.min(SIZE - 1, Math.ceil((outline[outline.length - 1] - 12) * scale + centre) + 1);
@@ -135,7 +157,7 @@ function render({ bg, fg }) {
       let hits = 0;
       for (let sx = 0; sx < SS; sx++) {
         const gx = (pxi + (sx + 0.5) / SS - centre) / scale + 12;
-        if (insideAt(outline, gx) && !insideAt(trace, gx)) hits++;
+        if (insideAt(outline, gx) && !onTrace(gx, gy)) hits++;
       }
       if (hits) cov[py * SIZE + pxi] += hits;
     }

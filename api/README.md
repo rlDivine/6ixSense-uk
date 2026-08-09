@@ -80,7 +80,7 @@ Ireland cannot pull in French or Irish listings. Skiddle takes its radius in
 miles rather than kilometres, which the source converts and then caps at 30
 miles, because the API rejects very large radii. PredictHQ carries no ticket
 link and no image, since it is a demand-intelligence feed rather than a
-ticketing one, so those cards fall back to the category mark; it sometimes
+ticketing one, so those cards get drawn category artwork; it sometimes
 carries a real description, which is used ahead of the generic fallback text
 for exactly that reason. Eventbrite is a per-town scrape of eleven discovery
 pages, ten verticals plus the general feed, and a town with no Eventbrite page
@@ -162,7 +162,7 @@ public/                 The PWA, served from the same origin
   styles.css            Theme tokens and layout
   manifest.json         Web app manifest, so the page installs
   sw.js                 Service worker: app-shell cache, never the API
-  icon.svg              The web and PWA mark
+  icon.svg              The PWA and home screen icon (the header mark is in index.html)
   privacy.html          Privacy policy
   support.html          Support page
 .env.example            The optional keys, with the signup URL for each
@@ -178,13 +178,25 @@ deliberately does not cache it, so the map needs a network connection.
 The palette is the Union flag: Pantone 280 blue (`#012169`), Pantone 186 red
 (`#C8102E`) and white.
 Neither flag colour survives a straight lift into a dark interface, so the dark
-theme sits on a navy derived from the blue and lifts the red enough to read on
-it. Every value in `public/styles.css` is a flat colour, and there are no
-gradients in the stylesheet or in the rendering code.
+theme sits on a neutral slate rather than a darkened flag blue, and lifts the
+red enough to read on it. Every value in `public/styles.css` is a flat colour,
+and there are no gradients in the stylesheet or in the rendering code.
 
 Nothing in the interface is an emoji. Category marks and interface icons are
 inline SVG defined at the top of `public/app.js`, so they inherit the current
 colour, hold their weight on every platform, and never depend on an emoji font.
+
+An event with no usable photograph is not left with an empty thumbnail. It gets
+drawn artwork instead: one composition per category, flat shapes in the category
+colour over its wash, with the category mark in the corner, and a layout derived
+from the event id so it does not change between renders. The design and the
+twelve motifs are set out in `../ios/Pulse/Design/CategoryArtwork.swift`, which
+both clients follow.
+
+The brand mark in the page header is an inline `<svg>` in `public/index.html`,
+not a reference to `public/icon.svg`. They carry the same path and both have to
+be edited when the mark changes. `icon.svg` is the PWA and home screen icon
+only; the header is what a user actually looks at.
 
 ## Deploying
 

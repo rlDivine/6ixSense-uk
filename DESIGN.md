@@ -69,7 +69,9 @@ is exactly what the first version looked like.
 
 Neither flag colour survives a straight lift into a dark interface, so the dark
 theme swaps the roles: near-white carries selection, and the red is lifted to
-read on navy.
+read against the page. The dark page itself is a neutral slate rather than a
+darkened flag blue. A saturated navy at that value glares on an OLED screen at
+night and tints every photograph on the list.
 
 | Token | Light | Dark | Job |
 |---|---|---|---|
@@ -90,9 +92,9 @@ unmodified.
 
 `accent` and `accent-fill` are one colour on light and two on dark, because on
 dark the red has to do two opposite jobs: be light enough to read as text on
-navy, and dark enough to carry a white label when it is the background. No
-single value does both. On light, Pantone 186 already carries white at 5.9:1,
-so the two tokens are the same and the split costs nothing.
+the dark page, and dark enough to carry a white label when it is the
+background. No single value does both. On light, Pantone 186 already carries
+white at 5.9:1, so the two tokens are the same and the split costs nothing.
 
 Defined in two places that must stay in step: `api/public/styles.css` (the
 `:root` and `[data-theme="light"]` blocks) and `ios/Pulse/Design/Theme.swift`
@@ -135,17 +137,18 @@ festivals and blue for music. In `Categories.map` (Swift) and `CATS` (JS).
 Each category is **two** values, not one, for the same reason the accent is:
 
 - **`color`** is theme-adaptive. It is the 6px dot in the card footer, the card
-  wash, and the placeholder glyph. The dark variant is a lifted version of the
-  light mid-tone, because the mid-tones are far too dark to read on navy.
+  wash, the drawn artwork on an event with no photo, and the category mark. The
+  dark variant is a lifted version of the light mid-tone, because the mid-tones
+  are far too dark to read on the dark surfaces.
 - **`pin`** is the light mid-tone, fixed in both themes. It is the map marker
   fill, and a white SF Symbol sits on it. The lifted dark hues carry white at
   only 2:1 to 3:1, so the marker cannot use them.
 
-The wash is that colour at low alpha, and the alpha differs by theme: 0.18 dark,
-0.12 light. That is not a taste decision. The placeholder glyph is drawn in the
-same hue on top of the wash, so the wash has to stay far enough from it to keep
-3:1, and the light surfaces have less room. If you make the light wash stronger,
-the glyph disappears into it.
+The wash is that colour at low alpha, and the alpha differs by theme: 0.20 dark,
+0.12 light. That is not a taste decision. The category mark and the artwork are
+drawn in the same hue on top of the wash, so the wash has to stay far enough
+from them to keep 3:1, and the light surfaces have less room. If you make the
+light wash stronger, the mark disappears into it.
 
 ### Typography
 
@@ -169,6 +172,42 @@ sticker date badge on the thumbnail and reads far better.
 Editorial rather than boxy. The place is a page title, not a caption. Cards are
 a thumbnail plus a text column, not a poster. Distance is quiet reference
 detail in the footer, not a large number competing with the event name.
+
+### The mark
+
+A map pin with a pulse trace knocked out of it as a counter, drawn as a single
+path filled even-odd. It is the handoff's option **1b, Beacon**, and it replaced
+the first pass at an identity, option 1a, a filled dot under two rising arcs.
+
+The handoff recommended 1a and the recommendation was reasonable: three
+separated shapes hold together at small sizes better than a silhouette with a
+counter cut out of it does. It was rejected anyway, because in the app it read
+as a wifi symbol, and a mark that says "signal strength" on a listings app is a
+worse failure than a mark that is hard to draw small. Being generic is
+recoverable. Being wrong is not.
+
+That trade is real and is not resolved. The header uses the mark at 18pt, and at
+that size the trace is close to the limit of what survives; go much below it and
+the counter starts to fill in. It holds everywhere the app currently puts it,
+and it is the first thing to check if the mark is ever put somewhere smaller.
+If a future pass finds a reading of the two axes that does not resemble a wifi
+glyph, it is worth revisiting; 1b is a decision made under a real objection, not
+a preference.
+
+One geometry, mirrored by hand in **five** places, all of which have to move
+together:
+
+- `ios/Pulse/Design/Theme.swift`, `PulseLogoGeometry`, the in-app mark as a
+  SwiftUI `Shape`
+- `ios/tools/make_icon.js`, which rasterises the App Store icons
+- `ios/tools/make_icon.swift`, the CoreGraphics twin of that tool
+- `api/public/icon.svg`, the PWA and home screen icon
+- the inline `<svg>` in the brand strip of `api/public/index.html`
+
+The last of those is the one that actually renders in the web header, and it was
+missing from every cross-reference in the codebase for a while, so a change to
+the mark landed everywhere except the place a user sees it. If you touch the
+geometry, start by listing all five.
 
 ## 4. Hard constraints
 
@@ -207,9 +246,34 @@ UK, a notice explaining that London is being shown.
 **Event card**, the most-used component. Thumbnail, overline saying when, title
 over two lines, venue, and a footer of category, distance, price and source. A
 bookmark control, which is a separate button sitting over the card rather than
-inside it. The photo often fails to load, so the category mark sits underneath
-and shows through rather than leaving an empty box. The map tray card and the
-iOS card do the same; anything new that shows a photo should too.
+inside it. The photo often fails to load or was never there, so drawn category
+artwork sits underneath it and shows through rather than leaving an empty box.
+The map tray card and the iOS card do the same; anything new that shows a photo
+should too.
+
+The artwork is set out in `ios/Pulse/Design/CategoryArtwork.swift`, which is the
+reference for both clients. Twelve motifs, each a composition rather than an
+enlarged icon, because a column of identical music notes still reads as missing
+data: an equaliser for music, bunting for festivals, pitch markings for
+football, a market awning, an arcade for museums, a curtain and swag for
+theatre, sprocket holes for film, and so on down to a run of diagonal tiles for
+anything that could not be placed. Flat shapes only, the category colour at
+varying alpha over its own wash, with the small category mark in the bottom
+corner to name it. Some motifs are shared on purpose: football and sport are the
+same idea, and inventing a distinction the palette does not make would be worse
+than repeating one.
+
+Two rules hold it up. A motif's layout varies per event but is **deterministic
+in the event id**, so a card keeps its artwork between redraws and between
+launches rather than reshuffling as you scroll. And it carries **nothing a
+screen reader needs**, so it is hidden from assistive technology; the category
+is already in the footer as text.
+
+What this replaced was no thumbnail at all and a 4pt colour spine in its place.
+Those rows looked poorer than the ones either side, and a feed drawn mostly from
+sources that carry no images looked broken rather than sparse. The spine
+survives where it was actually the right answer, which is a cell too narrow for
+a thumbnail: in practice, the iPad two up grid.
 
 **Map**, category-coloured pins with clustering, the user's position, a preview
 on tap, and a card tray along the bottom.
@@ -233,17 +297,9 @@ plain; they are a good place to add character.
 
 ## 6. Deliberately placeholder
 
-**The logo.** A flat map pin with a knocked-out centre. It is competent and
-consistent and it is not an identity. It was built to be thrown away: one
-geometry expressed in three files, so replacing it touches nothing else.
-
-- `ios/Pulse/Design/Theme.swift`, `PulseLogoGeometry`, the in-app mark as a
-  SwiftUI `Shape`
-- `ios/tools/make_icon.js`, which rasterises the App Store icons
-- `api/public/icon.svg`, the web and PWA icon
-
-A replacement needs to work at 18pt in a header, at 1024px on a home screen,
-and in a single flat colour. **This is the first thing worth redesigning.**
+**The wordmark.** There is a mark, described above, and it is a real decision.
+There is no drawn wordmark to go beside it: "Pulse" is set in the system font
+like any other page title. A mark without a wordmark is half an identity.
 
 **The name.** "Pulse" was chosen quickly. It is not researched and not
 trademark-cleared.
@@ -258,12 +314,13 @@ and inconsistent with each other.
 
 In rough order of value:
 
-1. A real identity: mark, wordmark, and a decision on whether the flag palette
+1. A wordmark to sit beside the mark, and a decision on whether the flag palette
    is the right long-term call or a first-release shortcut.
 2. The card. It is the screen. Everything else is chrome around a list of them.
-3. A photo strategy. Most events arrive with a poor image or none at all, and
-   the app currently falls back to a tinted square with an icon. That fallback
-   is seen constantly and deserves better than it has.
+3. The rest of the photo strategy. The no-photo case now has drawn artwork, but
+   the poor-photo case does not: a small, badly cropped, low contrast image
+   still gets shown as though it were a good one, and it is often worse than the
+   artwork it covers. A rule for rejecting an image would use work already done.
 4. Density and Dynamic Type. Test at the largest accessibility sizes; the card
    footer is where it will break first.
 5. Empty states with a point of view.
@@ -276,13 +333,14 @@ In rough order of value:
 | Category colours and icons | `CATS` and `ICON_PATHS` in `api/public/app.js` | `Categories` in `Theme.swift` |
 | Interface icons | `UI_ICONS` in `api/public/app.js` | SF Symbol names inline |
 | The card | `cardHTML` in `app.js`, `.card` in `styles.css` | `ios/Pulse/Views/EventCard.swift` |
-| The logo | `api/public/icon.svg` | `PulseLogoGeometry` in `Theme.swift`, then `node ios/tools/make_icon.js` |
+| No-photo artwork | the card renderer in `app.js` and `.card` art rules in `styles.css` | `ios/Pulse/Design/CategoryArtwork.swift` |
+| The logo | `api/public/icon.svg` **and** the inline brand mark in `api/public/index.html` | `PulseLogoGeometry` in `Theme.swift`, then `node ios/tools/make_icon.js`, keeping `make_icon.swift` in step |
 | Screen layout | `api/public/index.html` | `ios/Pulse/Views/` |
 
 The web client is the faster loop and renders in a headless browser, so it is
 the sensible place to try something before porting it to SwiftUI.
 
-Four things to know before touching the code:
+Six things to know before touching the code:
 
 - A `<button>` does not inherit `color` in CSS. Anything inside one that does
   not set its own colour renders as the browser default, which is black in both

@@ -280,26 +280,30 @@ enum PulseLogoGeometry {
                              control2: CGPoint(x: 20.2, y: 15.9),
                              end: CGPoint(x: 20.2, y: 10))
 
-    /// The pulse trace, as the closed outline of a stroke rather than a stroke,
-    /// so it can be a hole. Every segment is a straight line.
+    /// The pulse trace, as a centreline to be stroked at a constant width.
     ///
-    /// This is the part that pays for the pin: at 18pt in a header the trace is
-    /// close to the limit of what survives, and below about 20pt it starts to
-    /// fill in. It is legible at the sizes the app actually uses it.
+    /// The handoff supplies this as a ready made outline, and that outline is
+    /// not a constant width stroke: its left tail is 0.2 units thick and its
+    /// right bar is 1.4, seven times heavier. Filled, it read as a hairline
+    /// running into a block rather than as a trace. Stroking a centreline is
+    /// what it was meant to look like, so that is what happens here.
+    ///
+    /// Spans x 6.6 to 17.4, centred on the pin's own 12. Every cap stays inside
+    /// the head with room to spare: the furthest, the round cap at (6.6, 10.2),
+    /// sits 6.22 from the head centre against a radius of 8.2.
+    ///
+    /// This is still the part that pays for the pin: at 18pt in a header the
+    /// trace is close to the limit of what survives, and below about 20pt it
+    /// starts to fill in. It is legible at the sizes the app actually uses.
     static let trace: [CGPoint] = [
-        CGPoint(x: 7,    y: 10.7),
-        CGPoint(x: 9.6,  y: 10.7),
-        CGPoint(x: 11,   y: 7.3),
-        CGPoint(x: 13.1, y: 12.9),
-        CGPoint(x: 14.3, y: 10.2),
-        CGPoint(x: 17.1, y: 10.2),
-        CGPoint(x: 17.1, y: 8.8),
-        CGPoint(x: 13,   y: 8.8),
-        CGPoint(x: 12.3, y: 10.3),
-        CGPoint(x: 10.2, y: 4.8),
-        CGPoint(x: 7.8,  y: 10.5),
-        CGPoint(x: 7,    y: 10.5),
+        CGPoint(x: 6.6,  y: 10.2),
+        CGPoint(x: 9.4,  y: 10.2),
+        CGPoint(x: 10.9, y: 6.2),
+        CGPoint(x: 12.9, y: 12.6),
+        CGPoint(x: 14,   y: 9.4),
+        CGPoint(x: 17.4, y: 9.4),
     ]
+    static let traceWidth: CGFloat = 1.5
 
     /// Polar angle of `p` about `c`, in the same y-down degrees as above.
     static func angle(of p: CGPoint, about c: CGPoint) -> Double {
@@ -346,10 +350,16 @@ enum PulseLogoGeometry {
                     clockwise: true)
         path.closeSubpath()
 
+        // The trace is a stroke, but a Shape has to hand back one fillable
+        // path, so it is converted to its own outline here. Filled even-odd
+        // alongside the pin, that outline becomes a hole rather than a mark.
         if let first = trace.first {
-            path.move(to: place(first))
-            for point in trace.dropFirst() { path.addLine(to: place(point)) }
-            path.closeSubpath()
+            var line = Path()
+            line.move(to: place(first))
+            for point in trace.dropFirst() { line.addLine(to: place(point)) }
+            path.addPath(line.strokedPath(StrokeStyle(lineWidth: traceWidth * s,
+                                                      lineCap: .round,
+                                                      lineJoin: .round)))
         }
 
         return path

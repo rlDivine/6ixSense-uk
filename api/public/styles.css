@@ -249,10 +249,11 @@ button { font-family: inherit; cursor: pointer; }
 .refresh { flex: 0 0 auto; white-space: nowrap; background: none; border: 0; color: var(--ink-3); font-size: 11.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; padding: 0; }
 
 /* ---- Event card ----
-   Two treatments from the handoff. 1d is the default; 1e was not taken.
-   1f ("index") drops the thumbnail for a category spine and is used whenever an
-   event has no usable photo, which is most of them, so a tinted square with an
-   icon is not repeated down the whole screen. */
+   Option 1d from the handoff: the editorial row, an 84px square then the text.
+   Every card has the square now. An event with no usable photo fills it with
+   drawn category artwork instead of dropping the thumbnail, so a feed of
+   image-less sources does not read as broken. 1e was not taken and 1f, the
+   index row, has been retired; see the note further down. */
 .list { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; }
 .card-wrap { position: relative; }
 .card {
@@ -268,10 +269,26 @@ button { font-family: inherit; cursor: pointer; }
 .card:active { transform: scale(0.985); }
 .card .thumb {
   position: relative; width: 84px; height: 84px; border-radius: 10px;
-  overflow: hidden; display: grid; place-items: center;
+  overflow: hidden;
 }
 .card .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.card .thumb .ph-glyph { display: grid; place-items: center; opacity: 0.75; }
+/* The drawn category artwork, behind the photo and behind the mark. It fills
+   the square; its own viewBox clips the motifs that deliberately run off. */
+.card .thumb .art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* Bottom leading and small, as on iOS. The mark names the category; the motif
+   is what makes the tile look composed rather than empty. Full strength, not
+   faded: it has to clear 3:1 on what sits behind it.
+   The plate under it is not decoration. The mark is drawn in the category hue
+   and the motif shapes are the same hue at up to 0.46 alpha, so a bar or a
+   stripe landing behind the mark drops the pair to about 2.2:1, measured on
+   rendered pixels. An opaque plate of the card surface takes the motif out from
+   under it: the worst category then reads 4.69:1 by calculation and 4.6:1 in
+   pixels. It has to be opaque, so it is --surface rather than the tile's own
+   translucent wash, which would let the motif straight back through. */
+.card .thumb .ph-glyph {
+  position: absolute; left: calc(8% - 3px); bottom: calc(8% - 3px);
+  line-height: 0; padding: 3px; border-radius: 8px; background: var(--surface);
+}
 .card .body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .card .when { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
 .card .when.soon { color: var(--accent); }
@@ -472,14 +489,11 @@ button { font-family: inherit; cursor: pointer; }
 .btn-primary { background: var(--accent-fill); color: #fff; border: 0; border-radius: 14px; padding: 16px; font-weight: 650; font-size: 15px; }
 .btn-text { background: none; border: 0; color: var(--ink-3); font-size: 14px; font-weight: 600; padding: 8px; }
 
-/* Option 1f, the index card. No thumbnail: a 4px category spine carries the
-   colour instead, and the title takes the width the square was using. */
-.card.index { grid-template-columns: 1fr; padding-left: 18px; }
-.card.index .spine {
-  position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-  border-radius: 14px 0 0 14px;
-}
-.card.index .title { font-size: 17px; }
+/* Option 1f, the index card, is gone. It existed to keep a tinted square with
+   a repeated icon off the screen when an event had no photo; drawn per category
+   artwork answers that better, and the web has no narrow cell layout asking for
+   the compact row, so nothing was left calling for it. The rules for .card.index
+   and .spine went with it rather than sitting here unreachable. */
 
 .chiprow button .chipdot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
 

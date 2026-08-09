@@ -224,6 +224,219 @@ function refreshWashAlpha() {
   if (Number.isFinite(v)) washAlpha = v;
 }
 
+/* ---- category artwork ----
+   A designed stand in for an event that has no photograph. Mirrors
+   ios/Pulse/Design/CategoryArtwork.swift shape for shape.
+
+   Not every source carries images. PredictHQ has none at all, the venue guide
+   has none, and Ticketmaster's occasionally fail to load. Those events used to
+   drop to a bare 4px colour spine with no thumbnail, which left them visibly
+   poorer than the rows either side and made a full feed look broken.
+
+   Each category gets its own composition rather than a scaled up icon, because
+   a column of identical music notes still reads as missing data. The motif
+   carries the tile and the category mark sits in the corner to name it. Flat
+   fills and strokes only: the palette has no gradients anywhere and this is no
+   exception.
+
+   Everything is drawn on a 0 0 100 100 viewBox so the numbers read as percent
+   of the tile, and the browser scales it to the 84px square. Anything that runs
+   past the edge is clipped by the viewBox, which is deliberate in a few motifs.
+
+   Colour safety: the only colour that ever reaches an SVG attribute here is the
+   literal hex looked up out of CATS through catMeta. The category string from
+   the API is never interpolated into a paint, a style or any other CSS context,
+   because escaping cannot protect one. */
+
+/// A tiny linear congruential generator. This exists only so a card's artwork
+/// is stable: seeded from the event id, it gives the same layout every time
+/// that event is drawn, so nothing reshuffles as the feed scrolls or refreshes.
+/// It is not suitable for anything that needs real randomness, and nothing here
+/// needs that.
+function seeded(seed) {
+  // Mix the seed first. Raw event ids hash to nearby values often enough, and
+  // an LCG fed consecutive values produces visibly similar first outputs.
+  let s = (Math.imul(seed | 0, 1664525) + 1013904223) >>> 0;
+  s = (s ^ (s >>> 15)) >>> 0;
+  return (lo, hi) => {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return lo + (hi - lo) * (((s >>> 8) & 0xFFFFFF) / 0xFFFFFF);
+  };
+}
+
+/// FNV-1a over the event id. Event ids are strings on the web where iOS has an
+/// Int hash, so this is the step that turns one into the other.
+function seedOf(id) {
+  const str = String(id ?? "");
+  let h = 0x811C9DC5;
+  for (let i = 0; i < str.length; i++) {
+    h = (h ^ str.charCodeAt(i)) >>> 0;
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h | 0;
+}
+
+/// Several categories share a motif on purpose. Football and Sport are the same
+/// idea, and Music and Live music are already one hue, so giving them separate
+/// artwork would invent a distinction the palette does not make.
+const MOTIF_BY_CAT = {
+  music: "bars", "live music": "bars",
+  clubs: "rings",
+  festivals: "bunting",
+  comedy: "bubble",
+  football: "pitch", sport: "pitch",
+  markets: "stripes",
+  museums: "arches",
+  theatre: "curtain",
+  film: "sprockets",
+  food: "plate",
+  family: "confetti",
+};
+
+// Two decimals is past the point where the difference is visible at 84px, and
+// it keeps the card markup short.
+const n = (v) => String(Math.round(v * 100) / 100);
+
+const MOTIFS = {
+  /// Music. An equaliser, with the bar heights varying per event so two music
+  /// listings next to each other are not the same picture twice.
+  bars(t, rnd) {
+    const gap = 4.5, bw = (100 - gap * 8) / 7;
+    let out = "";
+    for (let i = 0; i < 7; i++) {
+      const f = rnd(0.26, 0.84), h = 100 * f;
+      out += `<rect x="${n(gap + i * (bw + gap))}" y="${n(100 - h)}" width="${n(bw)}" height="${n(h)}"` +
+        ` rx="${n(bw / 2)}" fill="${t}" fill-opacity="${n(0.26 + 0.18 * f)}"/>`;
+    }
+    return out;
+  },
+
+  /// Clubs. Concentric rings, a strobe seen head on. The outer ring runs past
+  /// the tile and is clipped, which is what stops it reading as a target.
+  rings(t) {
+    let out = "";
+    for (let i = 0; i < 4; i++) {
+      out += `<circle cx="50" cy="50" r="${n((28 + i * 26) / 2)}" fill="none" stroke="${t}"` +
+        ` stroke-opacity="${n(0.40 - i * 0.07)}" stroke-width="4.5"/>`;
+    }
+    return out;
+  },
+
+  /// Festivals. Bunting across the top edge.
+  bunting(t, rnd) {
+    const w = 15, gap = 2.5, x0 = (100 - (5 * w + 4 * gap)) / 2;
+    let out = "";
+    for (let i = 0; i < 5; i++) {
+      const x = x0 + i * (w + gap);
+      out += `<path d="M${n(x)} 12H${n(x + w)}L${n(x + w / 2)} 44Z" fill="${t}"` +
+        ` fill-opacity="${n(rnd(0.22, 0.46))}"/>`;
+    }
+    return out;
+  },
+
+  /// Comedy. A speech bubble, offset so it reads as a pair.
+  bubble(t) {
+    return `<rect x="34" y="46" width="52" height="36" rx="14" fill="none" stroke="${t}"` +
+      ` stroke-opacity="0.2" stroke-width="3.5"/>` +
+      `<rect x="16" y="21" width="56" height="38" rx="14" fill="none" stroke="${t}"` +
+      ` stroke-opacity="0.4" stroke-width="4"/>`;
+  },
+
+  /// Football and Sport. A centre circle, a halfway line and the top of the
+  /// box: the markings you recognise from directly above a pitch.
+  pitch(t) {
+    return `<rect x="0" y="48.6" width="100" height="2.8" fill="${t}" fill-opacity="0.26"/>` +
+      `<circle cx="50" cy="50" r="18" fill="none" stroke="${t}" stroke-opacity="0.36" stroke-width="3.5"/>` +
+      `<rect x="28" y="-1" width="44" height="22" rx="2" fill="none" stroke="${t}"` +
+      ` stroke-opacity="0.24" stroke-width="3"/>`;
+  },
+
+  /// Markets. An awning, in the alternating stripe every market stall uses.
+  stripes(t) {
+    const w = 100 / 6;
+    let out = "";
+    for (let i = 0; i < 6; i++) {
+      out += `<rect x="${n(i * w)}" y="0" width="${n(w + 0.5)}" height="100" fill="${t}"` +
+        ` fill-opacity="${i % 2 === 0 ? "0.3" : "0.13"}"/>`;
+    }
+    return out;
+  },
+
+  /// Museums. Columns whose rounded tops read as an arcade. They run past the
+  /// bottom edge and are clipped, so they sit on the floor of the tile rather
+  /// than floating in it.
+  arches(t) {
+    const w = 19, gap = 6, x0 = (100 - (3 * w + 2 * gap)) / 2;
+    let out = "";
+    for (let i = 0; i < 3; i++) {
+      out += `<rect x="${n(x0 + i * (w + gap))}" y="40" width="${w}" height="74" rx="${n(w / 2)}"` +
+        ` fill="${t}" fill-opacity="${i === 1 ? "0.34" : "0.24"}"/>`;
+    }
+    return out;
+  },
+
+  /// Theatre. Two drapes and the swag between them.
+  curtain(t) {
+    return `<rect x="0" y="0" width="20" height="100" fill="${t}" fill-opacity="0.28"/>` +
+      `<rect x="80" y="0" width="20" height="100" fill="${t}" fill-opacity="0.28"/>` +
+      `<path d="M7 11Q50 59 93 11" fill="none" stroke="${t}" stroke-opacity="0.4" stroke-width="4.5"/>`;
+  },
+
+  /// Film. Sprocket holes down both edges, a frame of 35mm.
+  sprockets(t) {
+    const h = 13, gap = 5.5, y0 = (100 - (4 * h + 3 * gap)) / 2;
+    let out = "";
+    for (const x of [5.5, 83.5]) {
+      for (let i = 0; i < 4; i++) {
+        out += `<rect x="${n(x)}" y="${n(y0 + i * (h + gap))}" width="11" height="${h}" rx="2.5"` +
+          ` fill="${t}" fill-opacity="0.32"/>`;
+      }
+    }
+    return out;
+  },
+
+  /// Food. A plate seen from above.
+  plate(t) {
+    return `<circle cx="50" cy="50" r="31" fill="none" stroke="${t}" stroke-opacity="0.34" stroke-width="4.5"/>` +
+      `<circle cx="50" cy="50" r="20" fill="none" stroke="${t}" stroke-opacity="0.2" stroke-width="3"/>`;
+  },
+
+  /// Family. Scattered confetti, the one motif where the per event variation is
+  /// the whole point.
+  confetti(t, rnd) {
+    let out = "";
+    for (let i = 0; i < 14; i++) {
+      const x = rnd(8, 92), y = rnd(8, 92), d = rnd(5, 13), o = rnd(0.20, 0.46);
+      out += `<circle cx="${n(x)}" cy="${n(y)}" r="${n(d / 2)}" fill="${t}" fill-opacity="${n(o)}"/>`;
+    }
+    return out;
+  },
+
+  /// Anything uncategorised. A diagonal run of tiles: clearly deliberate,
+  /// deliberately meaning nothing, so it never borrows another category's
+  /// symbolism for a listing we could not place.
+  tiles(t) {
+    let out = "";
+    for (let i = 0; i < 5; i++) {
+      const cx = 15 + 17.5 * i, cy = 76 - 13 * i;
+      out += `<rect x="${n(cx - 9.5)}" y="${n(cy - 9.5)}" width="19" height="19" rx="3" fill="${t}"` +
+        ` fill-opacity="${n(0.14 + 0.05 * i)}" transform="rotate(45 ${n(cx)} ${n(cy)})"/>`;
+    }
+    return out;
+  },
+};
+
+/// The drawn tile for one event: the category's motif in the category's hue,
+/// laid out deterministically from the event id.
+function catArt(cat, id) {
+  // catMeta resolves through CATS_BY_KEY and falls back, so `tint` is always
+  // one of our own frozen hex literals and never anything the API sent.
+  const tint = catMeta(cat).c;
+  const key = String(cat || "").trim().toLowerCase();
+  const draw = MOTIFS[MOTIF_BY_CAT[key] || "tiles"];
+  return `<svg class="art" viewBox="0 0 100 100" aria-hidden="true">${draw(tint, seeded(seedOf(id)))}</svg>`;
+}
+
 /* ---- data ---- */
 async function load(showSkeleton = true) {
   if (showSkeleton) renderSkeleton();
@@ -316,18 +529,19 @@ function cardHTML(e) {
   const on = state.saved[e.id] ? "on" : "";
   const photo = safeHref(e.image);
 
-  // Option 1f, the index card, whenever there is no usable photo. A tinted
-  // square with an icon repeated down the whole screen says nothing; a spine
-  // gives the title the width instead. The handoff calls this a per event
-  // decision made at render time, not a user setting.
-  const index = !photo;
-
-  // The wash and the category mark go down first and the photo covers them, so
-  // a URL that fails leaves the mark rather than an empty box.
-  const thumb = index ? "" : `<span class="thumb" style="background:${wash(e.category)}">` +
-    `<span class="ph-glyph">${catIcon(e.category, 28)}</span>` +
-    `<img src="${esc(photo)}" loading="lazy" onerror="this.remove()"/></span>`;
-  const spine = index ? `<span class="spine" style="background:${cm.c}" aria-hidden="true"></span>` : "";
+  // Every card gets the 84px square now. An event with no usable photo used to
+  // drop to a bare 4px colour spine, which made a feed of image-less sources
+  // (PredictHQ carries no images at all, and the venue guide has none) look
+  // broken next to the rows that did have one. It gets drawn artwork instead.
+  //
+  // Order matters: the wash, then the motif, then the category mark, and the
+  // photo last on top of all three. A URL that fails to load removes only the
+  // img, so the composition is what shows underneath rather than an empty box.
+  const thumb = `<span class="thumb" style="background:${wash(e.category)}">` +
+    catArt(e.category, e.id) +
+    `<span class="ph-glyph">${catIcon(e.category, 19)}</span>` +
+    (photo ? `<img src="${esc(photo)}" loading="lazy" onerror="this.remove()"/>` : "") +
+    `</span>`;
 
   // Footer order is fixed: category, distance, price, source. Source is the
   // quietest thing on the card because it is a trust signal, not a headline.
@@ -341,8 +555,8 @@ function cardHTML(e) {
 
   return `
   <div class="card-wrap">
-    <button class="card${index ? " index" : ""}" data-id="${esc(e.id)}">
-      ${spine}${thumb}
+    <button class="card" data-id="${esc(e.id)}">
+      ${thumb}
       <span class="body">
         <span class="when ${w.soon ? "soon" : ""}">${esc(w.text)}</span>
         <span class="title">${esc(e.title)}</span>

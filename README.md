@@ -88,10 +88,10 @@ is UK-only by design, so its coverage of British nightlife and gigs runs deeper
 than a global service's. Football is the biggest category the ticketing sources
 miss, because most clubs sell through their own box office rather than through
 Ticketmaster. PredictHQ is the one source with no ticket link and no image of
-its own, so those cards fall back to the category mark like any other listing
-with a missing photo; what it adds is the long tail of expos and community
-events the ticketing sources never carry, plus, sometimes, a real description
-rather than the generic fallback text.
+its own, so those cards get drawn category artwork like any other listing with
+no photo; what it adds is the long tail of expos and community events the
+ticketing sources never carry, plus, sometimes, a real description rather than
+the generic fallback text.
 
 ## Design
 
@@ -101,8 +101,8 @@ state. Red (Pantone 186, `#C8102E`) is reserved for three things: the logo, the
 primary action, and anything happening today. Reserving it is what stops the
 app looking like a wall of buttons. The dark theme swaps the roles, since
 neither flag colour survives a straight lift into a dark interface: it sits on
-a navy derived from the blue, near white carries the selected states, and the
-red is lifted to read on navy.
+a neutral slate rather than a darkened flag blue, near white carries the
+selected states, and the red is lifted to read against the page.
 
 **Layout.** Editorial rather than boxy. The place is a page title rather than a
 caption, dates sit above each title as a letter-spaced overline instead of a
@@ -119,22 +119,40 @@ client: the web app has none at all. Everywhere else the app uses SF Symbols on
 iOS and inline SVG on the web, so nothing depends on an emoji font or shifts
 weight between platforms.
 
-**Logo.** A flat map pin with a knocked-out centre. It is deliberately a
-placeholder, built so it can be replaced without anything else changing. One
-geometry, three implementations kept in step:
+**Cards with no photograph.** Plenty of listings arrive without a usable image,
+and those rows used to lose their thumbnail entirely, which made a feed drawn
+from image-less sources look broken rather than sparse. They now get drawn
+artwork instead: one composition per category in the category's own colour, over
+its wash, with the category mark in the corner. The layout varies per event but
+is derived from the event id, so a card does not reshuffle as you scroll.
+`ios/Pulse/Design/CategoryArtwork.swift` sets out the twelve motifs and the
+reasoning; the web client follows it.
+
+**Logo.** A map pin with a pulse trace knocked out of it as a counter, drawn as
+a single even-odd filled path. The pin is deliberate: the previous mark was a
+dot under two rising arcs and read as a wifi symbol. The cost is that a
+knocked-out counter is harder to hold at small sizes than separated shapes are,
+and at 18pt in a header the trace is near the limit of what survives. See
+[`DESIGN.md`](DESIGN.md) for the full trade.
+
+One geometry, five implementations kept in step by hand:
 
 - `ios/Pulse/Design/Theme.swift`, `PulseLogoGeometry`, the in-app mark
 - `ios/tools/make_icon.js`, which generates the three App Store icon PNGs
-  (`node tools/make_icon.js`); `make_icon.swift` is the CoreGraphics twin for
-  running on a Mac
-- `api/public/icon.svg`, the web and PWA icon
+  (`node tools/make_icon.js`)
+- `ios/tools/make_icon.swift`, the CoreGraphics twin of that tool, for running
+  on a Mac
+- `api/public/icon.svg`, the PWA and home screen icon
+- the inline `<svg>` in the brand strip of `api/public/index.html`, which is the
+  one that actually renders in the web header
 
 ## Designing
 
 [`DESIGN.md`](DESIGN.md) is the brief for anyone taking the interface further:
 the audience, the palette and the reasoning behind it, the type scale, every
 screen and what it has to show, the hard constraints, and an explicit list of
-what is deliberately a placeholder. The logo is first on that list.
+what is still deliberately a placeholder. The mark is settled; the wordmark
+beside it is not.
 
 ## Deploying
 
@@ -153,8 +171,9 @@ See [`api/DEPLOY.md`](api/DEPLOY.md) for the full walkthrough.
   put it, but the hostname is only real once you have deployed.
 - **Register `com.voice2jobs.pulseuk`** in App Store Connect. Pulse is a new
   product, not an update to 6ix Sense, so it needs its own listing.
-- **Replace the placeholder logo.** It is a competent stand-in, not an
-  identity.
+- **Check the mark at the smallest size you ship it at.** The knocked-out pulse
+  trace is close to its limit at 18pt, so anything smaller needs looking at on a
+  device rather than on a monitor.
 - **Have the privacy policy reviewed.** `api/public/privacy.html` describes
   what the app actually does and points at the ICO, but it has not been through
   a solicitor and should be before launch.

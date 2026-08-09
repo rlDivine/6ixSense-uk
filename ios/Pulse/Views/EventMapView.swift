@@ -744,7 +744,7 @@ struct PiPCard: View {
         }
         .padding(11)
         .frame(maxWidth: 330)
-        .background(Tok.panel, in: RoundedRectangle(cornerRadius: 14))
+        .cardGlass(cornerRadius: 14)
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Tok.hairline, lineWidth: 1))
         .padding(.horizontal, 16)
         .contentShape(RoundedRectangle(cornerRadius: 14))
@@ -756,7 +756,7 @@ struct PiPCard: View {
         return Text(w.text.uppercased())
             .font(.system(size: 10.5, weight: .bold))
             .kerning(0.8)
-            .foregroundStyle(w.soon ? Tok.accent : Tok.faint)
+            .foregroundStyle(w.soon ? Tok.accent : Tok.muted)
             .lineLimit(1)
     }
 }
@@ -797,7 +797,7 @@ struct CarouselCard: View {
             .padding(.top, 10)
         }
         .padding(10)
-        .background(Tok.panel, in: RoundedRectangle(cornerRadius: 16))
+        .cardGlass(cornerRadius: 16)
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Tok.hairline, lineWidth: 1))
         .contentShape(RoundedRectangle(cornerRadius: 16))
         .onTapGesture(perform: onOpen)
@@ -808,7 +808,7 @@ struct CarouselCard: View {
         return Text(w.text.uppercased())
             .font(.system(size: 10.5, weight: .bold))
             .kerning(0.8)
-            .foregroundStyle(w.soon ? Tok.accent : Tok.faint)
+            .foregroundStyle(w.soon ? Tok.accent : Tok.muted)
             .lineLimit(1)
     }
 

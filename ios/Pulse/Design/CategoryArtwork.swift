@@ -31,10 +31,21 @@ struct CategoryArtwork: View {
                 motif(w, h)
                 // Bottom leading, small. The mark identifies the category; the
                 // motif is what makes the tile look composed rather than empty.
+                //
+                // The plate is not decoration. The motif runs full bleed in the
+                // same hue as the mark, and the bars, stripes, drape, rings,
+                // sprockets and confetti all reach into this corner, so the
+                // mark was landing on its own colour: 2.2:1 on dark Music,
+                // measured on rendered pixels rather than against the wash it
+                // nominally sits on. A translucent plate does not fix that, the
+                // motif simply comes back through it. Opaque panel does, and
+                // takes the worst case to 4.76:1.
                 CategoryGlyph(category: category, size: w * 0.23)
+                    .padding(w * 0.036)
+                    .background(Tok.panel, in: RoundedRectangle(cornerRadius: w * 0.095))
+                    .padding(.leading, w * 0.075)
+                    .padding(.bottom, h * 0.075)
                     .frame(width: w, height: h, alignment: .bottomLeading)
-                    .padding(.leading, w * 0.09)
-                    .padding(.bottom, h * 0.09)
             }
             .frame(width: w, height: h)
             .clipped()
@@ -52,7 +63,10 @@ struct CategoryArtwork: View {
         case arches, curtain, sprockets, plate, confetti, tiles
     }
 
-    private static func motif(for category: String) -> Motif {
+    /// Deliberately not called `motif`. There is an instance `motif(_:_:)`
+    /// below that builds the view, and giving a static and an instance member
+    /// the same base name is a resolution question with no upside here.
+    private static func motifKind(for category: String) -> Motif {
         switch category.lowercased() {
         case "music", "live music": return .bars
         case "clubs":               return .rings
@@ -71,7 +85,7 @@ struct CategoryArtwork: View {
 
     @ViewBuilder
     private func motif(_ w: CGFloat, _ h: CGFloat) -> some View {
-        switch Self.motif(for: category) {
+        switch Self.motifKind(for: category) {
         case .bars:      bars(w, h)
         case .rings:     rings(w, h)
         case .bunting:   bunting(w, h)

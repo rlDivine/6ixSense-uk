@@ -1,15 +1,31 @@
 <!-- Pulse mark, "Beacon": a map pin with a pulse trace knocked out of it as a
-     counter. One filled path, even-odd, so the trace is a hole rather than a
-     second shape sitting on top. The geometry matches PulseLogoGeometry in
-     ios/Pulse/Design/Theme.swift, the rasterisers in ios/tools/make_icon.js
-     and ios/tools/make_icon.swift, and the inline brand mark in index.html.
-     Change one, change all five.
+     counter. The trace is a constant width stroke masked out of the pin, so it
+     is a real hole and the tile colour shows through it.
+     The geometry matches PulseLogoGeometry in ios/Pulse/Design/Theme.swift,
+     the rasterisers in ios/tools/make_icon.js and ios/tools/make_icon.swift,
+     and the inline brand mark in index.html. Change one, change all five.
+
+     The handoff gives the trace as a ready made outline, but that outline is
+     not a constant width stroke: its left tail is 0.2 units thick and its right
+     bar is 1.4, so it read as a hairline running into a block. It is drawn here
+     as a centreline stroked at 1.5 with round caps and joins instead, which is
+     what it was meant to look like. The centreline spans x 6.6 to 17.4, centred
+     on the pin's own 12, and every cap stays inside the head with room to
+     spare: the furthest, at (6.6, 10.2), sits 6.22 from the head centre against
+     a radius of 8.2.
+
      Drawn on a 24 grid, scaled by 512/24 * 0.62 and centred. The tile is
      accent-fill with the mark knocked out in white. Flat colour throughout:
      no gradient, no shadow, no rounded rectangle, the platform masks it. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Pulse">
+  <defs>
+    <mask id="pulse-trace-icon">
+      <path fill="#FFFFFF" d="M12 1.8a8.2 8.2 0 0 0-8.2 8.2c0 5.9 7.2 12 7.5 12.3a1.1 1.1 0 0 0 1.4 0c.3-.3 7.5-6.4 7.5-12.3A8.2 8.2 0 0 0 12 1.8Z"/>
+      <path fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M6.6 10.2H9.4L10.9 6.2L12.9 12.6L14 9.4H17.4"/>
+    </mask>
+  </defs>
   <rect width="512" height="512" fill="#C8102E"/>
   <g transform="translate(256 256) scale(13.226667) translate(-12 -12)">
-    <path fill="#FFFFFF" fill-rule="evenodd" d="M12 1.8a8.2 8.2 0 0 0-8.2 8.2c0 5.9 7.2 12 7.5 12.3a1.1 1.1 0 0 0 1.4 0c.3-.3 7.5-6.4 7.5-12.3A8.2 8.2 0 0 0 12 1.8Zm-5 8.9h2.6l1.4-3.4 2.1 5.6 1.2-2.7h2.8V8.8h-4.1l-.7 1.5-2.1-5.5-2.4 5.7H7v.2Z"/>
+    <path fill="#FFFFFF" mask="url(#pulse-trace-icon)" d="M12 1.8a8.2 8.2 0 0 0-8.2 8.2c0 5.9 7.2 12 7.5 12.3a1.1 1.1 0 0 0 1.4 0c.3-.3 7.5-6.4 7.5-12.3A8.2 8.2 0 0 0 12 1.8Z"/>
   </g>
 </svg>

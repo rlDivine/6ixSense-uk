@@ -65,7 +65,7 @@ serves Toronto and is a different product.
 | Area | Implementation |
 |---|---|
 | **Onboarding** | Three mandatory steps: value prop, location priming, interests |
-| **Discover** | Nearest/Soonest, date-range pills, category chips, image-led cards, pull-to-refresh, Map FAB |
+| **Discover** | Nearest/Soonest, date-range pills, category chips, image-led cards with drawn artwork behind a missing photo, pull-to-refresh, Map FAB |
 | **Map** | `MKMapView` wrapped in `UIViewRepresentable`, with category-coloured SF Symbol markers, clustering, user location and a bottom card carousel |
 | **Event detail** | Hero, key facts, a still venue map from `MKMapSnapshotter` with an Apple Maps directions link, Share, Save, "Get tickets and details" |
 | **Saved** | Grouped by date, per-event reminder as a local notification 2h before |
@@ -92,10 +92,15 @@ serves Toronto and is a different product.
 
 ## The logo
 
-`Design/Theme.swift` holds `PulseLogoGeometry`: a flat map pin with a knocked
-out centre, on a 24 by 24 grid. It is a SwiftUI `Shape`, so there is no image
-asset to keep in sync at any size, and it is a deliberate placeholder that can
-be swapped without touching anything else.
+`Design/Theme.swift` holds `PulseLogoGeometry`: a map pin with a pulse trace
+knocked out of it as a counter, on a 24 by 24 grid, filled even-odd so the trace
+reads as a hole. It is a SwiftUI `Shape`, so there is no image asset to keep in
+sync at any size.
+
+The trace is the part that pays for keeping the pin. The header draws it at
+18pt, which is close to the limit of what survives; go much below that and the
+counter fills in. If you put the mark anywhere smaller, check it on a device
+rather than on a monitor.
 
 The App Store icons come from the same geometry:
 
@@ -112,6 +117,12 @@ swift tools/make_icon.swift out.png light      # or dark, or tinted
 
 Both produce opaque 1024 by 1024 PNGs with no alpha, as the App Store requires.
 
+That is three copies of the geometry in this directory, and two more outside it:
+`api/public/icon.svg`, and the inline brand mark in the header of
+`api/public/index.html`. Five in total, kept in step by hand, so a change to the
+shape means editing all five. The web header is the one most easily forgotten
+and the one a user sees most often.
+
 ## Structure
 
 ```
@@ -123,6 +134,7 @@ Pulse/
   Services/EventService.swift   async URLSession client (baseURL here)
   State/AppState.swift          ObservableObject: fetch, filters, location, saved, reminders
   Design/Theme.swift            Colour tokens, category palette, PulseLogo, date and distance helpers
+  Design/CategoryArtwork.swift  The drawn thumbnail for an event with no photo: twelve motifs
   Views/                        PulseApp.swift (also holds RootView and MainTabView),
                                 OnboardingView, DiscoverView, EventCard, EventMapView,
                                 SavedView, SearchView, EventDetailView,
@@ -155,3 +167,6 @@ Emoji appear in exactly one place: the interest filter chips in
 `Models/Preference.swift`, where they make a twelve-item grid scannable at a
 glance. Everywhere else, including card placeholders, map markers and empty
 states, the app uses SF Symbols through `CategoryGlyph` and `Categories.symbol`.
+The artwork in `Design/CategoryArtwork.swift` is drawn from SwiftUI shapes for
+the same reason: no image assets, no font dependency, and it takes the category
+colour at whatever size the tile happens to be.
