@@ -29,6 +29,16 @@
   --active-fg: #0b1327;
   --shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
   --shadow-sm: none;
+  --wash-alpha: 0.18;
+
+  /* Liquid glass. Translucent, never a gradient.
+     0.88 is not a taste value. Chrome on glass has event photos scrolling
+     underneath it, so the composite has to hold up against a white thumbnail
+     as well as against the page. Solved for the worst case: at this alpha both
+     --ink and --ink-2 clear 4.5:1 over any backdrop. --ink-3 does not, so it is
+     never used on a glass surface. */
+  --glass: rgba(15, 23, 48, 0.88);
+  --glass-blur: saturate(160%) blur(18px);
 }
 [data-theme="light"] {
   --bg: #f6f7fb;
@@ -45,6 +55,9 @@
   --active-fg: #ffffff;
   --shadow: 0 12px 30px rgba(11, 22, 51, 0.14);
   --shadow-sm: 0 1px 2px rgba(11, 22, 51, 0.06);
+  --wash-alpha: 0.12;
+  --glass: rgba(255, 255, 255, 0.88);
+  --glass-blur: saturate(160%) blur(18px);
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -105,7 +118,13 @@ button { font-family: inherit; cursor: pointer; }
 /* ---- App bar ---- */
 .appbar {
   display: flex; align-items: center; gap: 10px;
-  padding: calc(env(safe-area-inset-top, 0) + 14px) 16px 0;
+  padding: calc(env(safe-area-inset-top, 0) + 14px) 16px 12px;
+}
+/* The brand strip stays put while the list runs underneath it, which is the
+   only reason the glass is glass rather than a tinted bar. */
+#discoverScroll .appbar {
+  position: sticky; top: 0; z-index: 40;
+  margin: 0 -16px; padding-left: 16px; padding-right: 16px;
 }
 .appbar.simple { padding-bottom: 4px; }
 .appbar.simple h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
@@ -124,6 +143,65 @@ button { font-family: inherit; cursor: pointer; }
   width: 30px; height: 30px; border-radius: 999px; font-size: 13px; flex: 0 0 auto;
 }
 
+/* ---- Liquid glass ----
+   Chrome that floats over scrolling content is translucent and blurred rather
+   than opaque, so the list reads as passing underneath it. This is a flat
+   translucent fill plus a blur, not a gradient. Where the browser has no
+   backdrop-filter the colour alone still covers the content, so nothing
+   becomes illegible; it just stops being glass. */
+.glass {
+  background: var(--glass);
+  border-bottom: 1px solid var(--hairline);
+}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .glass {
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+  }
+}
+
+.icon-btn {
+  background: none; border: 1px solid var(--hairline); color: var(--ink-2);
+  width: 34px; height: 34px; border-radius: 999px; flex: 0 0 auto;
+  display: grid; place-items: center;
+}
+
+/* ---- Two segment control ----
+   A well with the live segment filled. Replaces the underlined pair of words,
+   which read as tabs rather than as a choice. */
+.seg {
+  display: flex; gap: 3px; padding: 3px;
+  background: var(--glass); border: 1px solid var(--hairline); border-radius: 11px;
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+}
+.seg button {
+  flex: 1; border: 0; background: none; color: var(--ink-2);
+  font-size: 13.5px; font-weight: 600; padding: 8px 10px; border-radius: 9px;
+}
+.seg button.active { background: var(--active-bg); color: var(--active-fg); }
+
+.titleblock { padding: 14px 0 12px; }
+.pagedate { margin: 3px 0 0; font-size: 13px; color: var(--ink-2); }
+
+/* ---- Settings ---- */
+.modal { position: absolute; inset: 0; z-index: 900; display: grid; place-items: end center; background: rgba(4, 8, 18, 0.5); }
+.modal-card {
+  width: 100%; background: var(--surface); border-top: 1px solid var(--hairline);
+  border-radius: 20px 20px 0 0; padding: 14px 16px calc(env(safe-area-inset-bottom, 0) + 18px);
+}
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.modal-head h2 { margin: 0; font-size: 17px; font-weight: 700; }
+.setting { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+.setting-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.setting-row {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: var(--surface-2); border: 1px solid var(--hairline); border-radius: 12px;
+  padding: 12px 14px; color: var(--ink); font-size: 14px; font-weight: 600;
+}
+.setting-row .setting-label { text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 600; color: var(--ink); }
+.setting-value { font-size: 13px; color: var(--ink-2); font-weight: 400; }
+.setting-note { margin: 12px 0 0; font-size: 12px; color: var(--ink-3); }
+
 /* The page title carries the place, so the app bar above it can stay small. */
 .pagetitle {
   padding: 10px 16px 12px;
@@ -132,7 +210,7 @@ button { font-family: inherit; cursor: pointer; }
 }
 
 /* ---- Controls ---- */
-.controls { padding: 0 16px 10px; display: flex; flex-direction: column; gap: 9px; }
+.controls { padding: 0 0 10px; display: flex; flex-direction: column; gap: 9px; }
 
 /* Sort reads as two words with the live one underlined, not as a pair of
    buttons competing with everything else on the screen. */
@@ -147,7 +225,8 @@ button { font-family: inherit; cursor: pointer; }
 .pillrow, .chiprow { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 1px; }
 .pillrow::-webkit-scrollbar, .chiprow::-webkit-scrollbar { display: none; }
 .pillrow button, .chiprow button {
-  flex: 0 0 auto; border: 1px solid var(--hairline); background: none;
+  flex: 0 0 auto; border: 1px solid var(--hairline); background: var(--glass);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
   color: var(--ink-2); padding: 6px 12px; border-radius: 999px;
   font-size: 12.5px; font-weight: 600; white-space: nowrap;
 }
@@ -156,18 +235,22 @@ button { font-family: inherit; cursor: pointer; }
 }
 .chiprow button { font-size: 12px; padding: 5px 11px; }
 
-.statusbar { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-top: 1px; }
-#status { font-size: 12.5px; color: var(--ink-2); }
-.refresh { background: none; border: 0; color: var(--ink-3); font-size: 11.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; padding: 0; }
+.statusbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 1px; }
+#status { font-size: 12.5px; color: var(--ink-3); flex: 1; min-width: 0; }
+.refresh { flex: 0 0 auto; white-space: nowrap; background: none; border: 0; color: var(--ink-3); font-size: 11.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; padding: 0; }
 
-/* ---- Event card ---- */
+/* ---- Event card ----
+   Two treatments from the handoff. 1d is the default; 1e was not taken.
+   1f ("index") drops the thumbnail for a category spine and is used whenever an
+   event has no usable photo, which is most of them, so a tinted square with an
+   icon is not repeated down the whole screen. */
 .list { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; }
 .card-wrap { position: relative; }
 .card {
-  display: grid; grid-template-columns: 78px 1fr; gap: 13px; align-items: start;
+  display: grid; grid-template-columns: 84px 1fr; gap: 13px; align-items: start;
   width: 100%;
   background: var(--surface); color: var(--ink);
-  border: 1px solid var(--hairline); border-radius: 16px;
+  border: 1px solid var(--hairline); border-radius: 14px;
   /* Right padding leaves the bookmark, which is now a sibling sitting on top
      of the card rather than a third column inside it, somewhere to go. */
   padding: 12px 43px 12px 12px; box-shadow: var(--shadow-sm);
@@ -175,7 +258,7 @@ button { font-family: inherit; cursor: pointer; }
 }
 .card:active { transform: scale(0.985); }
 .card .thumb {
-  position: relative; width: 78px; height: 78px; border-radius: 12px;
+  position: relative; width: 84px; height: 84px; border-radius: 10px;
   overflow: hidden; display: grid; place-items: center;
 }
 .card .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -187,12 +270,13 @@ button { font-family: inherit; cursor: pointer; }
   font-size: 16px; font-weight: 650; line-height: 1.25; letter-spacing: -0.01em;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.card .venue { font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .venue { font-size: 13.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card .foot { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 4px; font-size: 11.5px; color: var(--ink-3); }
 .card .cat { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; color: var(--ink-2); }
 .card .cat i { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto; }
+.card .src { opacity: 0.72; }
 .card .dot { width: 2px; height: 2px; border-radius: 50%; background: currentColor; opacity: 0.55; }
-.card .free { color: var(--accent); font-weight: 700; }
+.card .free { color: var(--ink); font-weight: 600; }
 .bookmark {
   position: absolute; top: 12px; right: 12px;
   background: none; border: 0; line-height: 0; color: var(--ink-3);
@@ -226,11 +310,11 @@ button { font-family: inherit; cursor: pointer; }
 .tabbar {
   position: absolute; left: 0; right: 0; bottom: 0; height: 58px;
   display: grid; grid-template-columns: repeat(4, 1fr);
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
-  backdrop-filter: blur(16px); border-top: 1px solid var(--hairline);
+  background: var(--glass); border-top: 1px solid var(--hairline);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
-.tabbar button { background: none; border: 0; color: var(--ink-3); font-size: 10px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 3px; padding-top: 9px; }
+.tabbar button { background: none; border: 0; color: var(--ink-2); font-size: 10px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 3px; padding-top: 9px; }
 .tabbar button span { line-height: 0; }
 .tabbar button.active { color: var(--ink); }
 
@@ -330,9 +414,10 @@ button { font-family: inherit; cursor: pointer; }
 .fact .v svg, .detail .cta a svg, .dir svg, .sa svg { vertical-align: -2px; }
 
 /* ---- States ---- */
-.skel { background: var(--surface); border: 1px solid var(--hairline); border-radius: 16px; height: 102px; display: grid; grid-template-columns: 78px 1fr; gap: 13px; padding: 12px; overflow: hidden; }
-.shimmer { background: var(--surface-2); animation: shimmer 1.4s ease-in-out infinite; border-radius: 8px; }
-@keyframes shimmer { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+.skel { background: var(--surface); border: 1px solid var(--hairline); border-radius: 14px; height: 108px; display: grid; grid-template-columns: 84px 1fr; gap: 13px; padding: 12px; overflow: hidden; }
+.shimmer { background: var(--surface-2); animation: shimmer 1.5s ease-in-out infinite; border-radius: 8px; }
+/* Opacity only. The sweep this replaced was a gradient. */
+@keyframes shimmer { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 .skel .s2 { display: flex; flex-direction: column; gap: 9px; padding: 4px 0; }
 .skel .s2 .l { height: 11px; } .skel .s2 .l.w70 { width: 70%; } .skel .s2 .l.w40 { width: 40%; }
 .loading-note { text-align: center; color: var(--ink-3); font-size: 12.5px; padding: 16px 0; }
@@ -362,3 +447,21 @@ button { font-family: inherit; cursor: pointer; }
 .ob-actions { display: flex; flex-direction: column; gap: 6px; }
 .btn-primary { background: var(--accent-fill); color: #fff; border: 0; border-radius: 14px; padding: 16px; font-weight: 650; font-size: 15px; }
 .btn-text { background: none; border: 0; color: var(--ink-3); font-size: 14px; font-weight: 600; padding: 8px; }
+
+/* Option 1f, the index card. No thumbnail: a 4px category spine carries the
+   colour instead, and the title takes the width the square was using. */
+.card.index { grid-template-columns: 1fr; padding-left: 18px; }
+.card.index .spine {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  border-radius: 14px 0 0 14px;
+}
+.card.index .title { font-size: 17px; }
+
+.chiprow button .chipdot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
+
+/* The states offer the action that fixes them, and the empty state offers two:
+   clear the filters, or widen the dates without losing them. */
+.state-actions { display: flex; flex-direction: column; gap: 8px; align-items: stretch; margin-top: 18px; }
+.state-actions .btn-primary, .state-actions .btn-ghost { width: 100%; }
+.state h3 { color: var(--ink); font-size: 18px; margin: 0 0 8px; }
+.state p { margin: 0; line-height: 1.55; }

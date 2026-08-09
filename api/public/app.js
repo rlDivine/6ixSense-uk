@@ -16,18 +16,19 @@
 // Icons are inline SVG, not emoji, so they inherit the category colour, stay
 // the same weight on every platform, and never depend on an emoji font.
 const CATS = {
-  "pop-up": { c: "#7A5BA6", d: "#C08CE8", i: "gift" },
-  "food & drink": { c: "#B5651D", d: "#E0913F", i: "food" },
-  festival: { c: "#C8102E", d: "#F44F63", i: "flag" },
-  music: { c: "#2E5AAC", d: "#6E9BF0", i: "note" },
-  "live music": { c: "#4A7FD4", d: "#8FBCF5", i: "note" },
-  market: { c: "#2E7D6B", d: "#45C4A5", i: "bag" },
-  comedy: { c: "#B03060", d: "#EE6E9C", i: "mic" },
-  arts: { c: "#6B4FA0", d: "#9B87EC", i: "palette" },
-  film: { c: "#A03A5C", d: "#EE7093", i: "film" },
-  tours: { c: "#3E7C8C", d: "#5FC0D6", i: "signpost" },
-  sports: { c: "#1F5C3D", d: "#4FBE85", i: "ball" },
-  family: { c: "#C06A2E", d: "#EFA05C", i: "balloon" },
+  Music:        { c: "#2563C9", d: "#7BA4F2", i: "note" },
+  "Live music": { c: "#2563C9", d: "#7BA4F2", i: "note" },
+  Clubs:        { c: "#6D3FC4", d: "#AC8BF2", i: "disc" },
+  Festivals:    { c: "#C8102E", d: "#F4707F", i: "flag" },
+  Comedy:       { c: "#B23A8C", d: "#E58FCE", i: "mic" },
+  Football:     { c: "#17794A", d: "#4FC78C", i: "ball" },
+  Sport:        { c: "#2B7A6F", d: "#5FC9BB", i: "whistle" },
+  Markets:      { c: "#A5651B", d: "#E0A75C", i: "bag" },
+  Museums:      { c: "#0F6F86", d: "#4FB8D4", i: "museum" },
+  Theatre:      { c: "#9C2F5E", d: "#E07FA5", i: "masks" },
+  Film:         { c: "#4A4F9E", d: "#949AE8", i: "film" },
+  Food:         { c: "#B5541F", d: "#F0946A", i: "food" },
+  Family:       { c: "#7A6A12", d: "#CCB84F", i: "balloon" },
 };
 const CAT_FALLBACK = { c: "#5A6580", d: "#98A2BC", i: "ticket" };
 
@@ -46,6 +47,10 @@ const ICON_PATHS = {
   balloon: '<ellipse cx="12" cy="9.2" rx="5.6" ry="6.2"/><path d="M12 15.4v3.1M10.4 21h3.2"/>',
   gift: '<rect x="3.4" y="8.4" width="17.2" height="12.2" rx="1.6"/><path d="M3.4 12.6h17.2M12 8.4v12.2"/><path d="M12 8.4S10.6 3.4 8.2 3.4a2.5 2.5 0 0 0 0 5zM12 8.4s1.4-5 3.8-5a2.5 2.5 0 0 1 0 5z"/>',
   ticket: '<path d="M4 7.2h16v3a2 2 0 0 0 0 3.6v3H4v-3a2 2 0 0 0 0-3.6z"/><path d="M13.2 7.2v9.6"/>',
+  disc: '<circle cx="12" cy="12" r="8.8"/><circle cx="12" cy="12" r="2.4"/>',
+  whistle: '<path d="M13.6 9.2h6.2v4.2a4.2 4.2 0 0 1-4.2 4.2H9.4a4.2 4.2 0 1 1 0-8.4h4.2z"/><path d="M13.6 9.2 15.8 5"/><circle cx="9.4" cy="13.4" r="1.2"/>',
+  museum: '<path d="M3.6 9.6 12 4.2l8.4 5.4"/><path d="M5.4 9.6v8.2M9.8 9.6v8.2M14.2 9.6v8.2M18.6 9.6v8.2"/><path d="M3.4 20.2h17.2"/>',
+  masks: '<path d="M10.6 4.2H4.4v6.6a3.1 3.1 0 0 0 6.2 0z"/><path d="M19.6 8.4h-6.2V15a3.1 3.1 0 0 0 6.2 0z"/><path d="M6.2 7.4h2.6M15.2 11.6h2.6"/>',
 };
 
 // Interface icons, same treatment as the category ones. Everything that used
@@ -81,8 +86,10 @@ function uiIcon(name, size = 18, color) {
 /// The category's colours and icon. `c` is resolved for the current theme, so
 /// callers never have to think about it; `p` is the pin fill, which does not
 /// change with the theme because a white symbol sits on it either way.
+const CATS_BY_KEY = new Map(Object.entries(CATS).map(([k, v]) => [k.toLowerCase(), v]));
+
 function catMeta(cat) {
-  const m = CATS[(cat || "").toLowerCase()] || CAT_FALLBACK;
+  const m = CATS_BY_KEY.get(String(cat || "").trim().toLowerCase()) || CAT_FALLBACK;
   return { c: state.theme === "dark" ? m.d : m.c, p: m.c, i: m.i };
 }
 
@@ -196,8 +203,20 @@ function wash(cat) {
   // The alpha differs by theme because the placeholder glyph is drawn in the
   // same hue on top of this. The light surfaces need the lighter tint for the
   // two to stay apart; on dark there is more room.
-  const a = state.theme === "dark" ? "2E" : "1F";   // 0.18 and 0.12
+  //
+  // It is read from --wash-alpha rather than kept here as a second copy, so the
+  // stylesheet stays the one place the value lives. applyTheme caches it.
+  const a = Math.round(Math.min(1, Math.max(0, washAlpha)) * 255)
+    .toString(16).padStart(2, "0").toUpperCase();
   return `${catMeta(cat).c}${a}`;
+}
+
+// Cached because it is read once per card render and getComputedStyle is not
+// free. applyTheme refreshes it whenever the theme changes.
+let washAlpha = 0.18;
+function refreshWashAlpha() {
+  const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--wash-alpha"));
+  if (Number.isFinite(v)) washAlpha = v;
 }
 
 /* ---- data ---- */
@@ -239,9 +258,14 @@ function buildCats() {
   if (free) chips.push("Free");
   chips.push(...ordered.filter((c) => c !== "Free"));
   const row = $("#catRow");
-  row.innerHTML = chips.slice(0, 16).map((c) =>
-    `<button data-cat="${esc(c)}" class="${c === state.category ? "active" : ""}">${esc(c)}</button>`
-  ).join("");
+  row.innerHTML = chips.slice(0, 16).map((c) => {
+    const on = c === state.category;
+    // "All" and "Free" are not real categories, so they get no colour dot.
+    const dot = c === "All" || c === "Free"
+      ? ""
+      : `<i class="chipdot" style="background:${on ? "var(--active-fg)" : catMeta(c).c}"></i>`;
+    return `<button data-cat="${esc(c)}" class="${on ? "active" : ""}" aria-pressed="${on ? "true" : "false"}">${dot}${esc(c)}</button>`;
+  }).join("");
 }
 
 /* ---- rendering ---- */
@@ -252,40 +276,68 @@ function renderAll() {
   renderSaved();
 }
 
+function renderSortSeg() {
+  $$("#sortSeg button").forEach((b) => {
+    const on = b.dataset.sort === state.sort;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+}
+
 function renderStatus() {
+  renderSortSeg();
   const items = visible();
-  const rl = { all: "upcoming", today: "today", weekend: "this weekend", week: "this week" }[state.range];
+  const rl = { all: "", today: "today", weekend: "this weekend", week: "this week" }[state.range];
   // Someone outside the UK is being shown London, so "near you" would be a lie.
   const where = !state.inMarket ? `in ${placeName()}` : state.origin ? "near you" : `in ${placeName()}`;
-  $("#status").textContent = `${items.length} events ${rl} ${where}`;
+  // The status line states the count and the live sort, so the ranking rule is
+  // never implicit. "1 event" rather than "1 events".
+  const noun = items.length === 1 ? "event" : "events";
+  const order = state.sort === "soonest" ? "soonest first" : "nearest first";
+  $("#status").textContent = [`${items.length} ${noun}`, rl, where].filter(Boolean).join(" ") + `, ${order}`;
   const mins = Math.round((Date.now() - state.lastLoad) / 60000);
   $("#updated").textContent = state.lastLoad ? `Updated ${mins === 0 ? "just now" : mins + "m ago"}` : "";
   $("#locLabel").textContent = state.origin && state.inMarket ? "Near you" : placeName();
-  $("#pageTitle").textContent = `What's on in ${placeName()}`;
+  // The title is the place, with today's date beneath it.
+  $("#pageTitle").textContent = placeName();
+  $("#pageDate").textContent = new Date().toLocaleDateString("en-GB",
+    { weekday: "long", day: "numeric", month: "long" })
+    .replace(/^(\w+)\s/, "$1, ");
 }
 
 function cardHTML(e) {
   const cm = catMeta(e.category);
   const w = whenLabel(e.start);
   const on = state.saved[e.id] ? "on" : "";
-  // The icon is laid down first and the photo covers it, so a URL that fails
-  // leaves the icon rather than an empty box.
-  const img = `<span class="ph-glyph">${catIcon(e.category, 26)}</span>` +
-    (e.image ? `<img src="${esc(safeHref(e.image))}" loading="lazy" onerror="this.remove()"/>` : "");
+  const photo = safeHref(e.image);
+
+  // Option 1f, the index card, whenever there is no usable photo. A tinted
+  // square with an icon repeated down the whole screen says nothing; a spine
+  // gives the title the width instead. The handoff calls this a per event
+  // decision made at render time, not a user setting.
+  const index = !photo;
+
+  // The wash and the category mark go down first and the photo covers them, so
+  // a URL that fails leaves the mark rather than an empty box.
+  const thumb = index ? "" : `<span class="thumb" style="background:${wash(e.category)}">` +
+    `<span class="ph-glyph">${catIcon(e.category, 28)}</span>` +
+    `<img src="${esc(photo)}" loading="lazy" onerror="this.remove()"/></span>`;
+  const spine = index ? `<span class="spine" style="background:${cm.c}" aria-hidden="true"></span>` : "";
+
+  // Footer order is fixed: category, distance, price, source. Source is the
+  // quietest thing on the card because it is a trust signal, not a headline.
   const dist = distNum(e.distanceKm);
   const bits = [];
   if (dist != null) bits.push(`<span class="dot"></span><span>${dist} mi</span>`);
+  // Free is a strong signal, surfaced by weight rather than by spending red.
   if (isFree(e)) bits.push(`<span class="dot"></span><span class="free">Free</span>`);
   else if (e.price) bits.push(`<span class="dot"></span><span>${esc(e.price)}</span>`);
-  bits.push(`<span class="dot"></span><span>${esc(e.source)}</span>`);
+  if (e.source) bits.push(`<span class="dot"></span><span class="src">${esc(e.source)}</span>`);
 
-  // The bookmark is a sibling of the card, not a child of it. A control nested
-  // inside a button cannot be reached with a keyboard, which is how it used to
-  // be: a span with a click handler, focusable by nobody and named to nobody.
   return `
   <div class="card-wrap">
-    <button class="card" data-id="${esc(e.id)}">
-      <span class="thumb" style="background:${wash(e.category)}">${img}</span>
+    <button class="card${index ? " index" : ""}" data-id="${esc(e.id)}">
+      ${spine}${thumb}
       <span class="body">
         <span class="when ${w.soon ? "soon" : ""}">${esc(w.text)}</span>
         <span class="title">${esc(e.title)}</span>
@@ -319,12 +371,21 @@ function renderSkeleton() {
 }
 function renderEmpty() {
   $("#list").innerHTML =
-    `<div class="state"><div class="em">${uiIcon("calendar", 38)}</div><h3>No events match</h3><p>Try another category or widen the date range.</p><button id="resetBtn">Reset filters</button></div>`;
+    `<div class="state"><div class="em">${uiIcon("calendar", 38)}</div>
+      <h3>Quiet round here tonight</h3>
+      <p>Nothing in ${esc(placeName())} matches those filters. Widen the dates, or clear them and start again.</p>
+      <div class="state-actions">
+        <button id="resetBtn" class="btn-primary">Clear filters</button>
+        <button id="widenBtn" class="btn-ghost">Try this week</button>
+      </div></div>`;
   $("#endcap").textContent = "";
 }
 function renderError(msg) {
   $("#list").innerHTML =
-    `<div class="state"><div class="em">${uiIcon("offline", 38)}</div><h3>Couldn't reach events</h3><p>${esc(msg || "You may be offline.")}</p><button id="retryBtn">Retry</button></div>`;
+    `<div class="state"><div class="em">${uiIcon("offline", 38)}</div>
+      <h3>Lost the signal</h3>
+      <p>We could not reach the listings just now. ${esc(msg || "You may be offline.")} Anything you have saved is still here, because it lives on this device.</p>
+      <div class="state-actions"><button id="retryBtn" class="btn-primary">Try again</button></div></div>`;
 }
 
 /* ---- Saved ---- */
@@ -705,7 +766,12 @@ function locateMe() {
 /* ---- theme ---- */
 function applyTheme() {
   document.documentElement.dataset.theme = state.theme;
-  $("#themeBtn") && ($("#themeBtn").textContent = state.theme === "dark" ? "◐" : "◑");
+  refreshWashAlpha();
+  $$("#themeSeg button").forEach((b) => {
+    const on = b.dataset.themeChoice === state.theme;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
   const mc = document.querySelector('meta[name="theme-color"]');
   if (mc) mc.content = state.theme === "dark" ? "#080e1c" : "#f6f7fb";
   if (tileLayer) tileLayer.setUrl(tileURL()); // swap map tiles to match theme
@@ -765,11 +831,16 @@ function wireEvents() {
     renderStatus(); renderList(); if (state.tab === "map") renderMap();
   });
   $("#tabbar").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) switchTab(b.dataset.tab); });
-  $("#mapFab").onclick = () => switchTab("map");
   $("#locChip").onclick = requestLocation;
   $("#locateBtn").onclick = locateMe;
   $("#refreshBtn").onclick = () => load();
-  $("#themeBtn").onclick = () => { state.theme = state.theme === "dark" ? "light" : "dark"; store.set("theme", state.theme); applyTheme(); };
+  $$("#themeSeg button").forEach((b) => {
+    b.onclick = () => { state.theme = b.dataset.themeChoice; store.set("theme", state.theme); applyTheme(); };
+  });
+  const settings = $("#settings");
+  $("#settingsBtn").onclick = () => settings.classList.remove("hidden");
+  $("#settingsClose").onclick = () => settings.classList.add("hidden");
+  settings.onclick = (e) => { if (e.target === settings) settings.classList.add("hidden"); };
 
   // Delegated taps: cards, bookmarks, reminders, suggestions, state buttons
   document.body.addEventListener("click", (e) => {
@@ -782,6 +853,11 @@ function wireEvents() {
     const card = e.target.closest(".card");
     if (card) { openDetail(card.dataset.id); return; }
     if (e.target.id === "resetBtn") { state.category = "All"; state.range = "all"; $$("#rangeRow button").forEach((x) => x.classList.toggle("active", x.dataset.range === "all")); buildCats(); load(false); return; }
+    if (e.target.id === "widenBtn") {
+      state.range = "week";
+      $$("#rangeRow button").forEach((x) => x.classList.toggle("active", x.dataset.range === "week"));
+      buildCats(); load(false); return;
+    }
     if (e.target.id === "retryBtn") { load(); return; }
     const sq = e.target.closest("[data-sq]");
     if (sq) { state.search = sq.dataset.sq; $("#searchInput").value = state.search; renderSearch(); }

@@ -74,7 +74,7 @@ test("the vertical a listing came from becomes its category", async () => {
       const cats = Object.fromEntries(out.map((e) => [e.url, e.category]));
       assert.equal(cats["https://eb/e/a-1"], "Music");
       assert.equal(cats["https://eb/e/b-2"], "Comedy");
-      assert.equal(cats["https://eb/e/c-3"], "Sports");
+      assert.equal(cats["https://eb/e/c-3"], "Sport");
     }
   );
 });

@@ -204,7 +204,7 @@ export async function fetchSportsFixtures({ lat, lng, radiusKm = 50 } = {}) {
       makeEvent({
         id: `sdb-${f.idEvent}`,
         title: f.strEvent || `${f.strHomeTeam} v ${f.strAwayTeam}`,
-        category: "Sports",
+        category: "Football",
         start,
         venue: f.strVenue || "",
         address: f.strVenue || "",

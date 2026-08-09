@@ -24,15 +24,15 @@ const KM_PER_MILE = 1.609344;
 // app already uses so the filter chips stay coherent across sources.
 const CATEGORY_BY_CODE = {
   LIVE: "Live music",
-  CLUB: "Music",
-  FEST: "Festival",
-  DATE: "Food & Drink",
-  BARP: "Food & Drink",
-  ARTS: "Arts",
-  EXHB: "Arts",
-  THTR: "Arts",
+  CLUB: "Clubs",
+  FEST: "Festivals",
+  DATE: "Food",
+  BARP: "Food",
+  ARTS: "Theatre",
+  EXHB: "Museums",
+  THTR: "Theatre",
   KIDS: "Family",
-  SPRT: "Sports",
+  SPRT: "Sport",
   COMM: "Things to do",
   LGBT: "Things to do",
 };

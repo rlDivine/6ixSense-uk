@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { decodeEntities, distanceKm, makeEvent, safeUrl } from "../sources/util.js";
+import { canonicalCategory, decodeEntities, distanceKm, makeEvent, safeUrl } from "../sources/util.js";
 import { greatCircleKm } from "./helpers.js";
 
 const LONDON = [51.5074, -0.1278];
@@ -102,7 +102,7 @@ test("makeEvent fills every field with a safe default", () => {
   assert.deepEqual(e, {
     id: "42",
     title: "Gig night",
-    category: "Event",
+    category: "Things to do",
     start: null,
     venue: "",
     address: "",
@@ -130,7 +130,7 @@ test("makeEvent decodes entities in the text fields", () => {
     address: "47 Frith St &amp; Soho",
   });
   assert.equal(e.title, "Rock & Roll");
-  assert.equal(e.category, "Food & Drink");
+  assert.equal(e.category, "Food");
   assert.equal(e.venue, "Ronnie Scott's");
   assert.equal(e.address, "47 Frith St & Soho");
 });
@@ -204,4 +204,51 @@ test("makeEvent leaves a legitimate listing's links alone", () => {
   });
   assert.equal(e.url, "https://www.skiddle.com/e/123");
   assert.equal(e.image, "https://cdn.skiddle.com/large.jpg");
+});
+
+// The design's colour table is keyed on this vocabulary, so a source spelling
+// that does not fold onto it shows up as a grey fallback chip in the app.
+test("canonicalCategory folds every spelling the sources actually emit", () => {
+  const cases = {
+    // Ticketmaster segments
+    Music: "Music", Sports: "Sport", "Arts & Theatre": "Theatre", Film: "Film",
+    Miscellaneous: "Things to do",
+    // Eventbrite verticals
+    "Food & Drink": "Food", Festival: "Festivals", Comedy: "Comedy",
+    "Pop-up": "Markets", Family: "Family", "Things to do": "Things to do",
+    // Skiddle, after its own code table
+    "Live music": "Live music", Clubs: "Clubs", Museums: "Museums",
+    // Curated
+    Market: "Markets", Tours: "Museums", Arts: "Theatre",
+    // Football is kept apart from sport in general
+    Football: "Football",
+  };
+  for (const [raw, want] of Object.entries(cases)) {
+    assert.equal(canonicalCategory(raw), want, `${raw} should fold to ${want}`);
+  }
+});
+
+test("canonicalCategory is case and plural tolerant", () => {
+  assert.equal(canonicalCategory("MUSIC"), "Music");
+  assert.equal(canonicalCategory("  festivals  "), "Festivals");
+  assert.equal(canonicalCategory("museum"), "Museums");
+  assert.equal(canonicalCategory("markets"), "Markets");
+});
+
+test("canonicalCategory sends anything unrecognised to the real generic bucket", () => {
+  for (const raw of ["", null, undefined, "Show", "Wellness", "Zzz"]) {
+    assert.equal(canonicalCategory(raw), "Things to do");
+  }
+});
+
+test("every canonical category has a colour in the web client", async () => {
+  const fs = await import("node:fs");
+  const js = fs.readFileSync(new URL("../public/app.js", import.meta.url), "utf8");
+  const named = new Set(
+    [...js.matchAll(/^\s*"?([A-Za-z][A-Za-z &-]*?)"?:\s*\{\s*c:\s*"#/gm)].map((m) => m[1].toLowerCase())
+  );
+  const required = ["Music", "Live music", "Clubs", "Festivals", "Comedy", "Football",
+    "Sport", "Markets", "Museums", "Theatre", "Film", "Food", "Family"];
+  const missing = required.filter((c) => !named.has(c.toLowerCase()));
+  assert.deepEqual(missing, [], `categories with no colour: ${missing.join(", ")}`);
 });

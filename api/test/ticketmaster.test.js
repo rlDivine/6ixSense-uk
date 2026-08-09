@@ -111,7 +111,7 @@ test("tolerates a sparse event", async () => {
       async () => {
         const [e] = await fetchTicketmaster();
         assert.equal(e.id, "tm-X1");
-        assert.equal(e.category, "Show");
+        assert.equal(e.category, "Things to do");
         assert.equal(e.start, null);
         assert.equal(e.venue, "");
         assert.equal(e.address, "");

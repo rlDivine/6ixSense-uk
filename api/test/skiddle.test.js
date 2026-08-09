@@ -123,7 +123,7 @@ test("maps a full event onto the normalised shape", async () => {
   const [e] = await fetchWith([skiddleEvent()]);
   assert.equal(e.id, "sk-12345678");
   assert.equal(e.title, "Warehouse Project");
-  assert.equal(e.category, "Music");
+  assert.equal(e.category, "Clubs");
   assert.equal(e.start, "2026-09-12T22:00:00");
   assert.equal(e.venue, "Depot Mayfield");
   assert.equal(e.address, "Baring St, Manchester, M1 2PZ");
@@ -172,15 +172,15 @@ test("reads venue coordinates that arrive as strings", async () => {
 test("maps every documented event code onto an app category", async () => {
   const expected = {
     LIVE: "Live music",
-    CLUB: "Music",
-    FEST: "Festival",
-    DATE: "Food & Drink",
-    BARP: "Food & Drink",
-    ARTS: "Arts",
-    EXHB: "Arts",
-    THTR: "Arts",
+    CLUB: "Clubs",
+    FEST: "Festivals",
+    DATE: "Food",
+    BARP: "Food",
+    ARTS: "Theatre",
+    EXHB: "Museums",
+    THTR: "Theatre",
     KIDS: "Family",
-    SPRT: "Sports",
+    SPRT: "Sport",
     COMM: "Things to do",
     LGBT: "Things to do",
   };
@@ -204,7 +204,7 @@ test("an unknown or missing event code becomes the catch-all category", async ()
 
 test("accepts the lower-case eventcode spelling too", async () => {
   const [e] = await fetchWith([skiddleEvent({ EventCode: undefined, eventcode: "FEST" })]);
-  assert.equal(e.category, "Festival");
+  assert.equal(e.category, "Festivals");
 });
 
 test("formats entry prices in pounds and calls zero free", async () => {

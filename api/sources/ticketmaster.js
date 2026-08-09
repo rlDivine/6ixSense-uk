@@ -45,7 +45,7 @@ export async function fetchTicketmaster({ lat = LONDON.lat, lng = LONDON.lng, ra
     return makeEvent({
       id: `tm-${e.id}`,
       title: e.name,
-      category: seg || "Show",
+      category: seg || "Things to do",
       start,
       venue: venue?.name || "",
       address: [venue?.address?.line1, venue?.city?.name].filter(Boolean).join(", "),

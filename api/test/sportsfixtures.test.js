@@ -173,7 +173,7 @@ test("maps a fixture onto the normalised shape with the ground's coordinates", a
   const [e] = await fetchWith([fixture()]);
   assert.equal(e.id, "sdb-2052001");
   assert.equal(e.title, "Manchester United vs Liverpool");
-  assert.equal(e.category, "Sports");
+  assert.equal(e.category, "Football");
   assert.equal(e.start, "2026-09-12T14:00:00+00:00");
   assert.equal(e.venue, "Old Trafford");
   assert.equal(e.address, "Old Trafford");
