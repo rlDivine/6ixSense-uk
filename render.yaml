@@ -97,7 +97,7 @@ services:
   - type: cron
     name: ventrack-uk-localscan-discover
     runtime: docker
-    plan: free
+    plan: starter
     region: frankfurt
     dockerfilePath: ./api/Dockerfile
     dockerContext: ./api
