@@ -78,3 +78,45 @@ services:
       # localscan.js for the caching that keeps that cost bounded.
       - key: OPENAI_API_KEY
         sync: false
+
+  # Runs the monthly localscan research pass: api/discover-seeds.js, not
+  # server.js. A Cron Job rather than a timer inside the web service above on
+  # purpose. The web service is on the free plan and sleeps after 15 minutes
+  # idle, so an in-process "has 30 days passed" check has nothing durable to
+  # remember that against and no guarantee of being awake when the date
+  # arrives. A Cron Job runs on Render's own schedule regardless, bills only
+  # for the few minutes it actually takes to run once a month, and exits
+  # rather than staying resident.
+  #
+  # THE FIELD NAMES BELOW (schedule, dockerCommand) ARE WRITTEN FROM
+  # DOCUMENTATION, NOT CONFIRMED AGAINST A LIVE BLUEPRINT DEPLOY, unlike the
+  # `type: web` block above which has been running. Check them against
+  # whatever Render actually accepts the first time this Blueprint is
+  # applied, and adjust here if it disagrees; nothing else in this file
+  # depends on this block being right.
+  - type: cron
+    name: ventrack-uk-localscan-discover
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./api/Dockerfile
+    dockerContext: ./api
+    # Overrides the image's default `node server.js` for this service only.
+    dockerCommand: node discover-seeds.js
+    # 06:00 UTC on the 1st of every month. Cron syntax, in UTC.
+    schedule: "0 6 1 * *"
+    envVars:
+      # Same key as the web service above; Render treats these as separate
+      # values even though the name matches, so it has to be set here too.
+      - key: OPENAI_API_KEY
+        sync: false
+      # A fine grained personal access token (github.com Settings, Developer
+      # settings, Fine-grained tokens), scoped to ONLY this repository, with
+      # Contents: Read and write and Pull requests: Read and write and
+      # nothing else. Not a classic token: a classic token's scopes are
+      # account-wide, and this job has no reason to be able to touch any
+      # other repository. Without this set, the job still runs and still
+      # searches, it just logs what it found instead of opening a pull
+      # request: see openCandidatesPR() in localscan-discover.js.
+      - key: GITHUB_TOKEN
+        sync: false

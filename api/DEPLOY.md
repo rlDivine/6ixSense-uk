@@ -86,28 +86,40 @@ town). A typo is logged and that one entry is skipped at startup, which is
 worth checking the log for after adding one, rather than something that fails
 loudly. Commit the file and redeploy, or push to `main` if `autoDeploy` is on.
 
-### Why there's no automatic discovery yet
+### Automatic discovery
 
-The obvious next step is a job that finds new pages to watch on its own
-rather than waiting for someone to add them by hand, and it deserves an honest
-answer rather than a half-built version of it.
+Once a month, a separate Cron Job (`ventrack-uk-localscan-discover` in
+`render.yaml`, running `api/discover-seeds.js`) researches every region that
+already has at least one seed page, looking for others worth adding. Regions
+with no seeds yet are not researched: this grows coverage you have already
+started, it does not go looking for new towns to cover on its own.
 
-Discovering pages by watching what real users actually visit would need this
-app to collect usage data it does not collect today, and the current privacy
-answers (see `ios/APPSTORE.md`) say plainly that it collects none beyond
-location for distance sorting. Adding that tracking is a real decision with
-real privacy policy consequences, not something to slip in as a side effect
-of a scanner feature.
+It does not write to `localscan-seeds.js` directly. It opens a **pull
+request** proposing the pages it found, one PR a month, with the reasoning it
+gave for each one, and nothing is watched or billed against until a person
+reads that PR and merges it. That is the actual answer to "manually or
+automatically": an LLM drafts the line, a person still has to click merge.
+Two real risks come from skipping that step: an unsupervised web search
+feeding straight into an LLM pipeline pointed at a real app can and will
+sometimes surface a wrong-town result or something worse, and every page
+added is a page that costs money every time it is scanned regardless of
+whether it was worth adding.
 
-Discovering pages by searching the web on a schedule is more honest to build,
-but it is also a new, separate integration: every search API worth using
-(Google's Custom Search JSON API, Bing's) needs its own key, and a job that
-finds candidate pages should propose them for a person to check before they
-start being scanned and billed against, not add them automatically. Spam,
-wrong-town results and adult content are all real outcomes of an unsupervised
-web search feeding straight into an LLM extraction pipeline pointed at a real
-app. That is worth building properly, as its own piece of work, once the
-manual seed list above has proven the extraction side is worth trusting.
+To turn it on:
+
+```
+OPENAI_API_KEY = the same key as above; reuses the web service's
+GITHUB_TOKEN   = a fine grained personal access token, scoped to ONLY this
+                 repository, with Contents: Read and write and
+                 Pull requests: Read and write. Nothing else. Create one at
+                 github.com, Settings, Developer settings, Fine-grained tokens.
+```
+
+Set on the `ventrack-uk-localscan-discover` service specifically, in its own
+**Environment** tab, not the web service's. Without `GITHUB_TOKEN` the job
+still runs and still searches, it just logs what it found in the Render logs
+instead of opening a PR, which is a reasonable way to see what it would
+propose before handing it write access to anything.
 
 `GET /api/status` reports which keys the running instance can see, which is the
 quickest way to check a deploy picked them up.

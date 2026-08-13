@@ -134,6 +134,13 @@ fails to geocode falls back to the region's own centre rather than being
 dropped, the same "show something rather than nothing" choice `curated.js`
 and `sportsfixtures.js` already make elsewhere in this file.
 
+The seed list grows by hand, or once a month by `sources/localscan-discover.js`
+and the `ventrack-uk-localscan-discover` Cron Job, which researches regions
+that already have at least one seed and proposes anything new it finds as a
+pull request rather than writing to the file directly. `api/DEPLOY.md` has the
+full setup, including the token scope that job needs and why nothing gets
+watched or billed against until a person merges the PR.
+
 ### Football fixtures and grounds
 
 TheSportsDB names the ground but does not give its coordinates on the free
@@ -198,8 +205,10 @@ sources/
   eventbrite.js         Eventbrite UK via discovery-page JSON-LD
   curated.js            Built-in guide to real UK venues
   localscan.js          Community pages read by an LLM (needs OPENAI_API_KEY, and seed pages)
-  localscan-seeds.js    The pages localscan.js actually watches, per region, grown by hand
+  localscan-seeds.js    The pages localscan.js actually watches, per region
+  localscan-discover.js Monthly research: proposes new seed pages as a pull request
   util.js               Distance, entity decoding and event normalisation helpers
+discover-seeds.js       Entrypoint for the localscan-discover Cron Job, not the web service
 public/                 The PWA, served from the same origin
   index.html            Onboarding, the four tabs, the detail sheet
   app.js                Client logic, the inline SVG icon set, the Leaflet map
