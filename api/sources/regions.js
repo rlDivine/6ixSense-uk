@@ -17,18 +17,28 @@ import { distanceKm } from "./util.js";
 //                 (needs a free key)
 // - eventbrite:   scraped per eventbrite.co.uk town slug
 // - curated:      built-in guide of UK venues near the region
+// - localscan:    community pages (council sites, venues, Facebook Pages),
+//                 read by an LLM (needs a free-tier OpenAI key, plus pages
+//                 actually listed in sources/localscan-seeds.js)
 //
-// Every UK region runs all six. The keyed sources return nothing at all when
-// their key is unset, so the app still works with none configured. Eventbrite
-// is a per-town scrape, and a town with no Eventbrite page simply contributes
-// nothing rather than failing the request.
+// Every UK region runs all seven. The keyed sources return nothing at all
+// when their key is unset, so the app still works with none configured.
+// Eventbrite is a per-town scrape, and a town with no Eventbrite page simply
+// contributes nothing rather than failing the request. localscan is the same
+// shape again, twice over: no key means no source, and no seed pages for a
+// given region (the default for every region until localscan-seeds.js is
+// grown) means no source either, so it costs nothing anywhere until both are
+// set up.
 //
 // Order here is also de-dupe priority: server.js collapses events that share a
 // title and a day, keeping whichever source hit first. Ticketmaster and
 // Skiddle carry a real ticket link and price, so they are listed ahead of
 // PredictHQ, which carries neither, so that a duplicate resolves to the more
-// useful copy of the two.
-const UK_SOURCES = ["ticketmaster", "skiddle", "fixtures", "predicthq", "eventbrite", "curated"];
+// useful copy of the two. localscan is listed last for the same reason: it is
+// the least certain of the seven (an LLM's best reading of a webpage, not a
+// structured feed), so if the same event also turns up on a real ticketing
+// source, that copy should win.
+const UK_SOURCES = ["ticketmaster", "skiddle", "fixtures", "predicthq", "eventbrite", "curated", "localscan"];
 
 // A UK region. Every entry carries the county / council area / principal area
 // it sits in, and the nation, so the app's picker can group several hundred

@@ -81,6 +81,7 @@ capital.
 | **PredictHQ** | Free key (`PREDICTHQ_API_KEY`) | REST, `within` radius search, `country=GB` | Concerts, festivals, performing arts, expos, community listings, sport |
 | **Eventbrite UK** | No | `eventbrite.co.uk` discovery pages, JSON-LD, 11 pages per town | Music, food, comedy, arts, film, sport, family, festivals, pop-ups, free events |
 | **Local guide** | No | Built in | Real UK venues with regular programming |
+| **Local pages** | Free-tier key (`OPENAI_API_KEY`), plus pages actually listed in `sources/localscan-seeds.js` | An LLM reads the community pages that list is pointed at | Whatever those pages carry: a council's "what's on", one venue's own site, a Facebook Page. The one source built to catch the listing that was never meant to be ticketed |
 
 Every keyed source returns nothing at all when its key is unset, so the app
 works with none of them configured. Skiddle is the one worth setting first: it
@@ -92,6 +93,15 @@ its own, so those cards get drawn category artwork like any other listing with
 no photo; what it adds is the long tail of expos and community events the
 ticketing sources never carry, plus, sometimes, a real description rather than
 the generic fallback text.
+
+Local pages is a different shape from the other six. It costs real money per
+page scanned, it needs pages to be added by hand to `localscan-seeds.js`
+(there is no crawler that finds them on its own), and what it returns is an
+LLM's best reading of a webpage rather than a structured feed, so it is listed
+last in de-dupe priority: a real ticketed listing for the same event wins.
+`api/DEPLOY.md` has the full story, including why automatic discovery of new
+pages is a deliberately separate, not-yet-built decision rather than something
+bolted onto this.
 
 ## Design
 

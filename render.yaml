@@ -67,3 +67,14 @@ services:
       # the _KEY suffix kept for consistency with the three above.
       - key: PREDICTHQ_API_KEY
         sync: false
+      # Powers api/sources/localscan.js: an LLM reads the community pages
+      # listed in api/sources/localscan-seeds.js (council sites, venues,
+      # Facebook Pages) and pulls out real events that never reach a
+      # ticketing platform. Without this key the source returns nothing, the
+      # same as every other keyed source above. With it set but no pages
+      # listed in localscan-seeds.js, it still returns nothing: the seed list
+      # is what actually costs money, one LLM call per page per refresh
+      # window, so grow it deliberately. See the long comment at the top of
+      # localscan.js for the caching that keeps that cost bounded.
+      - key: OPENAI_API_KEY
+        sync: false

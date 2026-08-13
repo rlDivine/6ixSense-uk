@@ -9,6 +9,7 @@ import { fetchSportsFixtures } from "./sources/sportsfixtures.js";
 import { fetchCurated } from "./sources/curated.js";
 import { fetchEventbrite } from "./sources/eventbrite.js";
 import { fetchPredictHQ } from "./sources/predicthq.js";
+import { fetchLocalScan } from "./sources/localscan.js";
 import {
   CITIES,
   DEFAULT_REGION,
@@ -57,6 +58,14 @@ const SOURCE_IMPL = {
     label: "PredictHQ",
     run: (r) => fetchPredictHQ({ lat: r.lat, lng: r.lng, radiusKm: r.radiusKm }),
   },
+  // Community pages (council sites, venues, Facebook Pages), read by an LLM.
+  // Unlike every other source here this one wants the whole region object,
+  // not just its coordinates: it looks up seed pages by region.id and falls
+  // back to region.lat/region.lng when a scanned event cannot be geocoded.
+  localscan: {
+    label: "Local pages",
+    run: (r) => fetchLocalScan(r),
+  },
   eventbrite: { label: "Eventbrite", run: (r) => fetchEventbrite(r.eventbrite) },
   curated: {
     label: "Local guide",
@@ -72,6 +81,7 @@ function keyStatus() {
     SKIDDLE_API_KEY: !!process.env.SKIDDLE_API_KEY,
     THESPORTSDB_KEY: !!process.env.THESPORTSDB_KEY,
     PREDICTHQ_API_KEY: !!process.env.PREDICTHQ_API_KEY,
+    OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
   };
 }
 

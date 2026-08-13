@@ -74,6 +74,7 @@ Every UK region reports `"unit": "mi"`, so both clients display miles.
 | **PredictHQ** | Free key (`PREDICTHQ_API_KEY`) | REST, `within` radius search, `country=GB` | Concerts, festivals, performing arts, expos, community listings, sport |
 | **Eventbrite UK** | No | `eventbrite.co.uk` discovery pages, embedded JSON-LD, 11 pages per town | Music, food, comedy, arts, film, sport, family, festivals, pop-ups, free events |
 | **Local guide** | No | Built in | Real UK venues with regular programming |
+| **Local pages** | Free-tier key (`OPENAI_API_KEY`), plus pages listed in `sources/localscan-seeds.js` | Fetches each listed page, has an LLM extract real upcoming events from it | Whatever the watched pages carry: council sites, individual venues, Facebook Pages |
 
 Ticketmaster is pinned to GB so a radius search from the Kent coast or Northern
 Ireland cannot pull in French or Irish listings. Skiddle takes its radius in
@@ -85,13 +86,53 @@ carries a real description, which is used ahead of the generic fallback text
 for exactly that reason. Eventbrite is a per-town scrape of eleven discovery
 pages, ten verticals plus the general feed, and a town with no Eventbrite page
 contributes nothing rather than failing the request. The guide is national,
-and each region takes the slice inside its own radius.
+and each region takes the slice inside its own radius. Local pages is the
+newest and least structured of the seven: see the dedicated section below.
 
 Every keyed source returns nothing when its key is unset, so the whole thing
 works with none configured. `GET /api/status` reports which keys are present,
 which is the quickest way to explain a thin feed. Skiddle is the one worth
 setting first: it is UK-only by design, so its coverage of British nightlife
 and gigs runs deeper than a global service's.
+
+### Local pages
+
+`sources/localscan.js` is the source built for the event that will never
+appear on any of the other six because it was never meant to be ticketed: a
+free afternoon at the local boating pool, a village hall jumble sale. It
+fetches every page listed in `sources/localscan-seeds.js` for a region (an
+empty list by default, so this is inert until pages are actually added),
+strips the HTML down to its title, meta description, `og:*` tags and visible
+body text with cheerio, and sends that text to an OpenAI model with a strict
+JSON schema asking for real, dated, upcoming events only.
+
+Three things are worth knowing before touching it:
+
+- **It costs money per page, so it caches hard.** A page is normally
+  re-scraped and re-summarised a handful of times a day (`PAGE_TTL_MS`), not
+  on every request, which is deliberately much longer than the 12 minute
+  per-region cache the rest of this file runs.
+- **The event's `url` is always the page that was scanned, never anything the
+  model wrote.** The model is never asked for a link. This is a security
+  decision as much as a UX one: page content is untrusted third-party text
+  handed to an LLM, and this closes off prompt injection as a route to
+  sending a user anywhere. Same idea for `image`: only ever the page's own
+  `og:image`, read directly, never described by the model. See the long
+  comment at the top of `localscan.js`.
+- **Facebook mostly returns nothing usable, on purpose left that way rather
+  than worked around.** A plain fetch gets Facebook's JavaScript shell, not a
+  signed-in browser's view of the page, so most Facebook Page URLs come back
+  too thin to be worth an LLM call and are skipped for that reason before any
+  model is called. The one case that reliably works is an individual event's
+  own permalink, whose `og:title` / `og:description` have to be server
+  rendered for link previews to work in Messenger and WhatsApp.
+
+Coordinates for a scanned event come from OpenStreetMap Nominatim (free, no
+key, `countrycodes=gb`), throttled to Nominatim's own one-request-per-second
+policy and cached forever per address within the process. An address that
+fails to geocode falls back to the region's own centre rather than being
+dropped, the same "show something rather than nothing" choice `curated.js`
+and `sportsfixtures.js` already make elsewhere in this file.
 
 ### Football fixtures and grounds
 
@@ -153,8 +194,11 @@ sources/
   ticketmaster.js       Ticketmaster Discovery API, countryCode=GB (needs a free key)
   skiddle.js            Skiddle UK listings (needs a free key)
   sportsfixtures.js     Football fixtures and the UK ground table (needs a free key)
+  predicthq.js          PredictHQ events intelligence, country=GB (needs a free key)
   eventbrite.js         Eventbrite UK via discovery-page JSON-LD
   curated.js            Built-in guide to real UK venues
+  localscan.js          Community pages read by an LLM (needs OPENAI_API_KEY, and seed pages)
+  localscan-seeds.js    The pages localscan.js actually watches, per region, grown by hand
   util.js               Distance, entity decoding and event normalisation helpers
 public/                 The PWA, served from the same origin
   index.html            Onboarding, the four tabs, the detail sheet
