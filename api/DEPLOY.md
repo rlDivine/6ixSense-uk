@@ -81,17 +81,35 @@ different things that are easy to conflate.
 `discover-seeds.js` is roughly $12, paid once.
 
 **The pages it finds are a subscription.** At roughly 2,000 input and 400
-output tokens per page on gpt-4o-mini, one extraction costs about $0.00054, and
-a 12 hour TTL means at most two a day. So every seeded page is about
-**$0.032 a month**, about 2.5p, for as long as it stays in the list and its town
-keeps being opened.
+output tokens per page on gpt-4o-mini, one extraction costs about $0.00054.
+A page is fetched at most once a day (`LOCALSCAN_PAGE_TTL_MS`, 24 hours) and
+only sent to the model when its content has actually changed, so a typical page
+costs about **$0.002 a month**, well under a penny, for as long as it stays in
+the list and its town keeps being opened.
 
 | Stage | Distinct URLs | Per month, if every seeded town is browsed daily |
 | --- | --- | --- |
-| Now | 351 | $11.37 |
-| Now, warm regions only | 41 | $1.33 |
-| Whole country at ~5 pages a town | 2,285 | $74 |
-| Whole country at ~7 pages a town | 3,199 | $104 |
+| Now | 351 | $0.80 |
+| Now, warm regions only | 41 | $0.09 |
+| Whole country at ~5 pages a town | 2,285 | $5 |
+| Whole country at ~7 pages a town | 3,199 | $7 |
+
+Those figures assume a page is actually re-read about four or five times a
+month. Two things make that true rather than the sixty it would otherwise be:
+
+- **An unchanged page is not re-read.** Every scan still fetches the page,
+  which is free, and hashes exactly the text that would go to the model. If the
+  hash matches the last one, the existing extraction is reused and no LLM call
+  is made. Council listings and museum what's-on pages change weekly at best,
+  so most fetches cost nothing at all.
+- **`LOCALSCAN_PAGE_MAX_AGE_MS`, seven days, bounds that.** The extraction
+  prompt is given today's date, so a page saying "this Saturday" is resolved to
+  a real date when it is read. Reusing that indefinitely behind an unchanged
+  page would let those dates drift into the past, so an extraction is redone
+  once a week regardless.
+
+Worst case, a page that genuinely changes every day, is 30 calls a month, which
+is still half of what a 12 hour TTL cost.
 
 The second row is the one that describes a quiet app, and it is the floor:
 `WARM_REGIONS` refresh on a timer whether or not anybody asks, and nothing else
@@ -99,9 +117,15 @@ is billed until somebody opens that town. The lower rows are what success would
 cost, which is a problem worth having and not a surprise worth discovering from
 a bill.
 
-Three dials if it ever matters: `LOCALSCAN_MAX_SEEDS_PER_REGION` (default 24)
-caps pages per town, `PAGE_TTL_MS` in `localscan.js` sets how often a page is
-re-read, and unsetting `OPENAI_API_KEY` switches the whole source off.
+The dials, in the order worth reaching for:
+
+| Variable | Default | Effect |
+| --- | --- | --- |
+| `WARM_REGIONS` | four big cities | The only towns billed with no visitor. Set it to the towns you actually have users in, or leave it empty. |
+| `LOCALSCAN_PAGE_TTL_MS` | 24 hours | How often a page is fetched at all. Doubling it roughly halves the fetches, though not the LLM cost, which the hash check already governs. |
+| `LOCALSCAN_PAGE_MAX_AGE_MS` | 7 days | How long an unchanged page's extraction may be reused. Raising it saves a little more and lets a resolved relative date go staler. |
+| `LOCALSCAN_MAX_SEEDS_PER_REGION` | 24 | Caps pages per town. |
+| `OPENAI_API_KEY` | unset | Unset it and the source returns nothing at all. |
 
 If you don't want this cost at all, simply leave `OPENAI_API_KEY` unset. The
 source returns nothing and the rest of the app is unaffected, the same as any

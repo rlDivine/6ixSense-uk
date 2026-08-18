@@ -36,6 +36,7 @@
 // could get a fake-looking event card onto the feed. plausibleEvent() below
 // bounds that with a real-world date window and a per-page count cap, on top
 // of makeEvent()'s own safeUrl() and canonicalCategory().
+import { createHash } from "node:crypto";
 import * as cheerio from "cheerio";
 import { makeEvent, fetchWithTimeout, canonicalCategory } from "./util.js";
 import { SEEDS } from "./localscan-seeds.js";
@@ -50,7 +51,25 @@ const OPENAI_MODEL = process.env.LOCALSCAN_MODEL || "gpt-4o-mini";
 // this is what keeps the LLM cost bounded. 12 hours means a page checked in
 // the morning is checked again by evening, which is enough for anything a
 // community page would post.
-const PAGE_TTL_MS = 12 * 60 * 60 * 1000;
+// How long a page's extraction is reused before the page is fetched again.
+//
+// Read live rather than captured at import, for the reason spelled out at
+// maxSeedsPerRegion() below: this file has had that bug three times.
+//
+// 24 hours, not 12. What this source watches is council what's-on pages,
+// museum and theatre listings and community calendars, and those change
+// weekly at best. Refreshing twice a day bought nothing and doubled the bill.
+const pageTtlMs = () => Number(process.env.LOCALSCAN_PAGE_TTL_MS ?? 24 * 60 * 60 * 1000);
+
+// The hard ceiling on reusing an extraction whose page has not changed.
+//
+// This exists because the extraction prompt is given today's date, so a page
+// saying "this Saturday" is resolved to a real date at extraction time. Reuse
+// that for ever and those dates quietly drift into the past even though the
+// page itself never changed. A week is long enough for the unchanged-page
+// saving to be nearly all of the saving, and short enough that a relative date
+// cannot rot badly.
+const pageMaxAgeMs = () => Number(process.env.LOCALSCAN_PAGE_MAX_AGE_MS ?? 7 * 24 * 60 * 60 * 1000);
 // Pages that came back too thin to extract anything from (most Facebook
 // fetches: see fetchPage()) are retried sooner, since the useful content is
 // often there on one attempt and gone on the next depending on what Facebook
@@ -151,6 +170,12 @@ for (const [regionId, seeds] of SEEDS_BY_REGION) {
   }
 }
 
+/// A fingerprint of exactly the text that would be sent to the model, so an
+/// unchanged page can be detected before paying to read it again.
+function textHash(text) {
+  return createHash("sha1").update(text).digest("hex");
+}
+
 // ---- per-page cache --------------------------------------------------------
 //
 // Keyed by url and holding the EXTRACTION only, never finished events.
@@ -177,7 +202,7 @@ const pageCache = new Map();
 
 function isFresh(entry) {
   if (!entry) return false;
-  const ttl = entry.thin ? THIN_RETRY_MS : PAGE_TTL_MS;
+  const ttl = entry.thin ? THIN_RETRY_MS : pageTtlMs();
   return Date.now() - entry.at < ttl;
 }
 
@@ -410,6 +435,21 @@ async function extractForPage(seed, region) {
 
   if (isThin(page.text)) return thinEntry();
 
+  // The page came back unchanged since the last read, so the extraction we
+  // already have is still the right answer and there is no reason to buy it
+  // again. This is where nearly all of the running cost goes: a council page
+  // that changes twice a month was being re-read every TTL window regardless.
+  //
+  // Bounded by pageMaxAgeMs() so a resolved relative date cannot go stale for
+  // ever behind an unchanged page.
+  const hash = textHash(page.text);
+  if (cached && !cached.thin && cached.hash === hash
+      && Date.now() - cached.at < pageMaxAgeMs()) {
+    const entry = { ...cached, at: Date.now() };
+    pageCache.set(seed.url, entry);
+    return entry;
+  }
+
   const todayISO = new Date().toISOString().slice(0, 10);
   let extracted;
   try {
@@ -423,7 +463,7 @@ async function extractForPage(seed, region) {
     return thinEntry();
   }
 
-  const entry = { at: Date.now(), thin: false, extracted, image: page.image, townLabel: region.label };
+  const entry = { at: Date.now(), thin: false, hash, extracted, image: page.image, townLabel: region.label };
   pageCache.set(seed.url, entry);
   return entry;
 }

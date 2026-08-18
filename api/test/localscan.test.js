@@ -503,3 +503,100 @@ test("the cap is applied in file order, so which pages are watched is determinis
   }
   assert.ok(!seen.has("https://example.org/p5"), "p5 is past the cap and should not be watched");
 });
+
+// --- not paying twice for a page that has not changed -----------------------
+
+test("an unchanged page is re-fetched but not re-extracted", async () => {
+  // This is where nearly all of the running cost sits. A council what's-on
+  // page that changes twice a month was being sent to the model every TTL
+  // window regardless, which is what this short circuit stops.
+  const region = fakeRegion();
+  const seed = seedFor(region);
+  const body = `<html><body><h1>What's on</h1>${"Live music at the hall on 3 September. ".repeat(30)}</body></html>`;
+  let fetches = 0, extractions = 0;
+
+  await withEnv({ OPENAI_API_KEY: "k", LOCALSCAN_PAGE_TTL_MS: "0" }, async () => {
+    globalThis.fetch = async (url) => {
+      if (String(url).includes("openai.com")) {
+        extractions += 1;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ choices: [{ message: { content: '{"events":[]}' } }] }),
+        };
+      }
+      fetches += 1;
+      return { ok: true, status: 200, text: async () => body };
+    };
+
+    // TTL of 0 means every pass considers the entry stale, so without the hash
+    // check this would extract three times.
+    await fetchLocalScan(region, [seed]);
+    await fetchLocalScan(region, [seed]);
+    await fetchLocalScan(region, [seed]);
+  });
+
+  assert.equal(fetches, 3, "the page should still be fetched each pass");
+  assert.equal(extractions, 1, `expected one extraction, paid for ${extractions}`);
+});
+
+test("a changed page is extracted again", async () => {
+  const region = fakeRegion();
+  const seed = seedFor(region);
+  let extractions = 0;
+  let version = 1;
+
+  await withEnv({ OPENAI_API_KEY: "k", LOCALSCAN_PAGE_TTL_MS: "0" }, async () => {
+    globalThis.fetch = async (url) => {
+      if (String(url).includes("openai.com")) {
+        extractions += 1;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ choices: [{ message: { content: '{"events":[]}' } }] }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        text: async () => `<html><body>${`Gig number ${version} on 3 September. `.repeat(30)}</body></html>`,
+      };
+    };
+    await fetchLocalScan(region, [seed]);
+    version = 2;                       // the venue added something
+    await fetchLocalScan(region, [seed]);
+  });
+
+  assert.equal(extractions, 2, "new content has to be read, not reused");
+});
+
+test("an unchanged page is re-extracted once it passes the max age", async () => {
+  // Guards the staleness bound: the prompt is given today's date, so an
+  // extraction of "this Saturday" cannot be reused indefinitely even behind a
+  // page that never changes.
+  const region = fakeRegion();
+  const seed = seedFor(region);
+  const body = `<html><body>${"Quiz night this Saturday at the club. ".repeat(30)}</body></html>`;
+  let extractions = 0;
+
+  await withEnv(
+    { OPENAI_API_KEY: "k", LOCALSCAN_PAGE_TTL_MS: "0", LOCALSCAN_PAGE_MAX_AGE_MS: "0" },
+    async () => {
+      globalThis.fetch = async (url) => {
+        if (String(url).includes("openai.com")) {
+          extractions += 1;
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ choices: [{ message: { content: '{"events":[]}' } }] }),
+          };
+        }
+        return { ok: true, status: 200, text: async () => body };
+      };
+      await fetchLocalScan(region, [seed]);
+      await fetchLocalScan(region, [seed]);
+    }
+  );
+
+  assert.equal(extractions, 2, "past the max age the extraction must be redone");
+});
