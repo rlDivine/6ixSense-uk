@@ -60,21 +60,72 @@ small, real amount of money on the account this key belongs to.
 
 Two things bound that cost, and both matter:
 
-- **The seed list is what costs.** `localscan-seeds.js` currently lists 22
-  distinct URLs, heavily weighted to Ramsgate, plus a few Thanet-wide pages
-  shared across Ramsgate, Margate and Broadstairs. Cost tracks distinct URLs,
-  not entries: one page shared by three regions is still one fetch and one
-  extraction per cache window. There is no crawler here that adds pages on
-  its own.
+- **The seed list is what costs, and only for towns people actually open.**
+  `localscan-seeds.js` now lists about 350 distinct URLs across 47 towns. Cost
+  tracks distinct URLs, not entries: one page shared by three regions is still
+  one fetch and one extraction per cache window. There is no crawler here that
+  adds pages on its own.
+- **A town costs nothing until somebody browses it.** localscan only runs for
+  a region when that region's feed is being built, so seeding a town is not
+  the same as paying for it. The exception is `WARM_REGIONS`, which refresh on
+  a timer whether or not anyone asks.
 - **Pages are cached for hours, not minutes.** A page is re-fetched and
   re-summarised at most twice a day, not on every request. See `PAGE_TTL_MS`
-  in `localscan.js`. 22 URLs on a 12 hour TTL, each sending at most
-  `MAX_PAGE_CHARS` to a small model, comes to well under a dollar a month at
-  gpt-4o-mini prices, and does not scale with app traffic.
+  in `localscan.js`.
+
+Putting numbers on that, because 350 URLs is a different regime from the 22
+this started with. At roughly 2,000 input and 400 output tokens per page on
+gpt-4o-mini, one page costs about $0.0005 per extraction, so a town watching
+20 pages on a 12 hour TTL is around **$0.65 a month while it is being browsed
+daily**. The four warm regions are the only ones billed unconditionally, which
+is a couple of dollars a month. The exposure to know about is the tail: if all
+47 seeded towns were browsed daily it would be roughly $30 a month, and if a
+full 457-town sweep were ever seeded and used it would be in the hundreds. That
+is a traffic problem you would want to have, but it is not a surprise you
+should discover from a bill.
+
+Three dials if it ever matters: `LOCALSCAN_MAX_SEEDS_PER_REGION` (default 24)
+caps pages per town, `PAGE_TTL_MS` in `localscan.js` sets how often a page is
+re-read, and unsetting `OPENAI_API_KEY` switches the whole source off.
 
 If you don't want this cost at all, simply leave `OPENAI_API_KEY` unset. The
 source returns nothing and the rest of the app is unaffected, the same as any
 other keyed source left blank.
+
+### Growing this to every town
+
+`localscan-discover.js` can sweep the whole country, not just towns that
+already watch something. It is batched rather than run in one go, and the
+reason is review rather than cost: 457 towns at 20 candidates each is a nine
+thousand line pull request, and a proposal nobody reads is a direct commit with
+extra steps.
+
+```bash
+cd api
+# See the plan and the cost. Spends nothing.
+LOCALSCAN_DISCOVER_SCOPE=unseeded LOCALSCAN_DISCOVER_TARGET=20 \
+  LOCALSCAN_DISCOVER_DRY_RUN=1 node discover-seeds.js
+
+# Do one batch: 25 towns, one PR.
+LOCALSCAN_DISCOVER_SCOPE=unseeded LOCALSCAN_DISCOVER_TARGET=20 \
+  OPENAI_API_KEY=... GITHUB_TOKEN=... node discover-seeds.js
+```
+
+Each run skips towns already at the target, so repeating the command walks
+forward through the country on its own, one reviewable PR at a time. Roughly 18
+runs covers the 426 towns that currently watch nothing, at an estimated $13
+total. `LOCALSCAN_DISCOVER_LIMIT` changes the batch size and
+`LOCALSCAN_DISCOVER_SCOPE=all` revisits seeded towns too.
+
+This uses OpenAI's own `web_search` tool, so it is not subject to whatever
+search limits a coding session has, and it can be run repeatedly from any
+machine with the repo checked out.
+
+**Merging is still a person's job.** Every proposal arrives unverified, and the
+one failure mode to watch for is the wrong town: a great many British place
+names are also American cities, and search engines favour the American one. The
+PR body carries the model's stated reason for each page, which is what to read
+it against.
 
 ### Adding a page to watch
 
@@ -92,11 +143,12 @@ loudly. Commit the file and redeploy, or push to `main` if `autoDeploy` is on.
 
 ### Automatic discovery, and why it is not scheduled
 
-`api/discover-seeds.js` researches every region that already has at least one
-seed page, looking for others worth adding, and proposes what it finds as a
-**pull request** rather than writing to `localscan-seeds.js` directly.
-Regions with no seeds yet are not researched: this grows coverage you have
-already started, it does not go looking for new towns on its own.
+`api/discover-seeds.js` researches regions and proposes what it finds as a
+**pull request** rather than writing to `localscan-seeds.js` directly. By
+default it only looks at regions that already watch at least one page, so it
+grows coverage you have started rather than going looking for towns on its own.
+`LOCALSCAN_DISCOVER_SCOPE` widens that to the whole country: see
+[Growing this to every town](#growing-this-to-every-town) above.
 
 The PR step is the point, not ceremony. Nothing is watched or billed against
 until a person reads the proposal and merges it, which is the actual answer

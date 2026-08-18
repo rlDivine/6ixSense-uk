@@ -116,10 +116,39 @@ const VALID_SEEDS = SEEDS.filter((s) => {
   console.warn(`[localscan] seed skipped, unknown regionId "${s.regionId}" (${s.url})`);
   return false;
 });
+// The most pages one region may watch.
+//
+// This is a ceiling on cost and on wasted work, not a target. A cold scan gets
+// through roughly 15 to 25 pages inside scanBudgetMs() at a concurrency of 3,
+// so a region listing far more than that can never read the tail of its own
+// list in one pass. That is not as bad as it sounds, because it self heals:
+// whatever did get scanned is cached for PAGE_TTL_MS, cached pages cost no
+// fetch and no LLM call, so the next refresh spends its budget further down
+// the list and the region fills in over a few passes.
+//
+// What does not self heal is somebody pasting two hundred urls against one
+// town, which would spend the budget on that town for ever and quietly starve
+// its own tail. Hence a hard cap, applied in file order so it is deterministic,
+// and logged loudly at startup rather than silently truncating.
+// Read per call, not captured at module load. This file has now had that bug
+// three times (GEOCODE_DELAY_MS, then the scan budgets, now this): a const
+// evaluated at import cannot be changed by a test that sets the environment
+// afterwards, and the test silently passes against the default instead.
+const maxSeedsPerRegion = () => Number(process.env.LOCALSCAN_MAX_SEEDS_PER_REGION ?? 24);
+
 const SEEDS_BY_REGION = new Map();
 for (const seed of VALID_SEEDS) {
   if (!SEEDS_BY_REGION.has(seed.regionId)) SEEDS_BY_REGION.set(seed.regionId, []);
   SEEDS_BY_REGION.get(seed.regionId).push(seed);
+}
+for (const [regionId, seeds] of SEEDS_BY_REGION) {
+  if (seeds.length > maxSeedsPerRegion()) {
+    console.warn(
+      `[localscan] ${regionId} lists ${seeds.length} pages, over the ${maxSeedsPerRegion()} cap; ` +
+      `only the first ${maxSeedsPerRegion()} will be watched. ` +
+      `Prune the list or raise LOCALSCAN_MAX_SEEDS_PER_REGION.`
+    );
+  }
 }
 
 // ---- per-page cache --------------------------------------------------------
@@ -514,10 +543,13 @@ async function pool(items, limit, fn, deadline = Infinity) {
 // passes it, so production always uses the real, validated seed list.
 export async function fetchLocalScan(region, seedsOverride = null) {
   if (!process.env.OPENAI_API_KEY) return []; // no key: no fetch, no cost, same as PredictHQ
-  const seeds = seedsOverride
+  const all = seedsOverride
     ? seedsOverride.filter((s) => s.regionId === region.id)
     : SEEDS_BY_REGION.get(region.id);
-  if (!seeds || seeds.length === 0) return []; // nothing watched here yet
+  if (!all || all.length === 0) return []; // nothing watched here yet
+  // Capped here rather than at module load so the limit is read live, and in
+  // file order so which pages a big region watches is deterministic.
+  const seeds = all.slice(0, maxSeedsPerRegion());
 
   const deadline = Date.now() + scanBudgetMs();
   const results = await pool(seeds, 3, (seed) => scanPage(seed, region, deadline), deadline);

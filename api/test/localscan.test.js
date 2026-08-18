@@ -449,3 +449,57 @@ test("two events at the same address geocode once and share the result; an unres
     )
   );
 });
+
+// --- the per-region seed cap -------------------------------------------------
+
+test("a region listing more pages than the cap only scans up to the cap", async () => {
+  // Guards the case the cap exists for: one town with a huge list spending the
+  // whole scan budget on itself and starving its own tail for ever.
+  const region = fakeRegion();
+  const seeds = Array.from({ length: 40 }, (_, i) => ({
+    regionId: region.id,
+    url: `https://example.org/page-${i}`,
+    kind: "web",
+    label: `page ${i}`,
+  }));
+  const fetched = [];
+  await withEnv(
+    { OPENAI_API_KEY: "k", LOCALSCAN_MAX_SEEDS_PER_REGION: "24" },
+    async () => {
+      globalThis.fetch = async (url) => {
+        fetched.push(String(url));
+        // Deliberately thin, so isThin() short circuits before any LLM call and
+        // the test exercises seed selection rather than extraction.
+        return { ok: true, status: 200, text: async () => "<html><body>x</body></html>" };
+      };
+      await fetchLocalScan(region, seeds);
+    }
+  );
+  const pages = fetched.filter((u) => u.includes("/page-"));
+  assert.equal(pages.length, 24, `scanned ${pages.length} pages, expected the cap of 24`);
+});
+
+test("the cap is applied in file order, so which pages are watched is deterministic", async () => {
+  const region = fakeRegion();
+  const seeds = Array.from({ length: 30 }, (_, i) => ({
+    regionId: region.id,
+    url: `https://example.org/p${i}`,
+    kind: "web",
+    label: `p${i}`,
+  }));
+  const seen = new Set();
+  await withEnv(
+    { OPENAI_API_KEY: "k", LOCALSCAN_MAX_SEEDS_PER_REGION: "5" },
+    async () => {
+      globalThis.fetch = async (url) => {
+        seen.add(String(url));
+        return { ok: true, status: 200, text: async () => "<html><body>x</body></html>" };
+      };
+      await fetchLocalScan(region, seeds);
+    }
+  );
+  for (let i = 0; i < 5; i++) {
+    assert.ok(seen.has(`https://example.org/p${i}`), `p${i} should be watched`);
+  }
+  assert.ok(!seen.has("https://example.org/p5"), "p5 is past the cap and should not be watched");
+});

@@ -5,12 +5,21 @@
 // so that block was removed from render.yaml; see DEPLOY.md). Nothing in the
 // normal request path (server.js) touches this file.
 //
-// SCOPE, on purpose. This only researches regions that already have at least
-// one seed page, not all ~450 towns in regions.js. Researching every town
-// every month multiplies the cost of every call below by the length of that
-// list, for towns nobody has expressed any interest in growing yet. Widening
-// this is one line (searchRegionIds()) once the cost of doing so has been
-// thought through, not a default.
+// SCOPE. By default this still only researches regions that already watch at
+// least one page, which grows coverage somebody has started rather than going
+// looking for towns on its own. LOCALSCAN_DISCOVER_SCOPE=unseeded or =all
+// widens it to the whole country, and LOCALSCAN_DISCOVER_TARGET sets how many
+// pages a region should end up with.
+//
+// Sweeping all 457 towns is therefore supported, but it is batched rather than
+// done in one run, and the reason is review rather than cost: 457 regions at
+// 20 candidates each is a nine thousand line pull request, and a proposal
+// nobody can read is the same as a direct commit with extra steps. Each run
+// takes LOCALSCAN_DISCOVER_LIMIT regions, skips any that already meet the
+// target, and opens its own PR, so running it repeatedly walks forward through
+// the country. LOCALSCAN_DISCOVER_DRY_RUN prints the plan and the cost
+// estimate without spending anything. See "Growing this to every town" in
+// DEPLOY.md.
 //
 // WHY A PULL REQUEST AND NOT A DIRECT COMMIT. A monthly job that writes
 // straight to the file a live server reads is a monthly job that can put a
@@ -48,11 +57,97 @@ const BASE_BRANCH = process.env.GITHUB_BASE_BRANCH || "main";
 // A page a research pass proposes twice is treated as the same candidate, so
 // a repeat monthly run does not keep proposing something already sitting in
 // an unmerged PR or already added to the seed list.
-const MAX_CANDIDATES_PER_REGION = 5;
+//
+// How many pages a region should end up watching. Raising this raises the
+// running cost of every scan of that region for ever, not just the cost of
+// the research run, so it is a deliberate number: see the cost note in
+// DEPLOY.md before changing it.
+const TARGET_PER_REGION = Number(process.env.LOCALSCAN_DISCOVER_TARGET ?? 5);
+
+// How many regions one run is allowed to research. This is the safety valve,
+// and the reason it is small by default is not cost, it is review: 457
+// regions at 20 candidates each is a nine thousand line pull request, which
+// nobody reads, which defeats the entire point of proposing rather than
+// committing. Batches of this size stay reviewable, and because the scope
+// filter below skips regions that already meet the target, running it
+// repeatedly walks forward through the country on its own.
+const REGIONS_PER_RUN = Number(process.env.LOCALSCAN_DISCOVER_LIMIT ?? 25);
+
+// Rough cost of one region's research call, in US dollars, for the estimate
+// printed before anything is spent. A web_search-backed Responses call is
+// dominated by the search tool rather than the tokens; this is deliberately a
+// pessimistic round number rather than a precise one, because the point of it
+// is to stop somebody starting a 457 region run without knowing it is not
+// free, not to invoice them.
+const EST_COST_PER_REGION_USD = 0.03;
 
 // ---- which regions to research --------------------------------------------
+
+/// Seeds already listed for a region, by id.
+function seedCounts() {
+  const counts = new Map();
+  for (const s of SEEDS) counts.set(s.regionId, (counts.get(s.regionId) || 0) + 1);
+  return counts;
+}
+
+/// Which regions this run should research, in order, already truncated to
+/// REGIONS_PER_RUN.
+///
+/// Scope, from LOCALSCAN_DISCOVER_SCOPE:
+///   "seeded"   (default) only regions that already watch at least one page.
+///              Grows coverage somebody has already started, and never goes
+///              looking for towns on its own.
+///   "unseeded" only regions watching nothing yet. This is the one to use to
+///              spread across the country.
+///   "all"      every region in regions.js.
+///
+/// In every scope, a region that already meets TARGET_PER_REGION is skipped,
+/// which is what makes repeated runs make progress instead of re-proposing
+/// pages for the same few towns for ever. Ordering follows regions.js, which
+/// is roughly largest-first, so a partial sweep covers the towns most likely
+/// to be opened.
 export function searchRegionIds() {
-  return [...new Set(SEEDS.map((s) => s.regionId))];
+  const scope = (process.env.LOCALSCAN_DISCOVER_SCOPE || "seeded").toLowerCase();
+  const counts = seedCounts();
+
+  let ids;
+  if (scope === "all") {
+    ids = CITIES.map((c) => c.id);
+  } else if (scope === "unseeded") {
+    ids = CITIES.map((c) => c.id).filter((id) => !counts.has(id));
+  } else {
+    // Preserve regions.js ordering rather than SEEDS ordering, so "seeded"
+    // and "all" walk the country the same way.
+    ids = CITIES.map((c) => c.id).filter((id) => counts.has(id));
+  }
+
+  return ids.filter((id) => (counts.get(id) || 0) < TARGET_PER_REGION).slice(0, REGIONS_PER_RUN);
+}
+
+/// What a full sweep at the current settings would involve. Printed before
+/// spending anything, and the whole of what --dry-run reports.
+export function discoveryPlan() {
+  const scope = (process.env.LOCALSCAN_DISCOVER_SCOPE || "seeded").toLowerCase();
+  const counts = seedCounts();
+  const all = CITIES.map((c) => c.id);
+  const inScope = all.filter((id) => {
+    if (scope === "all") return true;
+    if (scope === "unseeded") return !counts.has(id);
+    return counts.has(id);
+  });
+  const remaining = inScope.filter((id) => (counts.get(id) || 0) < TARGET_PER_REGION);
+  const thisRun = searchRegionIds();
+  return {
+    scope,
+    target: TARGET_PER_REGION,
+    perRun: REGIONS_PER_RUN,
+    regionsInScope: inScope.length,
+    regionsRemaining: remaining.length,
+    regionsThisRun: thisRun.length,
+    runsRemaining: Math.ceil(remaining.length / Math.max(1, REGIONS_PER_RUN)),
+    estCostThisRunUsd: +(thisRun.length * EST_COST_PER_REGION_USD).toFixed(2),
+    estCostRemainingUsd: +(remaining.length * EST_COST_PER_REGION_USD).toFixed(2),
+  };
 }
 
 function regionLabel(regionId) {
@@ -70,7 +165,7 @@ function regionLabel(regionId) {
 // features multiplies what might silently not work the way documentation
 // describes. Instead the prompt itself asks for JSON, and the parsing below
 // is written to survive getting prose back anyway.
-async function searchForCandidates(regionId, existingUrls) {
+async function searchForCandidates(regionId, existingUrls, alreadyHave = 0) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) return [];
 
@@ -79,6 +174,8 @@ async function searchForCandidates(regionId, existingUrls) {
     `Search the web for real, currently active websites or Facebook Pages that list local events for ${town}, UK: a council "what's on" page, a specific venue, a local paper's listings page, a community group.`,
     `Do not suggest any of these, already known: ${existingUrls.length ? existingUrls.join(", ") : "(none yet)"}.`,
     `Only suggest a page you have actually found and that clearly lists specific events, not a general town guide or a page with no event listings.`,
+    `Find up to ${Math.max(1, TARGET_PER_REGION - alreadyHave)} of them.`,
+    `This is a British town: ${town}, United Kingdom. Several UK town names also name a larger American city, so reject anything that is not unambiguously the British one.`,
     `Reply with ONLY a JSON object, no other text, of the exact shape:`,
     `{"candidates": [{"url": "https://...", "kind": "web" or "facebook", "label": "short name", "reason": "one sentence on what you found there and why it looks active"}]}`,
     `If you find nothing worth proposing, reply {"candidates": []}.`,
@@ -100,7 +197,7 @@ async function searchForCandidates(regionId, existingUrls) {
   if (!res.ok) throw new Error(`localscan-discover OpenAI ${res.status}`);
   const data = await res.json();
   const text = extractResponseText(data);
-  return parseCandidates(text).slice(0, MAX_CANDIDATES_PER_REGION);
+  return parseCandidates(text).slice(0, Math.max(1, TARGET_PER_REGION - alreadyHave));
 }
 
 // The Responses API's JSON shape for where the model's own reply text lives
@@ -245,26 +342,34 @@ export async function openCandidatesPR(found) {
   }
 
   const monthTag = new Date().toISOString().slice(0, 7); // YYYY-MM
-  const branch = `localscan-candidates-${monthTag}`;
 
   const base = await gh(`/repos/${REPO_OWNER}/${REPO_NAME}/git/ref/heads/${BASE_BRANCH}`);
   const baseSha = base.object.sha;
 
-  try {
-    await gh(`/repos/${REPO_OWNER}/${REPO_NAME}/git/refs`, {
-      method: "POST",
-      body: JSON.stringify({ ref: `refs/heads/${branch}`, sha: baseSha }),
-    });
-  } catch (e) {
-    if (e.status === 422) {
-      // Reference already exists: this month's proposal branch is already
-      // out there, merged or not. Do not open a second one; that is a human
-      // decision (re-run after merging, or leave the job to try again next
-      // month) rather than something to paper over automatically.
-      console.log(`[localscan-discover] branch ${branch} already exists, skipping`);
-      return null;
+  // One branch per month was right when this ran once a month. Sweeping the
+  // country happens in batches, several in an afternoon, so a taken name now
+  // means "find the next one" rather than "stop". The cap is a backstop
+  // against a loop, not a real limit anyone should reach in a month.
+  let branch = null;
+  for (let n = 1; n <= 60; n++) {
+    const candidate = n === 1
+      ? `localscan-candidates-${monthTag}`
+      : `localscan-candidates-${monthTag}-${n}`;
+    try {
+      await gh(`/repos/${REPO_OWNER}/${REPO_NAME}/git/refs`, {
+        method: "POST",
+        body: JSON.stringify({ ref: `refs/heads/${candidate}`, sha: baseSha }),
+      });
+      branch = candidate;
+      break;
+    } catch (e) {
+      if (e.status === 422) continue; // taken; try the next suffix
+      throw e;
     }
-    throw e;
+  }
+  if (!branch) {
+    console.log("[localscan-discover] 60 proposal branches already open this month; merge or close some first");
+    return null;
   }
 
   const file = await gh(
@@ -319,8 +424,21 @@ export async function runDiscovery() {
     return { prUrl: null, regionsSearched: 0, candidatesFound: 0 };
   }
 
+  const plan = discoveryPlan();
+  console.log(
+    `[localscan-discover] scope=${plan.scope} target=${plan.target}/region\n` +
+    `  ${plan.regionsInScope} regions in scope, ${plan.regionsRemaining} still short of target\n` +
+    `  this run: ${plan.regionsThisRun} region(s), about $${plan.estCostThisRunUsd}\n` +
+    `  to finish the sweep: ~${plan.runsRemaining} more run(s), about $${plan.estCostRemainingUsd} total`
+  );
+  if (process.env.LOCALSCAN_DISCOVER_DRY_RUN) {
+    console.log("[localscan-discover] LOCALSCAN_DISCOVER_DRY_RUN set; stopping before spending anything");
+    return { prUrl: null, regionsSearched: 0, candidatesFound: 0, plan, dryRun: true };
+  }
+
   const regionIds = searchRegionIds();
   const existingUrls = SEEDS.map((s) => s.url);
+  const counts = seedCounts();
   const found = new Map();
 
   // Small concurrency cap: this is a monthly job, not a request path, so
@@ -331,7 +449,7 @@ export async function runDiscovery() {
     while (i < regionIds.length) {
       const regionId = regionIds[i++];
       try {
-        const candidates = await searchForCandidates(regionId, existingUrls);
+        const candidates = await searchForCandidates(regionId, existingUrls, counts.get(regionId) || 0);
         const fresh = dedupeCandidates(candidates, existingUrls);
         if (fresh.length) found.set(regionId, fresh);
       } catch (e) {
@@ -343,5 +461,5 @@ export async function runDiscovery() {
 
   const candidatesFound = [...found.values()].reduce((n, c) => n + c.length, 0);
   const prUrl = await openCandidatesPR(found);
-  return { prUrl, regionsSearched: regionIds.length, candidatesFound };
+  return { prUrl, regionsSearched: regionIds.length, candidatesFound, plan };
 }
