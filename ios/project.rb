@@ -18,6 +18,15 @@ end
 # Info.plist reference (not compiled)
 group.new_reference(File.join(ROOT, 'VenTrack', 'Info.plist'))
 
+# The local StoreKit test configuration, so the in-app purchase can be exercised
+# in the simulator before the product exists in App Store Connect. A reference
+# only: it is neither compiled nor bundled, and it is the SCHEME that points at
+# it. After generating the project, in Xcode: Product, Scheme, Edit Scheme, Run,
+# Options, StoreKit Configuration, pick VenTrack.storekit. That setting lives in
+# the scheme, which Xcode creates itself, so this script cannot set it for you.
+# Without it Store.loadProduct() finds nothing and the paywall shows no price.
+group.new_reference(File.join(ROOT, 'VenTrack.storekit'))
+
 # Asset catalog (app icon), added as a resource so the xcassets is compiled.
 assets = group.new_reference(File.join(ROOT, 'VenTrack', 'Assets.xcassets'))
 target.add_resources([assets])

@@ -142,6 +142,11 @@ struct EventMapView: View {
     /// the feed is for: the Discover title and the status line both read it.
     @MainActor private func searchThisArea() async {
         guard let centre = visibleCentre, !searchingArea else { return }
+        // Another route to a town you are not standing in, so it goes through
+        // the same gate as the town list and the address search. Checked before
+        // the reverse geocode rather than after: no point spending one on a
+        // move that will not happen.
+        guard app.unlocked else { app.unlockPrompt = .towns; return }
         searchingArea = true
         let here = CLLocation(latitude: centre.latitude, longitude: centre.longitude)
         let marks = try? await CLGeocoder().reverseGeocodeLocation(

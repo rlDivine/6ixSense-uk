@@ -1,0 +1,35 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [ ]
+  },
+  "identifier" : "A1B2C3D4",
+  "nonRenewingSubscriptions" : [ ],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "B2C3D4E5",
+      "localizations" : [
+        {
+          "description" : "Browse any of more than 450 UK towns, see the whole calendar rather than the next seven days, and keep as many events as you like with reminders.",
+          "displayName" : "VenTrack, unlocked",
+          "locale" : "en_GB"
+        }
+      ],
+      "productID" : "com.voice2jobs.ventrackuk.full",
+      "referenceName" : "VenTrack Full Unlock",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "C3D4E5F6",
+    "_developerTeamID" : "CRLGA87MAF",
+    "_lastSynchronizedDate" : 0
+  },
+  "subscriptionGroups" : [ ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

@@ -8,6 +8,7 @@ import SwiftUI
 /// immediately (preferredCategories is @Published and persisted on each toggle).
 struct PreferencesView: View {
     @EnvironmentObject var app: AppState
+    @EnvironmentObject var store: Store
     @Environment(\.dismiss) private var dismiss
 
     /// False until the catalogue fetch has actually been attempted. Without it
@@ -15,10 +16,18 @@ struct PreferencesView: View {
     /// on "Loading towns" for ever with no way to retry.
     @State private var triedRegions = false
 
+    /// Settings is itself a sheet, so it cannot use the app-wide unlock prompt
+    /// that MainTabView presents underneath it.
+    @State private var paywall: UnlockReason?
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
+                    unlockSection
+
+                    Divider().overlay(Tok.hairline).padding(.vertical, 4)
+
                     locationSection
 
                     Divider().overlay(Tok.hairline).padding(.vertical, 4)
@@ -43,6 +52,7 @@ struct PreferencesView: View {
             .task { await refreshRegions() }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
+            .paywall($paywall)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if !app.preferredCategories.isEmpty {
@@ -52,6 +62,63 @@ struct PreferencesView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }.fontWeight(.semibold).foregroundStyle(Tok.accent)
+                }
+            }
+        }
+    }
+
+    // MARK: Unlock
+
+    /// The unlock, and the way back to it after a reinstall or on a new phone.
+    ///
+    /// Restore has to be reachable here rather than only from the unlock sheet.
+    /// App Review checks that a non-consumable can be restored without having
+    /// to walk into a paywall first, and a user who already paid should never
+    /// have to be told no before they can say "I own this".
+    @ViewBuilder private var unlockSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("VenTrack")
+                .font(.system(size: 14)).foregroundStyle(Tok.muted).padding(.horizontal, 4)
+
+            if app.unlocked {
+                HStack(spacing: 10) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 15, weight: .semibold)).foregroundStyle(Tok.accent)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Unlocked")
+                            .font(.system(size: 14.5, weight: .semibold)).foregroundStyle(Tok.text)
+                        Text("Every town, the whole calendar, unlimited saves and reminders.")
+                            .font(.system(size: 12)).foregroundStyle(Tok.muted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 13).padding(.vertical, 11)
+                .background(Tok.panel, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Tok.hairline, lineWidth: 1))
+                .accessibilityElement(children: .combine)
+            } else {
+                countryRow(label: "Unlock everything",
+                           detail: "Every town, the whole calendar, unlimited saves",
+                           selected: false) {
+                    paywall = .general
+                }
+                Button {
+                    Task { await store.restore() }
+                } label: {
+                    Text(store.busy ? "Checking" : "Restore a previous purchase")
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(Tok.link)
+                        .padding(.horizontal, 4)
+                }
+                .buttonStyle(.plain)
+                .disabled(store.busy)
+
+                if let failure = store.failure {
+                    Text(failure)
+                        .font(.system(size: 12.5)).foregroundStyle(Tok.accent)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 4)
                 }
             }
         }
@@ -92,6 +159,7 @@ struct PreferencesView: View {
                         countryRow(label: c.label,
                                    detail: detail(for: c),
                                    selected: isSelected(c)) {
+                            guard app.unlocked else { paywall = .towns; return }
                             Task { await app.selectCountry(c) }
                         }
                     }

@@ -4,6 +4,7 @@ import UIKit
 @main
 struct VenTrackApp: App {
     @StateObject private var app = AppState()
+    @StateObject private var store = Store()
 
     init() { Chrome.apply() }
 
@@ -11,7 +12,21 @@ struct VenTrackApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(app)
+                .environmentObject(store)
                 .tint(Tok.accent)
+                .task {
+                    // AppState owns every gate; Store owns StoreKit. This is
+                    // the one wire between them, set before the first refresh
+                    // so no answer is missed.
+                    store.onChange = { unlocked, resolved in
+                        app.applyEntitlement(unlocked: unlocked, resolved: resolved)
+                    }
+                    await store.refresh()
+                    // Fetched early so the price is already in hand whenever a
+                    // gate is hit, rather than the sheet opening on a button
+                    // with no price on it.
+                    await store.loadProduct()
+                }
         }
     }
 }
@@ -60,6 +75,12 @@ struct MainTabView: View {
                 .tabItem { Label("Search", systemImage: "magnifyingglass") }.tag(3)
         }
         .tint(Tok.accent)
+        // The one unlock sheet for everything reachable from the four tabs.
+        // Presented here rather than per screen because a gate can fire from a
+        // row inside a lazy list, and a sheet attached to every row is how you
+        // get one that presents the wrong thing or nothing at all. The two
+        // screens that are themselves sheets carry their own.
+        .paywall($app.unlockPrompt)
         .task {
             app.requestLocation()   // ask on first launch so the user can grant it
             if app.events.isEmpty { await app.load() }

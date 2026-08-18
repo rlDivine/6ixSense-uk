@@ -65,6 +65,7 @@ struct SavedView: View {
                             reminderRow(e)
                         }
                     }
+                    allowanceNote.padding(.top, 6)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 28)
@@ -92,18 +93,75 @@ struct SavedView: View {
     /// A real switch with a name, not a tappable row that only looks like one.
     /// Two hours is the lead time the notification is actually scheduled with,
     /// so the label says exactly what will happen.
-    private func reminderRow(_ e: Event) -> some View {
-        Toggle(isOn: Binding(get: { app.reminders.contains(e.id) },
-                             set: { _ in app.toggleReminder(e) })) {
-            Text("Remind me two hours before")
-                .font(.system(size: 13))
-                .foregroundStyle(Tok.muted)
+    ///
+    /// Reminders are part of the unlock. When locked the switch is replaced
+    /// rather than disabled: a greyed-out switch says "broken", a row that
+    /// names its padlock says "this is for sale", and only one of those is
+    /// true.
+    @ViewBuilder private func reminderRow(_ e: Event) -> some View {
+        if app.unlocked {
+            Toggle(isOn: Binding(get: { app.reminders.contains(e.id) },
+                                 set: { _ in app.toggleReminder(e) })) {
+                Text("Remind me two hours before")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Tok.muted)
+            }
+            .tint(Tok.accentFill)
+            .padding(.horizontal, 4)
+            .padding(.top, 11)
+            .padding(.bottom, 16)
+            .accessibilityLabel("Remind me two hours before \(e.title) starts")
+        } else {
+            Button { app.unlockPrompt = .reminders } label: {
+                HStack(spacing: 7) {
+                    LockBadge()
+                    Text("Remind me two hours before")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Tok.muted)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(Tok.muted)
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 4)
+            .padding(.top, 11)
+            .padding(.bottom, 16)
+            .accessibilityLabel("Reminders for \(e.title) are part of the paid unlock")
         }
-        .tint(Tok.accentFill)
-        .padding(.horizontal, 4)
-        .padding(.top, 11)
-        .padding(.bottom, 16)
-        .accessibilityLabel("Remind me two hours before \(e.title) starts")
+    }
+
+    /// The standing note about the free allowance, under the list. Shown while
+    /// locked whether or not the allowance is spent, because knowing the limit
+    /// before hitting it is the difference between an offer and a surprise.
+    @ViewBuilder private var allowanceNote: some View {
+        if !app.unlocked {
+            Button { app.unlockPrompt = .saving } label: {
+                HStack(alignment: .top, spacing: 9) {
+                    Image(systemName: "bookmark")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Tok.link)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(app.savedIsFull
+                             ? "That is all \(AppState.freeSaveLimit) free saves used"
+                             : "\(app.savesRemaining) of \(AppState.freeSaveLimit) free saves left")
+                            .font(.system(size: 13.5, weight: .semibold))
+                            .foregroundStyle(Tok.text)
+                        Text("Unlock VenTrack once to keep as many as you like, with reminders.")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Tok.muted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(13)
+                .background(Tok.panel, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Tok.hairline, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            .accessibilityElement(children: .combine)
+        }
     }
 
     private var countLine: String {

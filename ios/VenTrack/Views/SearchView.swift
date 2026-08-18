@@ -105,16 +105,29 @@ struct SearchView: View {
             // pure date query, since "this weekend" is not an address.
             if outcome.dateQuery?.rest.isEmpty != true { addressRow }
             if hits.isEmpty {
+                // A date past the free window is not "no events on that date",
+                // it is "we did not look that far". Saying the first would be
+                // a lie, and the honest version is also the one that sells.
+                let beyondFreeWindow = !app.unlocked
+                    && (outcome.dateQuery?.range.upperBound ?? .distantPast) > freeWindowEnd
                 VStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass")
+                    Image(systemName: beyondFreeWindow ? "calendar.badge.clock" : "magnifyingglass")
                         .font(.system(size: 34)).foregroundStyle(Tok.muted)
-                    Text("No matches")
+                    Text(beyondFreeWindow ? "That is past the next seven days" : "No matches")
                         .font(.system(size: 17, weight: .bold)).foregroundStyle(Tok.text)
-                    Text(outcome.dateQuery != nil
-                         ? "No events on that date."
-                         : "Try a venue, an artist, a category, a date like \"this weekend\", or a place.")
+                    Text(beyondFreeWindow
+                         ? "The free app looks seven days ahead. Unlock VenTrack once to search the whole calendar."
+                         : (outcome.dateQuery != nil
+                            ? "No events on that date."
+                            : "Try a venue, an artist, a category, a date like \"this weekend\", or a place."))
                         .font(.system(size: 13.5)).foregroundStyle(Tok.muted)
                         .multilineTextAlignment(.center)
+                    if beyondFreeWindow {
+                        Button("See what to unlock") { app.unlockPrompt = .dateRange }
+                            .font(.system(size: 13.5, weight: .semibold))
+                            .foregroundStyle(Tok.link)
+                            .padding(.top, 2)
+                    }
                 }
                 .padding(40)
                 Spacer(minLength: 0)
@@ -148,15 +161,21 @@ struct SearchView: View {
                         .lineLimit(1)
                     Text(addressMiss == query
                          ? "Could not find that address in the UK."
-                         : "Show events around this place instead")
+                         : (app.unlocked
+                            ? "Show events around this place instead"
+                            : "Part of the paid unlock"))
                         .font(.system(size: 12))
                         .foregroundStyle(addressMiss == query ? Tok.accent : Tok.muted)
                         .lineLimit(1)
                 }
                 Spacer(minLength: 0)
                 if !locating {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .bold)).foregroundStyle(Tok.muted)
+                    if app.unlocked {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .bold)).foregroundStyle(Tok.muted)
+                    } else {
+                        LockBadge()
+                    }
                 }
             }
             .padding(.horizontal, 13).padding(.vertical, 11)
@@ -197,15 +216,28 @@ struct SearchView: View {
     private func useAsAddress(_ query: String) async {
         locating = true
         addressMiss = nil
-        let ok = await app.searchAddress(query)
+        let outcome = await app.searchAddress(query)
         locating = false
-        if ok {
+        switch outcome {
+        case .moved:
             // The query has done its job as a place; clear it so the full
             // re-centred feed shows rather than a text match on the street name.
             app.search = ""
-        } else {
+        case .notFound:
             addressMiss = query
+        case .locked:
+            app.unlockPrompt = .towns
         }
+    }
+
+    /// The far edge of what the free app fetched: the same eight day window the
+    /// backend's `range=week` uses, so this agrees with the feed rather than
+    /// guessing at it. Built with calendar arithmetic rather than adding
+    /// seconds, so it stays right across a clock change.
+    private var freeWindowEnd: Date {
+        let cal = Calendar.current
+        let start = cal.startOfDay(for: .now)
+        return cal.date(byAdding: .day, value: 8, to: start) ?? start
     }
 
     private func dateChip(_ dq: DateQuery) -> some View {

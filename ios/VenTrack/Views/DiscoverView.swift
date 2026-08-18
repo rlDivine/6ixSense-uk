@@ -100,12 +100,19 @@ struct DiscoverView: View {
         .accessibilityAddTraits(on ? .isSelected : [])
     }
 
+    /// The free app looks seven days ahead, so "All upcoming" carries a padlock
+    /// until the unlock is bought. It stays in the row rather than being hidden:
+    /// a control you can see and understand is a better offer than one that
+    /// silently is not there, and hiding it would leave the row looking like the
+    /// whole feature set.
     private var rangeRow: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 7) {
                 ForEach(EventService.Range.allCases, id: \.self) { r in
-                    Pill(text: r.label, active: app.range == r) {
+                    let locked = r == .all && !app.unlocked
+                    Pill(text: r.label, active: app.range == r, locked: locked) {
                         guard app.range != r else { return }
+                        if locked { app.unlockPrompt = .dateRange; return }
                         app.range = r
                         Task { await app.load() }
                     }
@@ -165,9 +172,11 @@ struct DiscoverView: View {
             ErrorState(message: err) { Task { await app.load() } }
         } else if app.visibleEvents.isEmpty {
             // `widen` is left at its default, which is exactly "try this week".
+            // Widening stops at the free window when locked, so the button
+            // always does what it says rather than opening a purchase sheet.
             EmptyState(place: app.placeName) {
                 app.category = "All"
-                app.range = .all
+                app.range = app.unlocked ? .all : .week
                 Task { await app.load() }
             }
         } else {
@@ -221,19 +230,26 @@ struct Pill: View {
     let text: String
     let active: Bool
     var small: Bool = false
+    /// Draws the padlock and quietens the label. The button stays tappable:
+    /// tapping is how the user finds out what the padlock is about.
+    var locked: Bool = false
     let action: () -> Void
     var body: some View {
         Button(action: action) {
-            Text(text)
-                .font(.system(size: small ? 12 : 12.5, weight: .semibold))
-                .padding(.horizontal, small ? 11 : 13)
-                .padding(.vertical, small ? 6 : 7)
-                .foregroundStyle(active ? Color.white : Tok.text)
-                .background(active ? Tok.accentFill : Tok.panel, in: Capsule())
-                .overlay(Capsule().stroke(active ? Tok.accentFill : Tok.hairline, lineWidth: 1))
+            HStack(spacing: 5) {
+                if locked { LockBadge() }
+                Text(text)
+                    .font(.system(size: small ? 12 : 12.5, weight: .semibold))
+            }
+            .padding(.horizontal, small ? 11 : 13)
+            .padding(.vertical, small ? 6 : 7)
+            .foregroundStyle(active ? Color.white : (locked ? Tok.muted : Tok.text))
+            .background(active ? Tok.accentFill : Tok.panel, in: Capsule())
+            .overlay(Capsule().stroke(active ? Tok.accentFill : Tok.hairline, lineWidth: 1))
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(active ? .isSelected : [])
+        .accessibilityHint(locked ? "Part of the paid unlock" : "")
     }
 }
 

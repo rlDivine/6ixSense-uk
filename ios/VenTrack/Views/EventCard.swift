@@ -209,7 +209,10 @@ struct EventCard: View {
     private var bookmark: some View {
         let saved = app.isSaved(event)
         return Button {
-            app.toggleSave(event)
+            // Refused only when the free allowance is spent. Offering the
+            // unlock is the whole point of returning a Bool here: without it
+            // the bookmark would visibly do nothing and read as a bug.
+            if !app.toggleSave(event) { app.unlockPrompt = .saving }
         } label: {
             Image(systemName: saved ? "bookmark.fill" : "bookmark")
                 .font(.system(size: 15, weight: .semibold))

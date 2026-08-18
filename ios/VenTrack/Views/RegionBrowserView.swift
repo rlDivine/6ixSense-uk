@@ -17,6 +17,9 @@ struct RegionBrowserView: View {
     let country: RegionCountry
 
     @State private var query = ""
+    /// Pushed inside Settings' own NavigationStack rather than presented as a
+    /// sheet, so presenting the unlock sheet from here is fine.
+    @State private var paywall: UnlockReason?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -26,6 +29,7 @@ struct RegionBrowserView: View {
         .background(Tok.bg.ignoresSafeArea())
         .navigationTitle(country.label)
         .navigationBarTitleDisplayMode(.inline)
+        .paywall($paywall)
     }
 
     // MARK: Header
@@ -175,12 +179,14 @@ struct RegionBrowserView: View {
     private func cityRow(_ city: RegionCountry.City) -> some View {
         let selected = app.placeOverride?.kind == .city && app.placeOverride?.label == city.label
         return Button {
+            guard app.unlocked else { paywall = .towns; return }
             Task {
                 await app.selectCity(city)
                 dismiss()
             }
         } label: {
             HStack(spacing: 10) {
+                if !app.unlocked { LockBadge() }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(city.label)
                         .font(.system(size: 14.5, weight: .semibold))

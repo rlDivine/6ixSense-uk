@@ -17,7 +17,10 @@ final class AppState: NSObject, ObservableObject {
 
     // Controls
     @Published var sort: EventService.Sort = .nearest
-    @Published var range: EventService.Range = .all
+    /// Seven days ahead, which is the free window and also a sensible default
+    /// for an events app whatever you have paid. "All upcoming" is one tap
+    /// away once unlocked. See `Gate` below.
+    @Published var range: EventService.Range = .week
     @Published var category: String = "All"
     @Published var search: String = ""
 
@@ -70,6 +73,84 @@ final class AppState: NSObject, ObservableObject {
     // Persistence
     @Published var saved: [String: Event] = [:]
     @Published var reminders: Set<String> = []
+
+    // MARK: The gate
+    //
+    // VenTrack is free to download and genuinely useful without paying: the
+    // town you are standing in, every category, every source, the map, and the
+    // next seven days. Three things are behind the one-time unlock, and they
+    // are the three that only start to matter once you already like it.
+    //
+    //   1. Any town other than the one you are in. `placeOverride` is the
+    //      single funnel for that, whether it came from the town list, the
+    //      country row or a typed address.
+    //   2. Looking further ahead than seven days, which is `range == .all`.
+    //   3. Keeping more than a handful of events, and reminders at all.
+    //
+    // Saving is not gated outright. A free allowance means the feature can be
+    // found and felt before it asks for anything, which converts better than a
+    // wall and is a better app besides. Reminders are gated outright because
+    // they are the part that needs notification permission and are unambiguously
+    // the premium half of Saved.
+
+    /// How many events a free user may keep. Small enough to matter, large
+    /// enough that the feature is real rather than a demo.
+    ///
+    /// `nonisolated` because `UnlockReason.lede` reads it to write the sentence
+    /// about the allowance, and that is a plain value type with no actor. A
+    /// static `let` of a Sendable type is safe to read from anywhere; without
+    /// the keyword it inherits this class's main-actor isolation.
+    nonisolated static let freeSaveLimit = 3
+
+    /// Mirrors `Store.unlocked`. Views read this rather than reaching for the
+    /// Store, so every gate in the app is one property on one object.
+    @Published private(set) var unlocked = false
+
+    /// False until StoreKit has answered once. Nothing that takes something
+    /// away from the user may act before this is true, because the value above
+    /// starts from a cached guess.
+    @Published private(set) var entitlementResolved = false
+
+    /// True when the free allowance is spent, so the interface can say so
+    /// before the user taps a bookmark that will not take.
+    var savedIsFull: Bool { !unlocked && saved.count >= Self.freeSaveLimit }
+
+    /// How many saves are left, for the line under the Saved list.
+    var savesRemaining: Int { max(0, Self.freeSaveLimit - saved.count) }
+
+    /// Set by any gate reached from one of the four tabs, and presented once by
+    /// `MainTabView`. It lives here rather than in each screen because a gate
+    /// can fire from inside a lazily built list row, and attaching a sheet to
+    /// every row of a list is how you get a sheet that presents the wrong thing
+    /// or nothing at all.
+    ///
+    /// Screens that are themselves sheets, `EventDetailView` and
+    /// `PreferencesView`, keep their own instead: a sheet cannot present
+    /// another sheet from a view it is covering.
+    @Published var unlockPrompt: UnlockReason?
+
+    /// Called by `Store`. Takes away access only on a definitive answer, never
+    /// on the cached guess: acting early would wipe a paying user's chosen town
+    /// in the moment between launch and StoreKit replying.
+    func applyEntitlement(unlocked isUnlocked: Bool, resolved: Bool) {
+        unlocked = isUnlocked
+        entitlementResolved = resolved
+        guard resolved, !isUnlocked else { return }
+
+        // Locked, definitively. This happens on a refund or a revoked purchase,
+        // and on any device that never bought it.
+        //
+        // Note what is NOT undone here: saved events over the free limit stay
+        // saved. Deleting somebody's list because they got a refund would be
+        // hostile, and the allowance only governs adding.
+        if range == .all {
+            range = .week
+            Task { await load() }
+        }
+        if placeOverride != nil {
+            Task { await clearOverride() }
+        }
+    }
 
     override init() {
         super.init()
@@ -138,10 +219,18 @@ final class AppState: NSObject, ObservableObject {
     }
 
     /// Browse somewhere else. Persists the choice and reloads the feed around it.
-    func setOverride(_ o: PlaceOverride) async {
+    ///
+    /// Returns false when the app is locked, so the caller shows the unlock
+    /// sheet instead of appearing to do nothing. Every route to a different
+    /// town runs through here, which is why the check lives here rather than
+    /// being repeated at each of the three call sites.
+    @discardableResult
+    func setOverride(_ o: PlaceOverride) async -> Bool {
+        guard unlocked else { return false }
         placeOverride = o
         persist()
         await load()
+        return true
     }
 
     /// Go back to following the device's location.
@@ -154,14 +243,18 @@ final class AppState: NSObject, ObservableObject {
     }
 
     /// Switch the whole feed to the country's primary town (London).
-    func selectCountry(_ c: RegionCountry) async {
-        guard let city = c.primary else { return }
-        await setOverride(PlaceOverride(kind: .country, label: c.label, coordinate: city.coordinate))
+    /// False when locked, or when the country names no town.
+    @discardableResult
+    func selectCountry(_ c: RegionCountry) async -> Bool {
+        guard let city = c.primary else { return false }
+        return await setOverride(PlaceOverride(kind: .country, label: c.label, coordinate: city.coordinate))
     }
 
     /// Browse one specific town out of the region browser: a county town in
     /// Kent, say, rather than the whole of the United Kingdom.
-    func selectCity(_ city: RegionCountry.City) async {
+    /// False when locked.
+    @discardableResult
+    func selectCity(_ city: RegionCountry.City) async -> Bool {
         await setOverride(PlaceOverride(kind: .city, label: city.label, coordinate: city.coordinate))
     }
 
@@ -180,13 +273,21 @@ final class AppState: NSObject, ObservableObject {
         identifier: "uk"
     )
 
+    /// What happened when the user asked to re-centre on a typed address.
+    /// Three outcomes rather than a Bool, because "we could not find that
+    /// street" and "this is part of the paid unlock" need entirely different
+    /// things said about them.
+    enum AddressOutcome { case moved, notFound, locked }
+
     /// Re-centre the feed on a typed address. Geocoding happens on-device, so
     /// there is no API key and no extra hop through our backend.
-    /// Returns false when the address could not be found in the UK.
     @discardableResult
-    func searchAddress(_ text: String) async -> Bool {
+    func searchAddress(_ text: String) async -> AddressOutcome {
         let query = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return false }
+        guard !query.isEmpty else { return .notFound }
+        // Checked before geocoding, not after: there is no reason to spend a
+        // geocode on a move that is not going to happen.
+        guard unlocked else { return .locked }
         let marks = try? await CLGeocoder().geocodeAddressString(
             query, in: Self.ukSearchRegion, preferredLocale: Locale(identifier: "en_GB")
         )
@@ -194,11 +295,11 @@ final class AppState: NSObject, ObservableObject {
         // that is genuinely in the country and reject the rest. A feed built
         // around Newport, Rhode Island would be empty and confusing.
         guard let mark = marks?.first(where: { $0.isoCountryCode == "GB" }),
-              let loc = mark.location else { return false }
+              let loc = mark.location else { return .notFound }
         // Prefer the geocoder's tidy name over whatever the user typed.
         let label = [mark.name, mark.locality].compactMap { $0 }.first ?? query
-        await setOverride(PlaceOverride(kind: .address, label: label, coordinate: loc.coordinate))
-        return true
+        let moved = await setOverride(PlaceOverride(kind: .address, label: label, coordinate: loc.coordinate))
+        return moved ? .moved : .locked
     }
 
     /// Where this feed is for, in words, for headers and empty states.
@@ -316,19 +417,40 @@ final class AppState: NSObject, ObservableObject {
 
     func isSaved(_ e: Event) -> Bool { saved[e.id] != nil }
 
-    func toggleSave(_ e: Event) {
-        if saved[e.id] != nil { saved[e.id] = nil; reminders.remove(e.id) }
-        else { saved[e.id] = e }
+    /// Returns false only when a save was refused because the free allowance is
+    /// spent, so the caller can offer the unlock rather than leaving a bookmark
+    /// button that visibly does nothing.
+    ///
+    /// Unsaving is never refused, including when the list is already over the
+    /// limit after a refund. Taking something away is not something the gate
+    /// should ever be in the way of.
+    @discardableResult
+    func toggleSave(_ e: Event) -> Bool {
+        if saved[e.id] != nil {
+            saved[e.id] = nil
+            reminders.remove(e.id)
+            persist()
+            return true
+        }
+        guard unlocked || saved.count < Self.freeSaveLimit else { return false }
+        saved[e.id] = e
         persist()
+        return true
     }
 
-    func toggleReminder(_ e: Event) {
-        if reminders.contains(e.id) { reminders.remove(e.id) }
-        else {
+    /// False when locked. Switching a reminder off is still allowed, so a
+    /// refunded user is not left with notifications they cannot stop.
+    @discardableResult
+    func toggleReminder(_ e: Event) -> Bool {
+        if reminders.contains(e.id) {
+            reminders.remove(e.id)
+        } else {
+            guard unlocked else { return false }
             reminders.insert(e.id)
             UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
         }
         persist(); scheduleAllReminders()
+        return true
     }
 
     var savedUpcoming: [Event] {

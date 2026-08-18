@@ -19,6 +19,11 @@ struct EventDetailView: View {
     /// the event to the system without asking for calendar permission.
     @State private var calendarFile: URL?
 
+    /// This view is presented as a sheet, and a sheet cannot present another
+    /// sheet from the view it is covering. So the unlock offer is held here
+    /// rather than on `AppState` like the tab screens use.
+    @State private var paywall: UnlockReason?
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Tok.bg.ignoresSafeArea()
@@ -32,6 +37,7 @@ struct EventDetailView: View {
         }
         .ignoresSafeArea(edges: .top)
         .onAppear(perform: makeCalendarFile)
+        .paywall($paywall)
     }
 
     // MARK: Hero
@@ -68,7 +74,7 @@ struct EventDetailView: View {
             Spacer()
             circleBtn(app.isSaved(event) ? "bookmark.fill" : "bookmark",
                       app.isSaved(event) ? "Remove from saved" : "Save event") {
-                app.toggleSave(event)
+                if !app.toggleSave(event) { paywall = .saving }
             }
         }
         .padding(.horizontal, 14)
@@ -325,7 +331,7 @@ struct EventDetailView: View {
     private var saveAction: some View {
         let saved = app.isSaved(event)
         return Button {
-            app.toggleSave(event)
+            if !app.toggleSave(event) { paywall = .saving }
         } label: {
             actionLabel(saved ? "Saved" : "Save", saved ? "bookmark.fill" : "bookmark")
         }
