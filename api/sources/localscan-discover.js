@@ -170,16 +170,49 @@ async function searchForCandidates(regionId, existingUrls, alreadyHave = 0) {
   if (!key) return [];
 
   const town = regionLabel(regionId);
+  const want = Math.max(1, TARGET_PER_REGION - alreadyHave);
+
+  // The first version of this prompt was three sentences, and a smoke test
+  // against Wolverhampton showed exactly what that buys: a directory of
+  // community centres, a Christmas news article, one single event permalink, a
+  // coeliac support group, and a url with two domains spliced together. Seven
+  // results, none of them the Grand Theatre, the Art Gallery or the
+  // university, which are the obvious pages for that city.
+  //
+  // So this is now a brief rather than a request. The named checklist is what
+  // makes the model look for the right KIND of page, the standing-page rule is
+  // what keeps news articles and one-off event pages out, and the exclusion
+  // list stops it proposing sources this app already has.
   const prompt = [
-    `Search the web for real, currently active websites or Facebook Pages that list local events for ${town}, UK: a council "what's on" page, a specific venue, a local paper's listings page, a community group.`,
-    `Do not suggest any of these, already known: ${existingUrls.length ? existingUrls.join(", ") : "(none yet)"}.`,
-    `Only suggest a page you have actually found and that clearly lists specific events, not a general town guide or a page with no event listings.`,
-    `Find up to ${Math.max(1, TARGET_PER_REGION - alreadyHave)} of them.`,
-    `This is a British town: ${town}, United Kingdom. Several UK town names also name a larger American city, so reject anything that is not unambiguously the British one.`,
+    `Find web pages that list upcoming local events for ${town}, United Kingdom.`,
+    ``,
+    `LOOK FOR THESE, roughly best first:`,
+    `- the district, borough or city council "what's on" or events page`,
+    `- the town or parish council events page`,
+    `- theatres, arts centres, concert halls, live music venues`,
+    `- museums, galleries, castles, cathedrals, heritage sites, country parks`,
+    `- the "visit ${town}" or local tourism board what's-on page`,
+    `- the local newspaper's what's-on or events section`,
+    `- markets, community centres, libraries, village halls`,
+    `- university or college public events and public lecture pages`,
+    `- leisure centres, racecourses, football or rugby club fixture pages`,
+    `- public Facebook Pages for any of the above`,
+    ``,
+    `RULES, all of them binding:`,
+    `1. It must be a STANDING LISTINGS PAGE: one that will still be listing different events in three months. Reject a news article about an event, a single event's own page, a page about one festival that has finished, and a directory of buildings or organisations with no dates on it.`,
+    `2. Copy each url EXACTLY as you found it. Do not build, guess, shorten or repair a url, and never join two addresses together. If you are not looking at the real url, leave it out.`,
+    `3. This is the British ${town}. Many UK town names also name a larger American city and search engines favour the American one, so reject anything not unambiguously the British town.`,
+    `4. Do NOT propose national ticketing or aggregator sites: Ticketmaster, Skiddle, Eventbrite, See Tickets, Ents24, AllGigs, AllEvents, 10times, Dice, Songkick, WeGotTickets, Fatsoma, DesignMyNight, TripAdvisor, Viagogo, StubHub. This app already reads those separately, so proposing them costs money and returns duplicates. You are looking for what those sites MISS.`,
+    `5. Prefer breadth. One theatre, one museum, one council page and one university page beats four pages from the same host.`,
+    ``,
+    `Already watched, do not repeat: ${existingUrls.length ? existingUrls.join(", ") : "(none yet)"}.`,
+    ``,
+    `Find up to ${want}. Returning fewer good pages is better than padding with weak ones.`,
+    ``,
     `Reply with ONLY a JSON object, no other text, of the exact shape:`,
-    `{"candidates": [{"url": "https://...", "kind": "web" or "facebook", "label": "short name", "reason": "one sentence on what you found there and why it looks active"}]}`,
+    `{"candidates": [{"url": "https://...", "kind": "web" or "facebook", "label": "short name", "reason": "what this page lists, and why you believe it is a standing listings page rather than a one-off"}]}`,
     `If you find nothing worth proposing, reply {"candidates": []}.`,
-  ].join(" ");
+  ].join("\n");
 
   const res = await fetchWithTimeout(
     "https://api.openai.com/v1/responses",
@@ -239,6 +272,30 @@ function parseCandidates(text) {
   }
 }
 
+// Sources this app already reads through their own modules. A candidate from
+// one of these is not a find, it is a duplicate that costs an LLM call to
+// rediscover and is then dropped by the de-dupe. The prompt says so too; this
+// is the half that does not depend on the model having listened.
+const EXCLUDED_HOSTS = [
+  "ticketmaster", "skiddle", "eventbrite", "seetickets", "ents24", "allgigs",
+  "allevents", "10times", "dice.fm", "songkick", "wegottickets", "fatsoma",
+  "designmynight", "tripadvisor", "viagogo", "stubhub", "ticketsource",
+  "ticketweb", "livenation", "gigseekr",
+];
+
+/// True for a url that has a second domain buried in its path, which is what a
+/// spliced-together address looks like.
+///
+/// A real one this caught on the first live run:
+/// wolverhampton.gov.uk/armedforceswolves.com/events/index.html, which is two
+/// sites joined at the seam and resolves to nothing. The model was told not to
+/// construct urls and did anyway, which is the whole reason this check is in
+/// code rather than left to the prompt.
+function hasSplicedDomain(parsedUrl) {
+  return /\/(?:www\.)?[a-z0-9-]+\.(?:com|co\.uk|org|org\.uk|net|gov\.uk|ac\.uk|io)(?:\/|$)/i
+    .test(parsedUrl.pathname);
+}
+
 function validateCandidates(parsed) {
   const list = Array.isArray(parsed?.candidates) ? parsed.candidates : [];
   const out = [];
@@ -251,6 +308,17 @@ function validateCandidates(parsed) {
       continue; // not a real URL; skip rather than propose garbage
     }
     if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") continue;
+
+    const host = parsedUrl.hostname.toLowerCase();
+    if (EXCLUDED_HOSTS.some((h) => host.includes(h))) {
+      console.log(`[localscan-discover] dropped ${c.url}: ${host} is already a source here`);
+      continue;
+    }
+    if (hasSplicedDomain(parsedUrl)) {
+      console.log(`[localscan-discover] dropped ${c.url}: looks like two addresses joined together`);
+      continue;
+    }
+
     out.push({
       url: c.url.trim(),
       kind: c.kind === "facebook" ? "facebook" : "web",
