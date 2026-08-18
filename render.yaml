@@ -102,7 +102,10 @@ services:
   #   - type: cron
   #     name: ventrack-uk-localscan-discover
   #     runtime: docker
-  #     plan: starter          # NOT free: cron has no free tier
+  #     plan: starter          # NOT free: cron has no free tier. This was
+  #                            # already corrected by hand in commit b2acbe2
+  #                            # after Render rejected `free`, so it is a
+  #                            # confirmed value rather than a guess.
   #     region: frankfurt
   #     dockerfilePath: ./api/Dockerfile
   #     dockerContext: ./api
