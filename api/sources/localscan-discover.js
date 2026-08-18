@@ -276,7 +276,7 @@ function parseCandidates(text) {
 // one of these is not a find, it is a duplicate that costs an LLM call to
 // rediscover and is then dropped by the de-dupe. The prompt says so too; this
 // is the half that does not depend on the model having listened.
-const EXCLUDED_HOSTS = [
+export const EXCLUDED_HOSTS = [
   "ticketmaster", "skiddle", "eventbrite", "seetickets", "ents24", "allgigs",
   "allevents", "10times", "dice.fm", "songkick", "wegottickets", "fatsoma",
   "designmynight", "tripadvisor", "viagogo", "stubhub", "ticketsource",
@@ -285,7 +285,26 @@ const EXCLUDED_HOSTS = [
   // the same shape as the others: a national roll-up of listings that come
   // from venues this source would rather watch directly.
   "theatresonline", "whatsonwhen", "list.co.uk", "visitbritain",
+  // A second live batch surfaced these two, same shape again.
+  "gigantic", "enjoy.ly",
 ];
+
+/// True for a url that cannot be a standing listings page.
+///
+/// Both rules come from real proposals in the first 25-town batch:
+///   - a PDF of "events over the winter vacation period 2025-26", which is a
+///     document rather than a page and was already months out of date;
+///   - anything carrying a year earlier than the current one in its path,
+///     which is a page about a season that has finished.
+/// Neither will ever list an upcoming event, so both cost a fetch per TTL
+/// window for ever and return nothing.
+export function isNotAStandingPage(parsedUrl, now = new Date()) {
+  const path = parsedUrl.pathname.toLowerCase();
+  if (/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|zip)$/.test(path)) return "a document, not a listings page";
+  const year = path.match(/(?:^|[^0-9])(20[0-9]{2})(?:[^0-9]|$)/);
+  if (year && Number(year[1]) < now.getUTCFullYear()) return `about ${year[1]}, which has passed`;
+  return null;
+}
 
 // At most this many pages from one hostname per region. The prompt asks for
 // breadth and a live run still returned a gallery's what's-on page plus that
@@ -328,6 +347,11 @@ function validateCandidates(parsed) {
     }
     if (hasSplicedDomain(parsedUrl)) {
       console.log(`[localscan-discover] dropped ${c.url}: looks like two addresses joined together`);
+      continue;
+    }
+    const stale = isNotAStandingPage(parsedUrl);
+    if (stale) {
+      console.log(`[localscan-discover] dropped ${c.url}: ${stale}`);
       continue;
     }
     const seenOnHost = perHost.get(host) || 0;
