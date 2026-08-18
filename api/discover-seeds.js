@@ -1,13 +1,17 @@
 #!/usr/bin/env node
-// Entrypoint for the monthly localscan research job. Not part of the Express
-// app: server.js never imports this file, and running it does not start a
-// server. Invoked by the ventrack-uk-localscan-discover Cron Job in
-// render.yaml, which runs `node discover-seeds.js` on a schedule instead of
-// the image's default `node server.js`.
+// Entrypoint for the localscan research pass. Not part of the Express app:
+// server.js never imports this file, and running it does not start a server.
 //
-// Safe to run by hand too, for a manual check: `node discover-seeds.js` from
-// inside api/, with OPENAI_API_KEY set and, if you want it to actually open a
-// pull request rather than just print what it found, GITHUB_TOKEN as well.
+// Run it by hand, from inside api/, with OPENAI_API_KEY set and, if you want
+// it to actually open a pull request rather than just print what it found,
+// GITHUB_TOKEN as well:
+//
+//   OPENAI_API_KEY=... GITHUB_TOKEN=... node discover-seeds.js
+//
+// It is not scheduled. It was a Render Cron Job, but Render cron services
+// have no free tier, so that block was removed from render.yaml rather than
+// have a Blueprint sync quietly try to create a paid service. render.yaml
+// keeps the exact block to restore if that cost is ever worth it.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,9 +19,8 @@ import { runDiscovery } from "./sources/localscan-discover.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Same no-dependency .env loader as server.js, for a local manual run.
-// Render's Cron Job gets its environment from the dashboard, same as the web
-// service, so this is a no-op there.
+// Same no-dependency .env loader as server.js, so a local run can pick the
+// keys up from api/.env instead of needing them inline every time.
 try {
   const envFile = fs.readFileSync(path.join(__dirname, ".env"), "utf8");
   for (const line of envFile.split("\n")) {

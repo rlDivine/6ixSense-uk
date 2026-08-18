@@ -1,8 +1,9 @@
-// Monthly research: finds new community pages worth watching, for towns that
+// Research pass: finds new community pages worth watching, for towns that
 // already have at least one, and proposes them as a pull request rather than
-// writing to localscan-seeds.js directly. Run by discover-seeds.js, which the
-// ventrack-uk-localscan-discover Cron Job in render.yaml invokes on a
-// schedule; nothing in the normal request path (server.js) touches this file.
+// writing to localscan-seeds.js directly. Run by discover-seeds.js, invoked
+// by hand rather than on a schedule (Render cron services have no free tier,
+// so that block was removed from render.yaml; see DEPLOY.md). Nothing in the
+// normal request path (server.js) touches this file.
 //
 // SCOPE, on purpose. This only researches regions that already have at least
 // one seed page, not all ~450 towns in regions.js. Researching every town
@@ -26,9 +27,10 @@
 //     the web_search tool and the shape of what comes back. See the long
 //     comment above extractResponseText() for exactly what is uncertain and
 //     why the parsing is written as defensively as it is.
-//   - the Render Cron Job block in render.yaml: the field names for a Docker
-//     runtime cron service (schedule, dockerCommand) are written from
-//     documentation, not confirmed against a live Blueprint deploy.
+//   - the commented-out Render Cron Job block kept in render.yaml for anyone
+//     who later wants this scheduled: its field names (schedule,
+//     dockerCommand) are written from documentation, not confirmed against a
+//     live Blueprint deploy.
 // The GitHub REST calls below are not in that category. Creating a ref,
 // updating file contents through the Contents API and opening a pull request
 // are long-stable, well-documented endpoints, used here in their plainest

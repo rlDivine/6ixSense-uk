@@ -100,11 +100,12 @@ and gigs runs deeper than a global service's.
 `sources/localscan.js` is the source built for the event that will never
 appear on any of the other six because it was never meant to be ticketed: a
 free afternoon at the local boating pool, a village hall jumble sale. It
-fetches every page listed in `sources/localscan-seeds.js` for a region (an
-empty list by default, so this is inert until pages are actually added),
+fetches every page listed in `sources/localscan-seeds.js` for a region,
 strips the HTML down to its title, meta description, `og:*` tags and visible
 body text with cheerio, and sends that text to an OpenAI model with a strict
-JSON schema asking for real, dated, upcoming events only.
+JSON schema asking for real, dated, upcoming events only. With no
+`OPENAI_API_KEY` set it does nothing at all and costs nothing, so the seed
+list can be grown before the key is ever configured.
 
 Three things are worth knowing before touching it:
 
@@ -134,12 +135,12 @@ fails to geocode falls back to the region's own centre rather than being
 dropped, the same "show something rather than nothing" choice `curated.js`
 and `sportsfixtures.js` already make elsewhere in this file.
 
-The seed list grows by hand, or once a month by `sources/localscan-discover.js`
-and the `ventrack-uk-localscan-discover` Cron Job, which researches regions
-that already have at least one seed and proposes anything new it finds as a
-pull request rather than writing to the file directly. `api/DEPLOY.md` has the
-full setup, including the token scope that job needs and why nothing gets
-watched or billed against until a person merges the PR.
+The seed list grows by hand, or by running `discover-seeds.js`, which
+researches regions that already have at least one seed and proposes anything
+new it finds as a pull request rather than writing to the file directly. It is
+run manually rather than on a schedule, because Render cron services have no
+free tier; `api/DEPLOY.md` has the full setup, the token scope it needs, and
+the block to restore in `render.yaml` if you ever want it scheduled.
 
 ### Football fixtures and grounds
 
@@ -208,7 +209,7 @@ sources/
   localscan-seeds.js    The pages localscan.js actually watches, per region
   localscan-discover.js Monthly research: proposes new seed pages as a pull request
   util.js               Distance, entity decoding and event normalisation helpers
-discover-seeds.js       Entrypoint for the localscan-discover Cron Job, not the web service
+discover-seeds.js       Seed research, run by hand; proposes new pages as a PR
 public/                 The PWA, served from the same origin
   index.html            Onboarding, the four tabs, the detail sheet
   app.js                Client logic, the inline SVG icon set, the Leaflet map

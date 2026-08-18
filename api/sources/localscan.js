@@ -98,7 +98,27 @@ for (const seed of VALID_SEEDS) {
 }
 
 // ---- per-page cache --------------------------------------------------------
-// url -> { at, thin, events }
+//
+// Keyed by url and holding the EXTRACTION only, never finished events.
+//
+// That split is load bearing. One page can legitimately be seeded for several
+// regions at once: a district council or tourism board "what's on" page
+// covers every town in the district, and Thanet's covers Ramsgate, Margate
+// and Broadstairs, all three of which are separate regions in regions.js.
+// Caching finished events against the url would mean the first region to scan
+// wins and every other region is handed that region's events verbatim, with
+// its region id baked into the event ids and its centre used as the
+// coordinate fallback. Margate users would get Ramsgate's listings, placed in
+// Ramsgate, and nothing would look broken enough to notice.
+//
+// So the expensive, region independent half (fetch, plus the one LLM call) is
+// cached per url, and the cheap, region dependent half (building events,
+// geocoding against that region, falling back to that region's centre) is
+// redone per region. Cost stays exactly where it was, one LLM call per page
+// per TTL no matter how many regions share it, and the output is correct for
+// each.
+//
+// url -> { at, thin, extracted, image, townLabel }
 const pageCache = new Map();
 
 function isFresh(entry) {
@@ -309,35 +329,55 @@ async function geocode(query) {
 }
 
 // ---- one page, start to finish ---------------------------------------------
-async function scanPage(seed, region) {
+/// Fetch and extract one page, cached by url across every region that lists
+/// it. Returns the cache entry, whose `thin` flag means "nothing usable here",
+/// covering a page that is down, a page too sparse to be worth an LLM call,
+/// and an extraction that failed, all of which should behave the same way to
+/// the caller.
+async function extractForPage(seed, region) {
   const cached = pageCache.get(seed.url);
-  if (isFresh(cached)) return cached.events;
+  if (isFresh(cached)) return cached;
+
+  const thinEntry = () => {
+    // A page that is down or unreadable right now should be retried sooner
+    // than the full 12 hour TTL, which THIN_RETRY_MS already does.
+    const entry = { at: Date.now(), thin: true, extracted: [], image: "", townLabel: region.label };
+    pageCache.set(seed.url, entry);
+    return entry;
+  };
 
   let page;
   try {
     page = await fetchPage(seed.url);
   } catch (e) {
     console.warn(`[localscan/${region.id}] ${seed.url}: ${e.message}`);
-    // A page that is down right now should be retried soon, not sat on for
-    // the full 12 hour TTL.
-    pageCache.set(seed.url, { at: Date.now(), thin: true, events: [] });
-    return [];
+    return thinEntry();
   }
 
-  if (isThin(page.text)) {
-    pageCache.set(seed.url, { at: Date.now(), thin: true, events: [] });
-    return [];
-  }
+  if (isThin(page.text)) return thinEntry();
 
   const todayISO = new Date().toISOString().slice(0, 10);
   let extracted;
   try {
+    // The town in the prompt is whichever region scanned this page first.
+    // For a shared district page that is the right kind of hint anyway, and
+    // the alternative, one LLM call per region for the same page, is exactly
+    // the cost this cache exists to avoid.
     extracted = await extractEvents(page.text, { townLabel: region.label, todayISO });
   } catch (e) {
     console.warn(`[localscan/${region.id}] extraction failed for ${seed.url}: ${e.message}`);
-    pageCache.set(seed.url, { at: Date.now(), thin: true, events: [] });
-    return [];
+    return thinEntry();
   }
+
+  const entry = { at: Date.now(), thin: false, extracted, image: page.image, townLabel: region.label };
+  pageCache.set(seed.url, entry);
+  return entry;
+}
+
+async function scanPage(seed, region) {
+  const page = await extractForPage(seed, region);
+  if (page.thin) return [];
+  const extracted = page.extracted;
 
   const events = [];
   extracted.forEach((raw, i) => {
@@ -390,7 +430,9 @@ async function scanPage(seed, region) {
     }
   }
 
-  pageCache.set(seed.url, { at: Date.now(), thin: false, events });
+  // Deliberately no cache write here. The cache holds the extraction, which
+  // extractForPage() already stored; these events are this region's view of
+  // it and must be rebuilt per region rather than shared.
   return events;
 }
 

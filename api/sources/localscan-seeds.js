@@ -30,19 +30,42 @@
 //
 //   By hand: add a line yourself, following the format above.
 //
-//   By the monthly research job (sources/localscan-discover.js, run by the
-//   ventrack-uk-localscan-discover Cron Job in render.yaml). It never edits
-//   this file directly on main: it proposes candidates in a pull request,
-//   which is what "manually or automatically" actually means here. Adding a
-//   line still goes through a human clicking merge, it is just that an LLM
-//   drafted the line instead of a person. See "Automatic discovery" in
-//   DEPLOY.md for the full mechanism, including what it needs configured
-//   before it does anything.
+//   By the research job (sources/localscan-discover.js, run by hand via
+//   `node discover-seeds.js`; it is not scheduled, because Render cron has
+//   no free tier). It never edits this file directly on main: it proposes
+//   candidates in a pull request, which is what "manually or automatically"
+//   actually means here. Adding a line still goes through a human clicking
+//   merge, it is just that an LLM drafted the line instead of a person. See
+//   "Automatic discovery" in DEPLOY.md for the full mechanism.
+// STATUS OF THE ENTRIES BELOW. These were found by web search and their
+// event listings were visible in the search results (Ramsgate Day, the
+// Festival of Sound and the Winter Festival all showed up with real dates),
+// but they were NOT opened and read directly: the environment they were added
+// from cannot reach these hosts. So they are a good starting point rather
+// than a verified one. Check the Render logs after the first scan: a page
+// that turns out to be wrong shows up as contributing nothing, and a page
+// that turns out to be right shows up as events with source "Local pages".
+//
+// The Ramsgate Boating Pool itself is not here yet. It is the example that
+// prompted this whole source, but no page for it turned up in search that
+// could be confirmed as its own listings page rather than a mention of it on
+// someone else's. If you know its site or Facebook Page, that is the single
+// best entry to add next.
 export const SEEDS = [
-  // Real example, ready for a real URL. Ramsgate is already a region
-  // (regions.js CITIES, id "ramsgate"): swap `url` for the Boating Pool's own
-  // site or Facebook Page and this starts contributing on the next scan.
-  // { regionId: "ramsgate", url: "https://example.org/whats-on", kind: "web", label: "Ramsgate Boating Pool" },
+  // Visit Thanet is the district tourism board, and its find-events page
+  // covers Ramsgate, Margate and Broadstairs together. Deliberately listed
+  // for all three regions: the per-url cache means this is still one fetch
+  // and one LLM call per TTL no matter how many regions share it, and each
+  // region gets its own events built from that one extraction.
+  { regionId: "ramsgate", url: "https://www.visitthanet.co.uk/whats-on/find-events/", kind: "web", label: "Visit Thanet, what's on" },
+  { regionId: "margate", url: "https://www.visitthanet.co.uk/whats-on/find-events/", kind: "web", label: "Visit Thanet, what's on" },
+  { regionId: "broadstairs", url: "https://www.visitthanet.co.uk/whats-on/find-events/", kind: "web", label: "Visit Thanet, what's on" },
+
+  // The local paper. Runs a recurring "things to see and do in Thanet" piece
+  // that is exactly the small, free, community listing the ticketing sources
+  // never carry, which is the whole reason this source exists.
+  { regionId: "ramsgate", url: "https://theisleofthanetnews.com/", kind: "web", label: "Isle of Thanet News" },
+  { regionId: "margate", url: "https://theisleofthanetnews.com/", kind: "web", label: "Isle of Thanet News" },
 
   // --- END SEEDS ---
   // Do not remove or move this line. localscan-discover.js finds it by exact

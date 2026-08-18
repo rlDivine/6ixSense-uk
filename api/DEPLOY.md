@@ -60,13 +60,15 @@ small, real amount of money on the account this key belongs to.
 
 Two things bound that cost, and both matter:
 
-- **No seed pages, no cost.** `api/sources/localscan-seeds.js` ships with an
-  empty list. Setting this key alone does not turn anything on: a region only
-  gets scanned once a page is actually added to that file for its region id.
-  There is no crawler here that goes looking for pages on its own.
-- **Pages are cached for hours, not minutes.** Once a page is added, it is
-  actually re-fetched and re-summarised a handful of times a day, not on
-  every request. See `PAGE_TTL_MS` in `localscan.js`.
+- **The seed list is what costs, and it is short.** `localscan-seeds.js`
+  currently lists two distinct pages, both covering Thanet, seeded across
+  Ramsgate, Margate and Broadstairs. Cost tracks distinct URLs, not entries:
+  one page shared by three regions is still one fetch and one extraction per
+  cache window. There is no crawler here that adds pages on its own.
+- **Pages are cached for hours, not minutes.** A page is re-fetched and
+  re-summarised a handful of times a day, not on every request. See
+  `PAGE_TTL_MS` in `localscan.js`. At two pages on a 12 hour TTL that is a
+  handful of small model calls a day, not a per-request charge.
 
 If you don't want this cost at all, simply leave `OPENAI_API_KEY` unset. The
 source returns nothing and the rest of the app is unaffected, the same as any
@@ -86,40 +88,48 @@ town). A typo is logged and that one entry is skipped at startup, which is
 worth checking the log for after adding one, rather than something that fails
 loudly. Commit the file and redeploy, or push to `main` if `autoDeploy` is on.
 
-### Automatic discovery
+### Automatic discovery, and why it is not scheduled
 
-Once a month, a separate Cron Job (`ventrack-uk-localscan-discover` in
-`render.yaml`, running `api/discover-seeds.js`) researches every region that
-already has at least one seed page, looking for others worth adding. Regions
-with no seeds yet are not researched: this grows coverage you have already
-started, it does not go looking for new towns to cover on its own.
+`api/discover-seeds.js` researches every region that already has at least one
+seed page, looking for others worth adding, and proposes what it finds as a
+**pull request** rather than writing to `localscan-seeds.js` directly.
+Regions with no seeds yet are not researched: this grows coverage you have
+already started, it does not go looking for new towns on its own.
 
-It does not write to `localscan-seeds.js` directly. It opens a **pull
-request** proposing the pages it found, one PR a month, with the reasoning it
-gave for each one, and nothing is watched or billed against until a person
-reads that PR and merges it. That is the actual answer to "manually or
-automatically": an LLM drafts the line, a person still has to click merge.
-Two real risks come from skipping that step: an unsupervised web search
-feeding straight into an LLM pipeline pointed at a real app can and will
-sometimes surface a wrong-town result or something worse, and every page
-added is a page that costs money every time it is scanned regardless of
-whether it was worth adding.
+The PR step is the point, not ceremony. Nothing is watched or billed against
+until a person reads the proposal and merges it, which is the actual answer
+to "manually or automatically": an LLM drafts the line, a person still clicks
+merge. An unsupervised web search feeding straight into an LLM pipeline
+pointed at a real app will eventually surface a wrong-town result or
+something worse, and every page added costs money on every scan from then on
+whether or not it was worth adding.
 
-To turn it on:
+**It is not on a schedule, deliberately.** It was originally a Render Cron
+Job, and that block has been removed from `render.yaml`, because Render cron
+services have no free tier: they need a paid plan and bill a minimum of
+roughly a dollar a month per cron service even for a job that runs once and
+exits. Leaving the block in meant the next Blueprint sync would try to create
+a paid service, which is not something that should happen as a side effect of
+syncing an unrelated change. `render.yaml` carries the exact block to restore
+if you later decide the cost is worth it.
+
+Run it by hand instead, from a machine with the repo checked out:
 
 ```
-OPENAI_API_KEY = the same key as above; reuses the web service's
-GITHUB_TOKEN   = a fine grained personal access token, scoped to ONLY this
-                 repository, with Contents: Read and write and
-                 Pull requests: Read and write. Nothing else. Create one at
-                 github.com, Settings, Developer settings, Fine-grained tokens.
+cd api
+OPENAI_API_KEY=... GITHUB_TOKEN=... node discover-seeds.js
 ```
 
-Set on the `ventrack-uk-localscan-discover` service specifically, in its own
-**Environment** tab, not the web service's. Without `GITHUB_TOKEN` the job
-still runs and still searches, it just logs what it found in the Render logs
-instead of opening a PR, which is a reasonable way to see what it would
-propose before handing it write access to anything.
+That does exactly what the scheduled job would have done, including opening
+the pull request. `GITHUB_TOKEN` should be a fine grained personal access
+token scoped to **only this repository**, with `Contents: Read and write` and
+`Pull requests: Read and write` and nothing else. Create one at github.com,
+Settings, Developer settings, Fine-grained tokens. Not a classic token: those
+are account-wide and this job has no reason to touch anything else you own.
+
+Leave `GITHUB_TOKEN` off entirely and the job still runs and still searches,
+it just prints what it found instead of opening a PR. That is a sensible way
+to see what it would propose before handing it write access to anything.
 
 `GET /api/status` reports which keys the running instance can see, which is the
 quickest way to check a deploy picked them up.

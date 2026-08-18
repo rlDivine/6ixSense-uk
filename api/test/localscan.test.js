@@ -319,6 +319,53 @@ test("a cached page is not re-fetched, re-extracted or re-geocoded on the next c
   );
 });
 
+test("one page seeded for two regions costs one LLM call but yields each region its own events", async () => {
+  // The case this guards: a district council or tourism board page covers
+  // every town in the district, so the same url is legitimately seeded for
+  // several regions. Caching finished events against the url would hand the
+  // second region the first region's events, with the first region's id in
+  // the event ids and the first region's centre as the coordinate fallback,
+  // and nothing would look broken enough to notice.
+  const regionA = fakeRegion();
+  const regionB = fakeRegion();
+  const sharedUrl = `https://example.test/district-${n}`;
+  const seedA = { regionId: regionA.id, url: sharedUrl, kind: "web", label: "district page" };
+  const seedB = { regionId: regionB.id, url: sharedUrl, kind: "web", label: "district page" };
+  const page = htmlResponse(pageHtml());
+  const oneEvent = openaiResponse([
+    { title: "District fete", description: "", category: "Family", startISO: null, venue: "Nowhere findable at all", address: "", isFree: false, price: "" },
+  ]);
+
+  await withEnv({ OPENAI_API_KEY: "k", ...NO_DELAY }, () =>
+    withStubbedFetch(
+      (url) => route(url, page, { openai: oneEvent, nominatim: nominatimResponse([]) }),
+      async (calls) => {
+        const outA = await fetchLocalScan(regionA, [seedA]);
+        const llmCallsAfterA = calls.filter((c) => c.url.includes("api.openai.com")).length;
+        const outB = await fetchLocalScan(regionB, [seedB]);
+        const llmCallsAfterB = calls.filter((c) => c.url.includes("api.openai.com")).length;
+
+        assert.equal(outA.length, 1);
+        assert.equal(outB.length, 1);
+
+        // The whole point of the url-keyed cache: the expensive half is not
+        // repeated for the second region.
+        assert.equal(llmCallsAfterA, 1);
+        assert.equal(llmCallsAfterB, 1, "the second region must not pay for another extraction");
+
+        // But the cheap, region-specific half is genuinely redone.
+        assert.notEqual(outA[0].id, outB[0].id, "event ids must carry their own region");
+        assert.match(outA[0].id, new RegExp(regionA.id));
+        assert.match(outB[0].id, new RegExp(regionB.id));
+        // Unresolvable address, so each falls back to its OWN region centre.
+        assert.equal(outA[0].lat, regionA.lat);
+        assert.equal(outB[0].lat, regionB.lat);
+        assert.notEqual(outA[0].lat, outB[0].lat);
+      }
+    )
+  );
+});
+
 test("two events at the same address geocode once and share the result; an unresolved address falls back to the region centre", async () => {
   const region = fakeRegion();
   const seed = seedFor(region);
