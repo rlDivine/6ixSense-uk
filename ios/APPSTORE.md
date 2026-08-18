@@ -100,11 +100,18 @@ plain text, so it is safe to give Apple this URL before launch.
 
 Both of the pages below are served by the backend, already carry the VenTrack name,
 and point at contact@voice2jobs.com. Apple does check that the privacy policy
-URL loads, so confirm the Render service is awake before you submit: on the
-free plan it sleeps after about 15 minutes idle and the first request takes
-30 to 60 seconds. If a reviewer hits it cold and it times out, that is a
-rejection for a reason that has nothing to do with the app. Consider moving to
-the paid Starter plan before submitting.
+URL loads, so confirm the Render service is awake before you submit. On the
+free plan it sleeps after about 15 minutes idle and the first request then
+takes 30 to 60 seconds. If a reviewer hits it cold and it times out, that is a
+rejection for a reason that has nothing to do with the app.
+
+The backend now pings itself every 10 minutes to stop that happening, which
+covers the ordinary case. It does not cover the case that matters most here:
+the ping stops while the instance is stopped, so a deploy during review, or any
+restart followed by a quiet night, leaves it asleep with nothing to wake it.
+Open the URL yourself the morning you submit and again each day review is open,
+or move to the paid Starter plan and stop thinking about it. See
+`api/DEPLOY.md`.
 
 The host is still called `pulse-uk-api` on purpose. See the note in
 `render.yaml`.
@@ -286,8 +293,10 @@ Location permission is optional. If it is declined the app still works: it defau
 Event listings come from Ticketmaster, Skiddle, PredictHQ, Eventbrite and public football fixture data, plus a small curated list of well known UK venues.
 ```
 
-Please wake the service yourself before submitting, and again if review takes a
-few days.
+Open that URL in a browser yourself before submitting, and again each day
+review is open. The keep-alive ping in the backend makes this unlikely to
+matter, but it cannot restart a service that has already stopped, so a deploy
+mid-review can still leave the reviewer with a cold instance.
 
 ## Things that are not ready
 
@@ -304,6 +313,8 @@ points rather than anything on the list above:
   Walk the What to Test list above before you submit.
 - **The wordmark is set in a system font.** That is fine for review and fine
   for launch, but it is not a designed identity.
-- **The free Render plan will make a reviewer think the app is broken.** Cold
-  starts take 30 to 60 seconds. The review notes explain it, but paying for
-  Starter is the safer answer.
+- **The free Render plan can still make a reviewer think the app is broken.**
+  Cold starts take 30 to 60 seconds. The keep-alive ping prevents the common
+  case, but it cannot wake an instance that has already stopped, and a deploy
+  during review does exactly that. The review notes explain it. Paying for
+  Starter removes the whole category and is the safer answer for a paid app.

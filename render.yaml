@@ -29,8 +29,16 @@ services:
     runtime: docker
 
     # Free spins down after about 15 minutes idle, and the next request pays a
-    # 30 to 60 second cold start. Change to `starter` (about $7/mo) before you
-    # ship the app, so a user's first tap is not a minute of waiting.
+    # 30 to 60 second cold start. api/keepalive.js pings this service's own
+    # public URL every 10 minutes to stop that, using the RENDER_EXTERNAL_URL
+    # that Render injects, so there is nothing to configure for it here.
+    #
+    # That ping prevents a sleep; it cannot end one, because it stops running
+    # when the instance does. It also spends roughly 744 of the 750 free
+    # instance hours a month, which leaves no room for a second free service in
+    # this workspace. Change to `starter` (about $7/mo) before you ship the
+    # app: always on, no hour cap, and a user's first tap is not a minute of
+    # waiting. See api/DEPLOY.md.
     plan: free
 
     # The closest Render region to the UK, which keeps latency down for British

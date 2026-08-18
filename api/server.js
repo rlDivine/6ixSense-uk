@@ -11,6 +11,7 @@ import { fetchEventbrite } from "./sources/eventbrite.js";
 import { fetchPredictHQ } from "./sources/predicthq.js";
 import { fetchLocalScan } from "./sources/localscan.js";
 import { landingPage } from "./landing.js";
+import { startKeepAlive } from "./keepalive.js";
 import {
   CITIES,
   DEFAULT_REGION,
@@ -379,4 +380,9 @@ app.listen(PORT, () => {
     );
   warmAll();
   setInterval(warmAll, CACHE_MS);
+
+  // Note this is separate from the warm loop above, which does not keep the
+  // instance up: those are OUTBOUND fetches to the event sources, and Render
+  // counts inbound traffic only. See keepalive.js.
+  startKeepAlive();
 });

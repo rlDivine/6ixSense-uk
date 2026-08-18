@@ -212,10 +212,64 @@ curl "https://pulse-uk-api.onrender.com/api/diag?lat=53.48&lng=-2.24"   # per-so
 source independently, bypassing the cache, and reports the count, timing and
 error for each.
 
+## Keeping the free instance awake
+
+A free instance stops after about 15 minutes with no inbound traffic, and the
+next visitor waits 30 to 60 seconds for it to start. `api/keepalive.js` pings
+the service's own public URL every 10 minutes so that window never elapses.
+
+**There is nothing to configure.** Render injects `RENDER_EXTERNAL_URL`, the
+ping uses it, and the whole thing is inert anywhere else, so it does nothing on
+your laptop. `GET /healthz` returns a constant and never touches a source or
+the cache, so a ping costs nothing but the request.
+
+The one thing to understand is what it cannot do:
+
+- **It prevents a sleep. It cannot end one.** While the instance is stopped
+  this code is not running either, so nothing pings and nothing wakes. Every
+  deploy restarts the process, and any restart followed by a quiet spell puts
+  the service to sleep with no way back except a real visitor. Only something
+  outside the service fixes that.
+- **Free instance hours are capped at 750 a month across the workspace.**
+  Staying up continuously spends about 744 of them in a 31 day month. That
+  fits, but only just, and only for one service: add a second free service and
+  both get suspended for the rest of the cycle when the pool runs out.
+
+If you want the service woken as well as kept awake, point a free uptime
+monitor at `https://pulse-uk-api.onrender.com/healthz` on a 5 or 10 minute
+check. UptimeRobot and cron-job.org both do this on a free tier. That is an
+external service so it keeps running while yours is stopped, which is exactly
+the gap the internal ping cannot cover.
+
+**A GitHub Actions cron is the wrong tool here, despite being the obvious
+one.** This repository is private, so scheduled workflows bill against the
+2,000 free Actions minutes a month, and every run is billed at a one minute
+minimum however fast it is. A ping every 10 minutes is 4,320 runs a month, so
+it costs money before it does anything useful. Every schedule slow enough to
+stay inside the allowance is slower than the 15 minute sleep window, which
+means it would not keep the service awake anyway. GitHub also disables
+scheduled workflows on a repository with 60 days of no activity.
+
+### Switching it off
+
+Set `KEEPALIVE=off` in the Render environment. Do that when you move to the
+Starter plan: a paid instance never sleeps, so the ping is just noise in the
+log. `KEEPALIVE_INTERVAL_MS` changes the period and `KEEPALIVE_URL` overrides
+the target, though neither should be needed.
+
+### The honest version
+
+This works, but paying for it is the supported answer, and for a paid app it is
+the right one. Starter is about $7/mo, never sleeps, has no instance-hour cap,
+and removes the cold start as a category of problem rather than papering over
+it. The ping is worth having while the app is not yet earning; it is not worth
+building a monitoring habit around once it is.
+
 ## Notes
 - **Free plan** spins down after about 15 minutes idle, and the next request
-  cold-starts in roughly 30 to 60 seconds. For a shipped app, change
-  `plan: free` to `plan: starter` (about $7/mo) in `render.yaml` for always-on.
+  cold-starts in roughly 30 to 60 seconds. The keep-alive ping above hides most
+  of that. For a shipped app, change `plan: free` to `plan: starter` (about
+  $7/mo) in `render.yaml` for always-on.
 - Requests are always served from cache and refreshed in the background, so a
   user request never waits on a live scrape. Cache TTL is 12 minutes.
 - At most 24 regions are cached at once (LRU), with the warm regions exempt.

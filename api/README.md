@@ -211,6 +211,7 @@ sources/
   util.js               Distance, entity decoding and event normalisation helpers
 discover-seeds.js       Seed research, run by hand; proposes new pages as a PR
 landing.js              The one dynamic part of the landing page: the App Store call to action
+keepalive.js            Self-ping that stops a free Render instance spinning down
 public/                 The marketing site. Everything in here is public
   index.html            Landing page. Self-contained, no external request
   privacy.html          Privacy policy, linked from the App Store listing
