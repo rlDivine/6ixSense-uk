@@ -1,0 +1,94 @@
+name: localscan seed discovery
+
+# Run by hand from the Actions tab, never on a schedule.
+#
+# This is how the seed sweep is meant to be driven. It exists because the job
+# needs two things that are awkward to hold anywhere else: an OpenAI key, which
+# should live in repository secrets rather than on somebody's laptop or in a
+# chat window, and write access to open a pull request, which Actions already
+# grants below without anyone creating a personal access token at all.
+#
+# Each run researches one batch of towns and opens one pull request. Runs skip
+# towns that already meet the target, so pressing the button again walks
+# forward through the country. Nothing is watched, and nothing is billed
+# against the OpenAI key at request time, until a person reviews and merges.
+#
+# See "Growing this to every town" in api/DEPLOY.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Which towns to research"
+        type: choice
+        default: unseeded
+        options:
+          - unseeded   # towns watching nothing yet: use this to spread out
+          - seeded     # top up towns that already watch something
+          - all        # every town in regions.js
+      target:
+        description: "Pages a town should end up watching"
+        default: "20"
+      limit:
+        description: "Towns per run. Keep the PR reviewable"
+        default: "25"
+      dry_run:
+        description: "Print the plan and cost, spend nothing"
+        type: boolean
+        default: true
+      open_pr:
+        description: "Open a PR. Off means print the findings only"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write        # create the proposal branch and commit to it
+  pull-requests: write   # open the PR
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    # A batch of 25 towns at two at a time, each a web-search-backed call, runs
+    # in a few minutes. The ceiling is here so a hung API call cannot sit and
+    # burn Actions minutes.
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Research a batch
+        working-directory: api
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # The token Actions mints for this run. It is scoped to this
+          # repository and expires when the job ends, which is strictly better
+          # than a personal access token that has to be created, stored and
+          # remembered. `permissions:` above is what gives it the two rights
+          # this job needs.
+          GITHUB_TOKEN: ${{ inputs.open_pr && secrets.GITHUB_TOKEN || '' }}
+          GITHUB_REPO_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO_NAME: ${{ github.event.repository.name }}
+          GITHUB_BASE_BRANCH: ${{ github.event.repository.default_branch }}
+          LOCALSCAN_DISCOVER_SCOPE: ${{ inputs.scope }}
+          LOCALSCAN_DISCOVER_TARGET: ${{ inputs.target }}
+          LOCALSCAN_DISCOVER_LIMIT: ${{ inputs.limit }}
+          LOCALSCAN_DISCOVER_DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+        run: node discover-seeds.js 2>&1 | tee /tmp/discover.log
+
+      - name: Put the result in the job summary
+        if: always()
+        run: |
+          {
+            echo '## localscan seed discovery'
+            echo
+            echo "scope \`${{ inputs.scope }}\`, target ${{ inputs.target }}/town, limit ${{ inputs.limit }}"
+            echo "dry run: ${{ inputs.dry_run }}, open PR: ${{ inputs.open_pr }}"
+            echo
+            echo '```'
+            cat /tmp/discover.log 2>/dev/null || echo "(no output)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

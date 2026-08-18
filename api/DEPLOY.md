@@ -100,13 +100,41 @@ reason is review rather than cost: 457 towns at 20 candidates each is a nine
 thousand line pull request, and a proposal nobody reads is a direct commit with
 extra steps.
 
+**The easiest way to run it is the Actions tab**, via
+`.github/workflows/localscan-discover.yml`. Nothing to install, and no personal
+access token to create: Actions mints a scoped, expiring token for the run, and
+the workflow asks for exactly the two rights the job needs. The OpenAI key
+lives in repository secrets rather than on a laptop.
+
+One-time setup: **Settings, Secrets and variables, Actions, New repository
+secret**, named `OPENAI_API_KEY`. Then **Actions, localscan seed discovery, Run
+workflow**.
+
+Run it in this order. The first two steps are about proving the job works
+before letting it loose, because the OpenAI Responses call in
+`localscan-discover.js` was written against documentation and has never been
+exercised against a live account.
+
+| Step | scope | limit | dry run | open PR | Costs | What it proves |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | unseeded | 25 | **on** | off | nothing | The plan and the bill are what you expect |
+| 2 | unseeded | **1** | off | **off** | ~$0.03 | The API call works and returns usable candidates |
+| 3 | unseeded | 25 | off | **on** | ~$0.75 | One reviewable PR. Read it, then merge |
+| 4+ | unseeded | 25 | off | on | ~$0.75 each | Repeat until the plan says nothing is left |
+
+Step 2 is the one not to skip. It prints the candidates to the job log instead
+of opening a PR, so three pence tells you whether the response parsing works
+before you commit to seventeen more runs.
+
+Locally instead, from a checkout:
+
 ```bash
 cd api
-# See the plan and the cost. Spends nothing.
+# The plan and the cost. Spends nothing, and needs no key.
 LOCALSCAN_DISCOVER_SCOPE=unseeded LOCALSCAN_DISCOVER_TARGET=20 \
   LOCALSCAN_DISCOVER_DRY_RUN=1 node discover-seeds.js
 
-# Do one batch: 25 towns, one PR.
+# One batch. Without GITHUB_TOKEN it prints findings instead of opening a PR.
 LOCALSCAN_DISCOVER_SCOPE=unseeded LOCALSCAN_DISCOVER_TARGET=20 \
   OPENAI_API_KEY=... GITHUB_TOKEN=... node discover-seeds.js
 ```

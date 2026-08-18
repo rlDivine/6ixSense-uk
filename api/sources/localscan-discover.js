@@ -419,11 +419,10 @@ export async function openCandidatesPR(found) {
 
 // ---- entrypoint, called by discover-seeds.js --------------------------------
 export async function runDiscovery() {
-  if (!process.env.OPENAI_API_KEY) {
-    console.log("[localscan-discover] OPENAI_API_KEY not set; nothing to do");
-    return { prUrl: null, regionsSearched: 0, candidatesFound: 0 };
-  }
-
+  // The plan is printed before the key is checked, deliberately. Working out
+  // how many towns are left and what they would cost is pure arithmetic over
+  // the seed list, so making somebody hold an API key just to ask "how much
+  // would this be?" would be a silly gate on the one step that spends nothing.
   const plan = discoveryPlan();
   console.log(
     `[localscan-discover] scope=${plan.scope} target=${plan.target}/region\n` +
@@ -434,6 +433,11 @@ export async function runDiscovery() {
   if (process.env.LOCALSCAN_DISCOVER_DRY_RUN) {
     console.log("[localscan-discover] LOCALSCAN_DISCOVER_DRY_RUN set; stopping before spending anything");
     return { prUrl: null, regionsSearched: 0, candidatesFound: 0, plan, dryRun: true };
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    console.log("[localscan-discover] OPENAI_API_KEY not set; nothing to do");
+    return { prUrl: null, regionsSearched: 0, candidatesFound: 0, plan };
   }
 
   const regionIds = searchRegionIds();
