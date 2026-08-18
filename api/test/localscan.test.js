@@ -366,6 +366,50 @@ test("one page seeded for two regions costs one LLM call but yields each region 
   );
 });
 
+test("a scan that runs out of budget returns what it has, and leaves the rest cached for next time", async () => {
+  // server.js kills any source that takes over 90 seconds and discards
+  // everything it produced. A cold scan of a well-seeded town can genuinely
+  // take that long, so the source stops starting new pages at its own budget
+  // and returns partial results instead of risking the lot.
+  const region = fakeRegion();
+  const seeds = Array.from({ length: 6 }, (_, i) => ({
+    regionId: region.id,
+    url: `https://example.test/budget-${n}-${i}`,
+    kind: "web",
+    label: `page ${i}`,
+  }));
+  const page = htmlResponse(pageHtml());
+  const oneEvent = openaiResponse([
+    { title: "Something on", description: "", category: "Music", startISO: null, venue: "", address: "", isFree: false, price: "" },
+  ]);
+
+  await withEnv({ OPENAI_API_KEY: "k", ...NO_DELAY, LOCALSCAN_BUDGET_MS: "0" }, () =>
+    withStubbedFetch(
+      (url) => route(url, page, { openai: oneEvent }),
+      async (calls) => {
+        // Budget of 0 means the deadline has already passed, so no page is
+        // even started. The point is that this resolves to an empty list
+        // rather than hanging or throwing.
+        const out = await fetchLocalScan(region, seeds);
+        assert.deepEqual(out, []);
+        assert.equal(calls.length, 0, "no page should be fetched once the budget is gone");
+      }
+    )
+  );
+
+  // With a real budget the same seeds now work, proving the guard is the
+  // budget and not something permanently broken.
+  await withEnv({ OPENAI_API_KEY: "k", ...NO_DELAY }, () =>
+    withStubbedFetch(
+      (url) => route(url, page, { openai: oneEvent }),
+      async () => {
+        const out = await fetchLocalScan(region, seeds);
+        assert.equal(out.length, 6);
+      }
+    )
+  );
+});
+
 test("two events at the same address geocode once and share the result; an unresolved address falls back to the region centre", async () => {
   const region = fakeRegion();
   const seed = seedFor(region);

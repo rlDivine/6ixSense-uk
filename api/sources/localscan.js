@@ -69,6 +69,31 @@ const MAX_PAGE_CHARS = 6000;
 // (a listings page read as many events) than a real village fete. Extra
 // results are dropped rather than the whole page being discarded.
 const MAX_EVENTS_PER_PAGE = 20;
+// How long one call to fetchLocalScan may spend before it stops starting new
+// work and returns whatever it already has.
+//
+// This exists because server.js kills any source that takes longer than 90
+// seconds (`withTimeout(s.run(region), 90000)`) and throws away everything it
+// produced. On a cold cache that is a real risk here and nowhere else: a
+// region with 22 seeded pages has to fetch and summarise all of them, at
+// three at a time, and then geocode each extracted event through a queue that
+// is deliberately rate limited to one request per second. All-or-nothing
+// against a hard 90 second ceiling means the first scan of a well seeded town
+// is the one most likely to return nothing at all.
+//
+// Returning partial results is strictly better. The pages that did get read
+// are cached by url regardless of whether this call finished (extractForPage
+// writes the cache as soon as it has an extraction), so the next refresh
+// starts warm and completes easily. 70 seconds leaves headroom under the 90.
+// Read per call rather than captured here: an env value frozen at module load
+// cannot be changed by a test (or by a restart-free config change), and this
+// file already learned that once with the geocode delay below.
+const scanBudgetMs = () => Number(process.env.LOCALSCAN_BUDGET_MS ?? 70000);
+// Geocoding is the slowest thing per event, so it gets a tighter budget than
+// the scan as a whole. Past this, events still ship, they just fall back to
+// the region centre, which is the same fallback an unresolvable address
+// already gets.
+const geocodeBudgetMs = () => Number(process.env.LOCALSCAN_GEOCODE_BUDGET_MS ?? 45000);
 // Anything the model claims starts before today (allowing for timezone slop)
 // or further out than this is treated as a bad extraction and dropped rather
 // than shown. Real community listings are rarely announced this far ahead.
@@ -374,7 +399,7 @@ async function extractForPage(seed, region) {
   return entry;
 }
 
-async function scanPage(seed, region) {
+async function scanPage(seed, region, deadline = Infinity) {
   const page = await extractForPage(seed, region);
   if (page.thin) return [];
   const extracted = page.extracted;
@@ -418,9 +443,17 @@ async function scanPage(seed, region) {
   // Resolve coordinates after building the events, so a slow or failed
   // geocode cannot stop an event from being returned: it just keeps null
   // coordinates and the caller falls back to the region's own centre.
+  //
+  // Bounded by the caller's deadline. Nominatim is rate limited to one
+  // request per second by its own usage policy, so a page that produced
+  // thirty events with thirty distinct addresses is thirty seconds of
+  // queueing on its own. Past the budget the remaining events take the
+  // region centre, which is the same fallback an unresolvable address gets,
+  // rather than the whole scan overrunning and being discarded.
+  const geocodeDeadline = Math.min(deadline, Date.now() + geocodeBudgetMs());
   for (const e of events) {
     const query = [e.venue, e.address, region.label, "UK"].filter(Boolean).join(", ");
-    const point = await geocode(query);
+    const point = Date.now() < geocodeDeadline ? await geocode(query) : null;
     if (point) {
       e.lat = point.lat;
       e.lng = point.lng;
@@ -448,16 +481,28 @@ function hashOf(s) {
 // them all at once. Mirrors eventbrite.js's own pool(), kept local rather
 // than shared: the two sources' retry/error handling differs enough that a
 // shared abstraction would need parameterising for no real saving.
-async function pool(items, limit, fn) {
+async function pool(items, limit, fn, deadline = Infinity) {
   const out = [];
   let i = 0;
+  let skipped = 0;
   const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
     while (i < items.length) {
       const idx = i++;
+      // Stop starting new pages once the budget is gone. Whatever has already
+      // been read stays in the per-url cache, so the next refresh picks up
+      // where this one stopped rather than repeating it.
+      if (Date.now() >= deadline) {
+        out[idx] = [];
+        skipped++;
+        continue;
+      }
       out[idx] = await fn(items[idx]).catch(() => []);
     }
   });
   await Promise.all(workers);
+  if (skipped) {
+    console.log(`[localscan] budget reached, ${skipped} page(s) left for the next refresh`);
+  }
   return out;
 }
 
@@ -474,6 +519,7 @@ export async function fetchLocalScan(region, seedsOverride = null) {
     : SEEDS_BY_REGION.get(region.id);
   if (!seeds || seeds.length === 0) return []; // nothing watched here yet
 
-  const results = await pool(seeds, 3, (seed) => scanPage(seed, region));
+  const deadline = Date.now() + scanBudgetMs();
+  const results = await pool(seeds, 3, (seed) => scanPage(seed, region, deadline), deadline);
   return results.flat();
 }
