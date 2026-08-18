@@ -74,15 +74,30 @@ Two things bound that cost, and both matter:
   in `localscan.js`.
 
 Putting numbers on that, because 350 URLs is a different regime from the 22
-this started with. At roughly 2,000 input and 400 output tokens per page on
-gpt-4o-mini, one page costs about $0.0005 per extraction, so a town watching
-20 pages on a 12 hour TTL is around **$0.65 a month while it is being browsed
-daily**. The four warm regions are the only ones billed unconditionally, which
-is a couple of dollars a month. The exposure to know about is the tail: if all
-47 seeded towns were browsed daily it would be roughly $30 a month, and if a
-full 457-town sweep were ever seeded and used it would be in the hundreds. That
-is a traffic problem you would want to have, but it is not a surprise you
-should discover from a bill.
+this started with, and because the research cost and the running cost are
+different things that are easy to conflate.
+
+**Researching a town is one-time.** A full sweep of the country through
+`discover-seeds.js` is roughly $12, paid once.
+
+**The pages it finds are a subscription.** At roughly 2,000 input and 400
+output tokens per page on gpt-4o-mini, one extraction costs about $0.00054, and
+a 12 hour TTL means at most two a day. So every seeded page is about
+**$0.032 a month**, about 2.5p, for as long as it stays in the list and its town
+keeps being opened.
+
+| Stage | Distinct URLs | Per month, if every seeded town is browsed daily |
+| --- | --- | --- |
+| Now | 351 | $11.37 |
+| Now, warm regions only | 41 | $1.33 |
+| Whole country at ~5 pages a town | 2,285 | $74 |
+| Whole country at ~7 pages a town | 3,199 | $104 |
+
+The second row is the one that describes a quiet app, and it is the floor:
+`WARM_REGIONS` refresh on a timer whether or not anybody asks, and nothing else
+is billed until somebody opens that town. The lower rows are what success would
+cost, which is a problem worth having and not a surprise worth discovering from
+a bill.
 
 Three dials if it ever matters: `LOCALSCAN_MAX_SEEDS_PER_REGION` (default 24)
 caps pages per town, `PAGE_TTL_MS` in `localscan.js` sets how often a page is
