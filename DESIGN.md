@@ -301,6 +301,25 @@ the whole feed.
 **Preferences**, interests, and a location picker over all 454 towns grouped by
 nation and county with a filter field.
 
+**Unlock**, the one purchase screen. VenTrack is free to download; browsing
+towns other than the one you are in, looking past the next seven days, and
+keeping more than three saved events with reminders are behind a single
+non-consumable purchase. The sheet takes an `UnlockReason` and leads with the
+gate the user actually walked into, rather than opening on a generic feature
+list.
+
+This is the screen most likely to be designed badly, so the constraint is worth
+stating: **no countdown, no crossed-out price, no "most popular" badge on a
+single product, no dark pattern on the dismiss.** There is one thing to buy and
+one price. On a utility, an honest presentation of that outperforms a sales
+page, and the current version is plain on purpose rather than for want of
+effort. What it could use is warmth, not urgency.
+
+Locked controls carry a small padlock and stay tappable, because a control you
+can see and understand is a better offer than one that silently is not there.
+`LockBadge` is that padlock, and it is the same on the range pill, the town
+rows, the address row and the reminder switch.
+
 Every list screen needs **loading, empty and error** states. They exist and are
 plain; they are a good place to add character.
 
@@ -345,6 +364,7 @@ In rough order of value:
 | No-photo artwork | the card renderer in `app.js` and `.card` art rules in `styles.css` | `ios/VenTrack/Design/CategoryArtwork.swift` |
 | The logo | `api/public/icon.svg` **and** the inline brand marks in `api/public/index.html` and `api/webapp/index.html` | `VenTrackLogoGeometry` in `Theme.swift`, then `node ios/tools/make_icon.js`, keeping `make_icon.swift` in step |
 | Screen layout | `api/webapp/index.html` | `ios/VenTrack/Views/` |
+| The unlock sheet and padlocks | not in the web app | `ios/VenTrack/Views/PaywallView.swift` |
 
 The web client is the faster loop and renders in a headless browser, so it is
 the sensible place to try something before porting it to SwiftUI.

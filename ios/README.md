@@ -1,6 +1,6 @@
 # VenTrack: native iOS app (SwiftUI)
 
-A native **SwiftUI** app for iPhone and iPad that shows what's on across the
+A native **SwiftUI** app for iPhone that shows what's on across the
 United Kingdom, sorted by how close and how soon. It is a **client** for the
 Express backend in [`../api`](../api). The backend does the aggregation and
 the distance and time sorting, and the app renders it natively.
@@ -21,7 +21,8 @@ open VenTrack.xcodeproj
 project is committed, so you only need to re-run it after adding or renaming a
 Swift file.
 
-Pick an iPhone or iPad simulator and hit Cmd-R.
+Pick an iPhone simulator and hit Cmd-R. The app is iPhone only; see the note
+on `TARGETED_DEVICE_FAMILY` below.
 
 ## Running on your own iPhone
 
@@ -76,8 +77,8 @@ carrying its four configured API keys across, which is its own migration.
 | **Event detail** | Hero, key facts, a still venue map from `MKMapSnapshotter` with an Apple Maps directions link, Share, Save, "Get tickets and details" |
 | **Saved** | Grouped by date, per-event reminder as a local notification 2h before |
 | **Search** | Live filter over title, venue and category, plus date phrases ("this weekend", "25/7") and UK address lookup |
-| **Preferences** | Interests, and a location picker over all 454 UK towns, grouped by nation and county |
-| **iPad** | A real regular-width layout: `NavigationSplitView` sidebar, adaptive grid, map pane |
+| **Preferences** | Interests, a location picker over all 454 UK towns grouped by nation and county, and the unlock with Restore |
+| **Unlock** | One non-consumable in-app purchase. Free covers the town you are in, seven days ahead and three saves |
 | **Design** | Union flag palette, restrained category colours, light and dark (follows system), no gradients |
 | **Persistence** | Saved events, reminders, interests and location override in `UserDefaults`. No account. |
 
@@ -139,29 +140,51 @@ VenTrack/
   Models/Preference.swift       Interest buckets and their keywords
   Models/DateQueryParser.swift  "this weekend", "25/7", "next friday"
   Services/EventService.swift   async URLSession client (baseURL here)
-  State/AppState.swift          ObservableObject: fetch, filters, location, saved, reminders
+  Services/Store.swift          StoreKit 2: the one non-consumable unlock, and restore
+  State/AppState.swift          ObservableObject: fetch, filters, location, saved, reminders, every gate
   Design/Theme.swift            Colour tokens, category palette, VenTrackLogo, date and distance helpers
   Design/CategoryArtwork.swift  The drawn thumbnail for an event with no photo: twelve motifs
   Views/                        VenTrackApp.swift (also holds RootView and MainTabView),
                                 OnboardingView, DiscoverView, EventCard, EventMapView,
                                 SavedView, SearchView, EventDetailView,
-                                PreferencesView, RegionBrowserView, States
-  Views/iPad/                   Regular-width shell, map pane, sidebar primitives
+                                PreferencesView, RegionBrowserView, PaywallView, States
   Assets.xcassets/              AppIcon: the three 1024px PNGs and their Contents.json
   Info.plist                    Location usage string and the local-network ATS exceptions
 project.rb                      Regenerates VenTrack.xcodeproj
+VenTrack.storekit               Local StoreKit config, so the purchase works in the simulator
 tools/make_icon.js|.swift       Generates the AppIcon PNGs from VenTrackLogoGeometry
 ```
+
+## The gate
+
+VenTrack is free to download. One non-consumable purchase unlocks browsing
+towns other than the one you are in, looking past the next seven days, and
+keeping more than three saved events with reminders. The reasoning, the price
+and the App Store Connect setup are in [APPSTORE.md](APPSTORE.md).
+
+Every gate reads one property, `AppState.unlocked`, which `Store` keeps in step.
+Views never talk to StoreKit. The checks themselves live at the funnels rather
+than at each call site: `setOverride` is the only way to change town, whichever
+of the four routes in the user took, so that is where the town check sits.
+
+To work on the purchase flow, point the scheme at the local configuration once:
+**Product, Scheme, Edit Scheme, Run, Options, StoreKit Configuration,
+VenTrack.storekit**. That lives in the scheme, which Xcode generates, so
+`project.rb` cannot set it for you. Without it there is no product, so the
+paywall opens with no price on it. **Debug, StoreKit, Manage Transactions**
+resets a test purchase so the locked state can be tried again.
 
 ## Notes
 
 - Deployment target **iOS 17**, set in `project.rb`. The map is UIKit's
   `MKMapView` behind a `UIViewRepresentable`, not the SwiftUI `Map` view, so
   the clustering and per-annotation styling go through `MKMapViewDelegate`.
-- `TARGETED_DEVICE_FAMILY` must stay `1,2`. Shipping iPhone-only makes iPadOS
-  run the app in scaled-compatibility mode, so the `Views/iPad` layout never
-  activates, which is what got the 6ix Sense 1.0 (1) build rejected under
-  Guideline 4 (Design). VenTrack inherits both the layout and the requirement.
+- `TARGETED_DEVICE_FAMILY` is `1`, iPhone only, and the `Views/iPad` layout it
+  used to pair with has been deleted. The rejection risk that got 6ix Sense
+  1.0 (1) turned down under Guideline 4 was claiming iPad support the app did
+  not honour, not this value on its own. If iPad support is ever restored, put
+  both halves back together; half the pair is what caused the rejection. The
+  long comment in `project.rb` has the full history.
 - Bundle id is `com.voice2jobs.ventrackuk`, a new App Store product rather than
   an update to 6ix Sense. It is also distinct from the old
   `com.voice2jobs.pulseuk`, which is the point: VenTrack ships as its own

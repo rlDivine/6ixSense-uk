@@ -38,51 +38,130 @@ Six warnings, none of which block anything:
 | Primary category | Entertainment |
 | Secondary category | Travel |
 | Copyright | 2026 Voice2Jobs Inc. |
+| Contains in-app purchases | Yes, one non-consumable |
 
 Name is 8 characters and the subtitle is 29, both inside Apple's 30 character
 limits.
 
 ## Pricing and availability
 
-VenTrack is **paid upfront**: one price, no free tier, no in-app purchase, no
-subscription. That is a decision, not a default, and there are two things to
-set up before it can be one.
+VenTrack is **free to download** with a single **non-consumable in-app
+purchase** that unlocks the rest. Not a subscription, and no ads.
 
 | Field | Value |
 | --- | --- |
-| Business model | Paid, one time |
-| Price | £2.99 suggested (see below) |
+| Business model | Free with one in-app purchase |
+| App price | Free |
+| In-app purchase | VenTrack Full Unlock, non-consumable |
+| Product ID | `com.voice2jobs.ventrackuk.full` |
+| Price | £4.99 suggested |
 | Availability | United Kingdom only |
-| In-app purchases | None |
 | Subscriptions | None |
 
-**Do the Agreements, Tax and Banking section first.** In App Store Connect,
-under Business, there is a Paid Applications agreement that is separate from
-the free one every account already has. Until it is signed, and until a bank
-account and tax forms are attached to it, the price selector for a new app is
-locked to Free. This is not a warning that appears at submission time; the
-option simply is not there, and it is the single most common reason a first
-paid app ends up shipped free by accident. Sort it before you build the
-listing, because the tax forms can take a day or two to clear.
+### Why not paid upfront
 
-**Availability is the UK only.** Every region in `sources/regions.js` is a
-British town, distances are in miles and the fixture data is domestic football.
-Someone in another country who buys this gets an app with nothing near them,
-and refund requests and one star reviews follow. Set the territory list to
-United Kingdom and widen it later if the data ever supports it.
+Because the coverage is uneven by design and the buyer cannot see that before
+paying. `localscan` currently seeds 22 pages for Ramsgate, 3 for Margate, 1 for
+Broadstairs and none for the other 451 towns. "The listings others miss" is the
+one thing VenTrack does that a browser does not, and it is true in one town.
 
-**On the price.** £2.99 is the suggestion rather than a fixed answer. It sits
-above the £0.99 impulse tier that invites refund churn, and low enough that it
-is not a considered purchase. Worth being clear about the trade you have
-already chosen: paid upfront converts poorly for a discovery app, because
-nobody can see the listings before paying and there is no way to tell whether
-the coverage is good in their town. Expect low install numbers and a high
-proportion of people who actually use it. If the numbers disappoint, the usual
-next step is a free tier limited to one town with the rest paid, which is a
-larger change than a price edit and worth planning rather than improvising.
+Charge upfront and a Manchester buyer pays for a promise that returns nothing
+extra for Manchester, asks Apple for a refund, which Apple grants readily, and
+leaves a one star review. Meanwhile the Ramsgate user who would have paid
+happily never finds the app, because a paid app gets almost no organic installs.
+Free download plus an unlock puts the trial before the payment, which is the
+only order that works when quality varies this much by location.
 
-The landing page is what carries the pitch to someone who has not paid yet.
-See `api/README.md`.
+### What is free and what is not
+
+Free, and deliberately good enough to keep on the phone:
+
+- Wherever the phone is, plus the town the backend resolves for it
+- Every category, every source, the map, the event detail, sharing
+- The next seven days
+- Three saved events
+
+Behind the unlock:
+
+- Any other town: all 454 in the catalogue, plus any address you type, plus
+  "search this area" on the map
+- The whole calendar instead of the next seven days
+- Unlimited saves, and reminders at all
+
+### Do these two things before anything else
+
+1. **Complete Agreements, Tax and Banking.** In App Store Connect under
+   Business there is a Paid Applications agreement, separate from the free one
+   every account already has. Until it is signed with a bank account and tax
+   forms attached, you cannot create a paid in-app purchase at all. This is not
+   a warning at submission time; the option simply is not there. Tax forms can
+   take a day or two to clear, so start now.
+2. **Enrol in the Apple Small Business Program.** Commission drops from 30% to
+   15% for anyone under $1M a year. It takes about five minutes and applies
+   from the following month. Most first time developers never notice it exists.
+
+What you keep per unlock, after UK VAT and commission:
+
+| Price | At 30% | At 15% (Small Business) |
+| --- | --- | --- |
+| £2.99 | £1.74 | £2.12 |
+| £4.99 | £2.91 | £3.53 |
+
+£4.99 rather than £2.99 because someone who has already used the app and liked
+it is a warm buyer. Price sensitivity after the fact is far lower than cold,
+which is why freemium unlocks are normally priced above the equivalent paid app.
+
+Running costs are about £76 a year (Render Starter plus OpenAI), or £155
+including the developer programme fee. Break even is **22 unlocks a year**, or
+44 including the fee. The bar is low. Getting the installs to convert is the
+hard part, not the price.
+
+### Creating the in-app purchase
+
+In App Store Connect, under the app, Monetization, In-App Purchases:
+
+| Field | Value |
+| --- | --- |
+| Type | Non-Consumable |
+| Reference Name | VenTrack Full Unlock |
+| Product ID | `com.voice2jobs.ventrackuk.full` |
+| Display Name | VenTrack, unlocked |
+| Description | Browse any of more than 450 UK towns, see the whole calendar rather than the next seven days, and keep as many events as you like with reminders. |
+
+The Product ID must match `Store.productID` in
+`ios/VenTrack/Services/Store.swift` exactly. A mismatch is silent: the paywall
+opens with no price on it and the button does nothing.
+
+A non-consumable needs a screenshot of the purchase screen for review. Take it
+of the paywall sheet, which is what `PaywallView` renders.
+
+### Testing it before it exists
+
+`ios/VenTrack.storekit` is a local StoreKit configuration with the same product
+in it, so the whole flow works in the simulator with no App Store Connect
+involvement. Point the scheme at it once: **Product, Scheme, Edit Scheme, Run,
+Options, StoreKit Configuration, VenTrack.storekit**. That setting lives in the
+scheme, which Xcode generates, so `project.rb` cannot set it for you.
+
+With it selected you can buy, and you can reset with **Debug, StoreKit, Manage
+Transactions** to test the locked state again. Test at least: buy, relaunch and
+confirm it is still unlocked, delete the app and reinstall and use Restore, and
+Ask to Buy if you can, since that is the `.pending` path.
+
+### Availability is the UK only
+
+Every region in `sources/regions.js` is a British town, distances are in miles
+and the fixture data is domestic football. Someone abroad who installs this gets
+an app with nothing near them. Set the territory list to United Kingdom and
+widen it later if the data ever supports it.
+
+### If the numbers disappoint
+
+The lever to reach for is the free tier, not the price. Widening what free gets
+grows installs and reviews; narrowing it converts more of the ones you have.
+Changing £4.99 to £5.99 does neither. Before touching any of it, seed five or
+six more towns properly so the differentiator is true somewhere other than
+Ramsgate, because right now that is the thing actually limiting the ceiling.
 
 ## URLs
 
@@ -122,7 +201,7 @@ Up to 170 characters. This one is 147 and can be changed later without a new
 build, which the description cannot.
 
 ```
-Find what is on near you across the UK tonight, this weekend or any date you pick. Ranked by how close and how soon, with no account and no sign up.
+Free to use where you are. Find what is on near you across the UK tonight or this weekend, ranked by how close and how soon, with no account and no sign up.
 ```
 
 ## Description
@@ -155,6 +234,10 @@ Distances in miles. Dates written the way you write them. Prices in pounds. Foot
 NO ACCOUNT, NO SIGN UP
 
 There is nothing to join. Saved events, reminders and your chosen interests stay on your device. Your location is used to work out how far away things are and for nothing else.
+
+FREE WHERE YOU ARE
+
+VenTrack is free for the town you are in, every category, every source, the map and the next seven days, plus three saved events. One optional purchase unlocks the rest for good: any of more than 450 towns or any address you type, the whole calendar instead of the next seven days, and unlimited saves with reminders. It is a single payment, not a subscription, and there are no ads.
 ```
 
 ## Keywords
@@ -170,16 +253,25 @@ whats on,gigs,concerts,festivals,near me,tonight,london,manchester,things to do,
 ## What to Test, for TestFlight
 
 ```
-Check the feed loads and is sorted by distance. Switch the sort to Soonest. Change the city from Settings and confirm the feed follows it and survives a relaunch. Try a date search such as "this weekend" or "july 25 to 27". Open the map, collapse the tray, reopen it. Save an event, set the reminder, add one to your calendar. Try it in both light and dark appearance.
+Check the feed loads and is sorted by distance. Switch the sort to Soonest. Try a date search such as "this weekend". Open the map, collapse the tray, reopen it. Save an event and add one to your calendar. Try it in both light and dark appearance.
+
+Then the unlock. Before buying: confirm you can save three events and that the fourth offers the unlock instead, that "All upcoming" and the town list show a padlock, and that Settings offers Restore. Buy it, and confirm the padlocks are gone, the town list works and reminders can be switched on. Force quit and relaunch, and confirm it is still unlocked. Delete the app, reinstall, and use Settings, Restore a previous purchase.
 ```
 
 ## App Privacy answers
 
 The answers below are what the code actually does. They were checked rather
 than assumed: the app imports only Apple frameworks (CoreLocation, MapKit,
-SwiftUI, UIKit, UserNotifications, Foundation, QuartzCore), has zero third
-party packages, contains no analytics or advertising SDK, and makes no network
-request to any host other than its own API.
+StoreKit, SwiftUI, UIKit, UserNotifications, Foundation, QuartzCore), has zero
+third party packages, contains no analytics or advertising SDK, and makes no
+network request to any host other than its own API and Apple's.
+
+**The in-app purchase does not add a row to this label.** StoreKit transactions
+are between the user and Apple. The app reads whether this Apple Account owns
+the unlock and stores a single Bool on the device; it never sends purchase
+information anywhere, has no analytics to send it to, and has no account to
+attach it to. So "Purchases" stays unchecked, and that is a statement about the
+code rather than an omission.
 
 **Do you collect data from this app?** Yes. One item only.
 
@@ -291,6 +383,8 @@ The app reads from its own backend at https://pulse-uk-api.onrender.com. That se
 Location permission is optional. If it is declined the app still works: it defaults to a UK city and you can change it from Settings, then the gear icon, then Change city.
 
 Event listings come from Ticketmaster, Skiddle, PredictHQ, Eventbrite and public football fixture data, plus a small curated list of well known UK venues.
+
+The app is free for the town you are in, the next seven days and three saved events. One non-consumable purchase, VenTrack Full Unlock, adds the other UK towns, the full date range and unlimited saves with reminders. It can be reached from any padlocked control, and from Settings, which also carries Restore. There is no account, so there is nothing to log in to in order to test it.
 ```
 
 Open that URL in a browser yourself before submitting, and again each day
@@ -303,11 +397,19 @@ mid-review can still leave the reviewer with a cold instance.
 Being straight about what is unfinished, since these are the likely rejection
 points rather than anything on the list above:
 
-- **No screenshots exist yet.** They need a device.
-- **Agreements, Tax and Banking is almost certainly not done.** Without it the
-  app cannot be sold at any price and the listing will only offer Free. See
+- **No screenshots exist yet.** They need a device. One of them has to be of
+  the paywall sheet, which App Review requires for a non-consumable.
+- **Agreements, Tax and Banking is almost certainly not done.** Without it you
+  cannot create a paid in-app purchase at all, so the unlock cannot exist. See
   Pricing and availability above. Along with the screenshots, this is what
   actually stands between here and a submission.
+- **The in-app purchase has not been created in App Store Connect.** The code
+  is written and testable against `ios/VenTrack.storekit`, but nothing has been
+  registered under the real product ID yet, and the app binary and the product
+  are reviewed together.
+- **The purchase flow has never run against real StoreKit.** It has the local
+  configuration to test against, which is not the same thing. Sandbox test on a
+  device before submitting, including Restore on a fresh install.
 - **It compiles but it has never been through a full manual pass on a device.**
   A green build proves the code is well formed, not that every screen behaves.
   Walk the What to Test list above before you submit.

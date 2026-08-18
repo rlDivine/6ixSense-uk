@@ -106,7 +106,9 @@
         border: 1px solid var(--hairline);
         font-weight: 600;
       }
-      .cta-note { font-size: 13.5px; color: var(--ink-2); margin-top: 12px; }
+      /* Same measure as the lede, so the hero reads as one column rather than
+         a paragraph that suddenly runs wider than the one above it. */
+      .cta-note { font-size: 13.5px; color: var(--ink-2); margin-top: 14px; max-width: 34em; }
 
       section { padding: 34px 0; border-top: 1px solid var(--hairline); }
       h2 { font-size: 19px; margin: 0 0 18px; letter-spacing: -0.3px; }
@@ -159,6 +161,10 @@
           starts, for more than 450 towns and cities.
         </p>
         {{CTA}}
+        <p class="cta-note">
+          Free to download. One optional purchase unlocks every UK town, the
+          whole calendar and unlimited saves. Not a subscription, and no ads.
+        </p>
       </div>
 
       <div class="wrap">
@@ -183,11 +189,15 @@
             </div>
             <div class="card">
               <h3>Save it, and be reminded</h3>
-              <p>Keep anything you like and get a reminder two hours before it starts. Add it straight to your calendar.</p>
+              <p>Keep what you like and get a reminder two hours before it starts. Add anything straight to your calendar.</p>
             </div>
             <div class="card">
               <h3>No account, no sign up</h3>
               <p>Nothing to join. Saved events stay on your device. Your location is used to work out distance and nothing else.</p>
+            </div>
+            <div class="card">
+              <h3>Free where you are</h3>
+              <p>Your own town, every category, the map and the next seven days cost nothing. One payment unlocks the other 450 towns, the full calendar and unlimited saves.</p>
             </div>
           </div>
         </section>
