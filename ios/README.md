@@ -123,11 +123,12 @@ swift tools/make_icon.swift out.png light      # or dark, or tinted
 
 Both produce opaque 1024 by 1024 PNGs with no alpha, as the App Store requires.
 
-That is three copies of the geometry in this directory, and two more outside it:
-`api/public/icon.svg`, and the inline brand mark in the header of
-`api/public/index.html`. Five in total, kept in step by hand, so a change to the
-shape means editing all five. The web header is the one most easily forgotten
-and the one a user sees most often.
+That is three copies of the geometry in this directory, and three more outside
+it: `api/public/icon.svg`, the inline brand mark in the header of
+`api/public/index.html` (the landing page), and the inline mark in
+`api/webapp/index.html` (the web app). Six in total, kept in step by hand, so a
+change to the shape means editing all six. The landing page one is both the most
+easily forgotten and the one the public sees most often.
 
 ## Structure
 

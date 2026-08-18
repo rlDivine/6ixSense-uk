@@ -252,7 +252,9 @@ test("canonicalCategory sends anything unrecognised to the real generic bucket",
 
 test("every canonical category has a colour in the web client", async () => {
   const fs = await import("node:fs");
-  const js = fs.readFileSync(new URL("../public/app.js", import.meta.url), "utf8");
+  // webapp/, not public/: public/ is the marketing site now, and the web app
+  // moved out of it when the landing page took over the root.
+  const js = fs.readFileSync(new URL("../webapp/app.js", import.meta.url), "utf8");
   const named = new Set(
     [...js.matchAll(/^\s*"?([A-Za-z][A-Za-z &-]*?)"?:\s*\{\s*c:\s*"#/gm)].map((m) => m[1].toLowerCase())
   );

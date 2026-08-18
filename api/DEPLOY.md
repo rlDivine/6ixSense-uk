@@ -139,6 +139,30 @@ quickest way to check a deploy picked them up.
 Optionally set `WARM_REGIONS` to change which towns stay pre-warmed. The
 default is `london,manchester,birmingham,glasgow`.
 
+## The landing page, and `APP_STORE_URL`
+
+The service's root URL is a landing page, not the app. It used to be the full
+web app, which meant anyone who found this hostname got the whole product free
+next to a paid iOS app. The web app now lives in `api/webapp/` and is only
+served when `SERVE_WEB_APP` is set, which it should not be in production.
+`api/README.md` has the reasoning, including what this does not fix.
+
+Set one more variable once the app is on sale:
+
+```
+APP_STORE_URL = https://apps.apple.com/gb/app/ventrack/id0000000000
+```
+
+Leave it unset until then. The page renders "Coming soon to the App Store" as
+plain text rather than a dead button, so it is safe to have live before launch.
+
+**Anyone who opened the old site is still holding a copy of the web app.** Its
+service worker cached the app shell and serves from that cache without asking
+the network, so deleting the files did not reach them. `api/public/sw.js` is
+now a kill switch that unregisters the old worker and clears its caches on the
+next visit. Do not delete that file: deleting it leaves the old worker
+registered indefinitely.
+
 ## The service name stays `pulse-uk-api`
 
 The product was renamed from Pulse to VenTrack. The Render service was not, and

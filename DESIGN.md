@@ -31,7 +31,10 @@ worldwide fallback. Someone who opens it abroad is shown London and told why.
 Two clients share one backend and one design language:
 
 - **iOS** (`ios/`), SwiftUI, iPhone and iPad, iOS 17 and up
-- **Web** (`api/public/`), a vanilla-JS installable PWA
+- **Web** (`api/webapp/`), a vanilla-JS installable PWA. It is a development
+  and design tool now rather than a shipped product: the public site at
+  `api/public/` is a landing page, and the web app is only served when
+  `SERVE_WEB_APP` is set. See `api/README.md`.
 
 They are not a shared codebase, so a design decision has to be expressible in
 both. Anything that only works in one is not a design decision, it is a
@@ -96,7 +99,7 @@ the dark page, and dark enough to carry a white label when it is the
 background. No single value does both. On light, Pantone 186 already carries
 white at 5.9:1, so the two tokens are the same and the split costs nothing.
 
-Defined in two places that must stay in step: `api/public/styles.css` (the
+Defined in two places that must stay in step: `api/webapp/styles.css` (the
 `:root` and `[data-theme="light"]` blocks) and `ios/VenTrack/Design/Theme.swift`
 (`enum Tok`).
 
@@ -199,20 +202,21 @@ If a future pass finds a reading of the two axes that does not resemble a wifi
 glyph, it is worth revisiting; 1b is a decision made under a real objection, not
 a preference.
 
-One geometry, mirrored by hand in **five** places, all of which have to move
+One geometry, mirrored by hand in **six** places, all of which have to move
 together:
 
 - `ios/VenTrack/Design/Theme.swift`, `VenTrackLogoGeometry`, the in-app mark as
   a SwiftUI `Shape`
 - `ios/tools/make_icon.js`, which rasterises the App Store icons
 - `ios/tools/make_icon.swift`, the CoreGraphics twin of that tool
-- `api/public/icon.svg`, the PWA and home screen icon
-- the inline `<svg>` in the brand strip of `api/public/index.html`
+- `api/public/icon.svg`, the site and home screen icon
+- the inline `<svg>` in the header of `api/public/index.html`, the landing page
+- the inline `<svg>` in the brand strip of `api/webapp/index.html`, the web app
 
-The last of those is the one that actually renders in the web header, and it was
-missing from every cross-reference in the codebase for a while, so a change to
-the mark landed everywhere except the place a user sees it. If you touch the
-geometry, start by listing all five.
+The last two are the ones that actually render, and the web one was missing from
+every cross-reference in the codebase for a while, so a change to the mark landed
+everywhere except the place a user sees it. If you touch the geometry, start by
+listing all six.
 
 ## 4. Hard constraints
 
@@ -334,13 +338,13 @@ In rough order of value:
 
 | You want to change | Web | iOS |
 |---|---|---|
-| Colour tokens | `api/public/styles.css` top block | `ios/VenTrack/Design/Theme.swift`, `enum Tok` |
-| Category colours and icons | `CATS` and `ICON_PATHS` in `api/public/app.js` | `Categories` in `Theme.swift` |
-| Interface icons | `UI_ICONS` in `api/public/app.js` | SF Symbol names inline |
+| Colour tokens | `api/webapp/styles.css` top block | `ios/VenTrack/Design/Theme.swift`, `enum Tok` |
+| Category colours and icons | `CATS` and `ICON_PATHS` in `api/webapp/app.js` | `Categories` in `Theme.swift` |
+| Interface icons | `UI_ICONS` in `api/webapp/app.js` | SF Symbol names inline |
 | The card | `cardHTML` in `app.js`, `.card` in `styles.css` | `ios/VenTrack/Views/EventCard.swift` |
 | No-photo artwork | the card renderer in `app.js` and `.card` art rules in `styles.css` | `ios/VenTrack/Design/CategoryArtwork.swift` |
-| The logo | `api/public/icon.svg` **and** the inline brand mark in `api/public/index.html` | `VenTrackLogoGeometry` in `Theme.swift`, then `node ios/tools/make_icon.js`, keeping `make_icon.swift` in step |
-| Screen layout | `api/public/index.html` | `ios/VenTrack/Views/` |
+| The logo | `api/public/icon.svg` **and** the inline brand marks in `api/public/index.html` and `api/webapp/index.html` | `VenTrackLogoGeometry` in `Theme.swift`, then `node ios/tools/make_icon.js`, keeping `make_icon.swift` in step |
+| Screen layout | `api/webapp/index.html` | `ios/VenTrack/Views/` |
 
 The web client is the faster loop and renders in a headless browser, so it is
 the sensible place to try something before porting it to SwiftUI.

@@ -35,8 +35,9 @@ const VARIANTS = {
 // "Beacon": a map pin with a pulse trace knocked out of it as a counter. These
 // numbers are the reference geometry documented in ios/VenTrack/Design/Theme.swift
 // (VenTrackLogoGeometry) and reproduced in ios/tools/make_icon.swift and
-// api/public/icon.svg, plus the inline brand mark in api/public/index.html.
-// Change one, change all five.
+// api/public/icon.svg, plus the inline brand marks in api/public/index.html
+// (the landing page) and api/webapp/index.html (the web app).
+// Change one, change all six.
 //
 // The old mark was a stroke, so it could be rasterised from a distance field.
 // This one is a filled outline built from two circular arcs, two cubics and a

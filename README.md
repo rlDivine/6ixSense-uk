@@ -145,16 +145,17 @@ knocked-out counter is harder to hold at small sizes than separated shapes are,
 and at 18pt in a header the trace is near the limit of what survives. See
 [`DESIGN.md`](DESIGN.md) for the full trade.
 
-One geometry, five implementations kept in step by hand:
+One geometry, six implementations kept in step by hand:
 
 - `ios/VenTrack/Design/Theme.swift`, `VenTrackLogoGeometry`, the in-app mark
 - `ios/tools/make_icon.js`, which generates the three App Store icon PNGs
   (`node tools/make_icon.js`)
 - `ios/tools/make_icon.swift`, the CoreGraphics twin of that tool, for running
   on a Mac
-- `api/public/icon.svg`, the PWA and home screen icon
-- the inline `<svg>` in the brand strip of `api/public/index.html`, which is the
-  one that actually renders in the web header
+- `api/public/icon.svg`, the site and home screen icon
+- the inline `<svg>` in the header of `api/public/index.html`, the landing page,
+  which is the one the public actually sees
+- the inline `<svg>` in the brand strip of `api/webapp/index.html`, the web app
 
 ## Designing
 

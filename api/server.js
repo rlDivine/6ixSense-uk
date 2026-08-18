@@ -10,6 +10,7 @@ import { fetchCurated } from "./sources/curated.js";
 import { fetchEventbrite } from "./sources/eventbrite.js";
 import { fetchPredictHQ } from "./sources/predicthq.js";
 import { fetchLocalScan } from "./sources/localscan.js";
+import { landingPage } from "./landing.js";
 import {
   CITIES,
   DEFAULT_REGION,
@@ -324,7 +325,44 @@ function timeRank(a, b) {
   return a.startMs - b.startMs;
 }
 
-app.use(express.static(path.join(__dirname, "public")));
+// ---------------------------------------------------------------------------
+// The public site.
+//
+// `public/` is the marketing site: a landing page, the privacy policy and the
+// support page (the latter two are linked from the App Store listing, so they
+// have to stay reachable at these exact paths). It is deliberately NOT the
+// app. The web app that used to live here gave the whole product away next to
+// a paid iOS app, and now lives in `webapp/`, served only when SERVE_WEB_APP
+// is set, which is for local development.
+//
+// Note this hides the HTML, not the data: /api/events is still open and
+// unauthenticated, which is what the shipped app needs to call. Locking that
+// down is a separate job from this one.
+// ---------------------------------------------------------------------------
+
+// The call to action is filled in from APP_STORE_URL. See landing.js, which
+// is a separate module only so it is testable without booting a listener.
+const sendLanding = (_req, res) => res.type("html").send(landingPage());
+app.get("/", sendLanding);
+app.get("/index.html", sendLanding);
+
+// index: false so the static handler cannot serve the unsubstituted file for
+// "/" behind the routes above.
+app.use(express.static(path.join(__dirname, "public"), { index: false }));
+
+// The web app, for development only. Off unless explicitly switched on, and
+// mounted on a subpath because every asset it references is relative.
+if (process.env.SERVE_WEB_APP) {
+  console.log("  Web app: ON at /app (SERVE_WEB_APP is set)");
+  app.use("/app", express.static(path.join(__dirname, "webapp")));
+  // The icon is shared with the marketing site rather than duplicated. Its
+  // sibling, sw.js, is deliberately left to 404 here: the dev copy has no
+  // business installing a cache, and app.js already ignores a failed
+  // registration.
+  app.get("/app/icon.svg", (_req, res) =>
+    res.sendFile(path.join(__dirname, "public", "icon.svg"))
+  );
+}
 
 app.listen(PORT, () => {
   console.log(`\n  VenTrack UK running at http://localhost:${PORT}`);

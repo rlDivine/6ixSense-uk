@@ -42,15 +42,63 @@ Six warnings, none of which block anything:
 Name is 8 characters and the subtitle is 29, both inside Apple's 30 character
 limits.
 
+## Pricing and availability
+
+VenTrack is **paid upfront**: one price, no free tier, no in-app purchase, no
+subscription. That is a decision, not a default, and there are two things to
+set up before it can be one.
+
+| Field | Value |
+| --- | --- |
+| Business model | Paid, one time |
+| Price | £2.99 suggested (see below) |
+| Availability | United Kingdom only |
+| In-app purchases | None |
+| Subscriptions | None |
+
+**Do the Agreements, Tax and Banking section first.** In App Store Connect,
+under Business, there is a Paid Applications agreement that is separate from
+the free one every account already has. Until it is signed, and until a bank
+account and tax forms are attached to it, the price selector for a new app is
+locked to Free. This is not a warning that appears at submission time; the
+option simply is not there, and it is the single most common reason a first
+paid app ends up shipped free by accident. Sort it before you build the
+listing, because the tax forms can take a day or two to clear.
+
+**Availability is the UK only.** Every region in `sources/regions.js` is a
+British town, distances are in miles and the fixture data is domestic football.
+Someone in another country who buys this gets an app with nothing near them,
+and refund requests and one star reviews follow. Set the territory list to
+United Kingdom and widen it later if the data ever supports it.
+
+**On the price.** £2.99 is the suggestion rather than a fixed answer. It sits
+above the £0.99 impulse tier that invites refund churn, and low enough that it
+is not a considered purchase. Worth being clear about the trade you have
+already chosen: paid upfront converts poorly for a discovery app, because
+nobody can see the listings before paying and there is no way to tell whether
+the coverage is good in their town. Expect low install numbers and a high
+proportion of people who actually use it. If the numbers disappoint, the usual
+next step is a free tier limited to one town with the rest paid, which is a
+larger change than a price edit and worth planning rather than improvising.
+
+The landing page is what carries the pitch to someone who has not paid yet.
+See `api/README.md`.
+
 ## URLs
 
 | Field | Value |
 | --- | --- |
 | Support URL | https://pulse-uk-api.onrender.com/support.html |
 | Privacy Policy URL | https://pulse-uk-api.onrender.com/privacy.html |
-| Marketing URL | leave blank, or https://voice2jobs.com |
+| Marketing URL | https://pulse-uk-api.onrender.com/ |
 
-Both of those pages are served by the backend, already carry the VenTrack name,
+The marketing URL is the backend's root, which is now a VenTrack landing page
+rather than the web app it used to serve. Once the app is on sale, set
+`APP_STORE_URL` in the Render environment to the listing's URL and the page's
+button will link to it; until then it reads "Coming soon to the App Store" as
+plain text, so it is safe to give Apple this URL before launch.
+
+Both of the pages below are served by the backend, already carry the VenTrack name,
 and point at contact@voice2jobs.com. Apple does check that the privacy policy
 URL loads, so confirm the Render service is awake before you submit: on the
 free plan it sleeps after about 15 minutes idle and the first request takes
@@ -246,8 +294,11 @@ few days.
 Being straight about what is unfinished, since these are the likely rejection
 points rather than anything on the list above:
 
-- **No screenshots exist yet.** They need a device. This is the only thing
-  actually standing between here and a submission.
+- **No screenshots exist yet.** They need a device.
+- **Agreements, Tax and Banking is almost certainly not done.** Without it the
+  app cannot be sold at any price and the listing will only offer Free. See
+  Pricing and availability above. Along with the screenshots, this is what
+  actually stands between here and a submission.
 - **It compiles but it has never been through a full manual pass on a device.**
   A green build proves the code is well formed, not that every screen behaves.
   Walk the What to Test list above before you submit.

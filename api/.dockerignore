@@ -3,3 +3,12 @@ npm-debug.log
 .git
 .gitignore
 *.md
+
+# The web app is a development tool, not something production serves. server.js
+# already keeps it behind SERVE_WEB_APP; leaving it out of the image as well
+# means a stray environment variable cannot put the whole product back on the
+# open web for free next to a paid iOS app. Consequence to know about: setting
+# SERVE_WEB_APP on a deployed instance gets 404s rather than the app, which is
+# the intended answer. Run it locally instead. See README.md.
+webapp
+test

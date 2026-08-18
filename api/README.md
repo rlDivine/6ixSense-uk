@@ -210,22 +210,62 @@ sources/
   localscan-discover.js Monthly research: proposes new seed pages as a pull request
   util.js               Distance, entity decoding and event normalisation helpers
 discover-seeds.js       Seed research, run by hand; proposes new pages as a PR
-public/                 The PWA, served from the same origin
+landing.js              The one dynamic part of the landing page: the App Store call to action
+public/                 The marketing site. Everything in here is public
+  index.html            Landing page. Self-contained, no external request
+  privacy.html          Privacy policy, linked from the App Store listing
+  support.html          Support page, linked from the App Store listing
+  icon.svg              The site icon (the header mark is inline in index.html)
+  sw.js                 Kill switch that unregisters the old web app's service worker
+webapp/                 The web app. NOT served unless SERVE_WEB_APP is set
   index.html            Onboarding, the four tabs, the detail sheet
   app.js                Client logic, the inline SVG icon set, the Leaflet map
   styles.css            Theme tokens and layout
   manifest.json         Web app manifest, so the page installs
-  sw.js                 Service worker: app-shell cache, never the API
-  icon.svg              The PWA and home screen icon (the header mark is in index.html)
-  privacy.html          Privacy policy
-  support.html          Support page
 .env.example            The optional keys, with the signup URL for each
 Dockerfile              Node 20 image, the one Render builds
 ../render.yaml          Render blueprint, at the repository root (see DEPLOY.md)
 ```
 
-Leaflet itself is loaded from a CDN by `index.html`, not bundled, and `sw.js`
-deliberately does not cache it, so the map needs a network connection.
+Leaflet itself is loaded from a CDN by `webapp/index.html`, not bundled, so the
+map needs a network connection.
+
+## Why `public/` and `webapp/` are two directories
+
+`public/` is served wholesale by `express.static`. `webapp/` is not, unless
+`SERVE_WEB_APP` is set, and it is not set in production.
+
+The web app used to be the site. It is the same product as the iOS app, which
+is paid, so anyone who found the backend's URL got the whole thing for nothing
+and had no reason to buy anything. The split is the fix: the root is now a
+landing page that points at the App Store, and the web app stays in the repo
+as a development tool.
+
+Two things this deliberately does not do, both worth knowing:
+
+- **It does not lock down the data.** `/api/events` is still open and
+  unauthenticated, because the shipped iOS app calls it with no credentials.
+  Anyone can still read the feed directly. Hiding the HTML raises the effort;
+  it is not access control.
+- **It does not reach browsers that already installed the old web app.** The
+  old service worker was cache first on the app shell, so those installs serve
+  their own copy and never ask the network. `public/sw.js` is what undoes
+  them: a worker at the same URL that deletes every cache, unregisters itself
+  and reloads. It has no fetch handler, and there is a test that keeps it that
+  way. Do not delete that file, or the old worker stays registered forever.
+
+To run the web app locally:
+
+```bash
+SERVE_WEB_APP=1 npm start     # then open http://localhost:3000/app/
+```
+
+## The App Store link
+
+The landing page's call to action comes from `APP_STORE_URL`. Set it in the
+environment and the button links there. Leave it unset and the page renders
+"Coming soon to the App Store" as plain text rather than a link, which is why
+the page is safe to have live before the app is actually on sale.
 
 ## Design
 
@@ -233,11 +273,13 @@ The palette is the Union flag: Pantone 280 blue (`#012169`), Pantone 186 red
 (`#C8102E`) and white.
 Neither flag colour survives a straight lift into a dark interface, so the dark
 theme sits on a neutral slate rather than a darkened flag blue, and lifts the
-red enough to read on it. Every value in `public/styles.css` is a flat colour,
-and there are no gradients in the stylesheet or in the rendering code.
+red enough to read on it. Every value in `webapp/styles.css` is a flat colour,
+and there are no gradients in the stylesheet or in the rendering code. The
+landing page carries its own copy of the same two palettes, copied rather than
+imported so it stays a single file with no build step.
 
 Nothing in the interface is an emoji. Category marks and interface icons are
-inline SVG defined at the top of `public/app.js`, so they inherit the current
+inline SVG defined at the top of `webapp/app.js`, so they inherit the current
 colour, hold their weight on every platform, and never depend on an emoji font.
 
 An event with no usable photograph is not left with an empty thumbnail. It gets
@@ -247,10 +289,10 @@ from the event id so it does not change between renders. The design and the
 twelve motifs are set out in `../ios/VenTrack/Design/CategoryArtwork.swift`, which
 both clients follow.
 
-The brand mark in the page header is an inline `<svg>` in `public/index.html`,
-not a reference to `public/icon.svg`. They carry the same path and both have to
-be edited when the mark changes. `icon.svg` is the PWA and home screen icon
-only; the header is what a user actually looks at.
+The brand mark is an inline `<svg>` in both `public/index.html` and
+`webapp/index.html`, not a reference to `public/icon.svg`. All three carry the
+same path and all three have to be edited when the mark changes. `icon.svg` is
+the site and home screen icon only; the inline ones are what a user looks at.
 
 ## Deploying
 
