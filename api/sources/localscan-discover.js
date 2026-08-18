@@ -281,7 +281,18 @@ const EXCLUDED_HOSTS = [
   "allevents", "10times", "dice.fm", "songkick", "wegottickets", "fatsoma",
   "designmynight", "tripadvisor", "viagogo", "stubhub", "ticketsource",
   "ticketweb", "livenation", "gigseekr",
+  // Added after a live run proposed theatresonline for Wolverhampton. It is
+  // the same shape as the others: a national roll-up of listings that come
+  // from venues this source would rather watch directly.
+  "theatresonline", "whatsonwhen", "list.co.uk", "visitbritain",
 ];
+
+// At most this many pages from one hostname per region. The prompt asks for
+// breadth and a live run still returned a gallery's what's-on page plus that
+// same gallery's this-month sub-page, which is two fetches and two LLM calls
+// for one venue's listings. One host is allowed a couple of genuinely
+// different pages, not a section of its own sitemap.
+const MAX_PER_HOST = 2;
 
 /// True for a url that has a second domain buried in its path, which is what a
 /// spliced-together address looks like.
@@ -299,6 +310,7 @@ function hasSplicedDomain(parsedUrl) {
 function validateCandidates(parsed) {
   const list = Array.isArray(parsed?.candidates) ? parsed.candidates : [];
   const out = [];
+  const perHost = new Map();
   for (const c of list) {
     if (!c || typeof c.url !== "string") continue;
     let parsedUrl;
@@ -318,6 +330,12 @@ function validateCandidates(parsed) {
       console.log(`[localscan-discover] dropped ${c.url}: looks like two addresses joined together`);
       continue;
     }
+    const seenOnHost = perHost.get(host) || 0;
+    if (seenOnHost >= MAX_PER_HOST) {
+      console.log(`[localscan-discover] dropped ${c.url}: already ${MAX_PER_HOST} page(s) from ${host}`);
+      continue;
+    }
+    perHost.set(host, seenOnHost + 1);
 
     out.push({
       url: c.url.trim(),
