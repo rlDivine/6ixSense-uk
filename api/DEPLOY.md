@@ -60,15 +60,17 @@ small, real amount of money on the account this key belongs to.
 
 Two things bound that cost, and both matter:
 
-- **The seed list is what costs, and it is short.** `localscan-seeds.js`
-  currently lists two distinct pages, both covering Thanet, seeded across
-  Ramsgate, Margate and Broadstairs. Cost tracks distinct URLs, not entries:
-  one page shared by three regions is still one fetch and one extraction per
-  cache window. There is no crawler here that adds pages on its own.
+- **The seed list is what costs.** `localscan-seeds.js` currently lists 22
+  distinct URLs, heavily weighted to Ramsgate, plus a few Thanet-wide pages
+  shared across Ramsgate, Margate and Broadstairs. Cost tracks distinct URLs,
+  not entries: one page shared by three regions is still one fetch and one
+  extraction per cache window. There is no crawler here that adds pages on
+  its own.
 - **Pages are cached for hours, not minutes.** A page is re-fetched and
-  re-summarised a handful of times a day, not on every request. See
-  `PAGE_TTL_MS` in `localscan.js`. At two pages on a 12 hour TTL that is a
-  handful of small model calls a day, not a per-request charge.
+  re-summarised at most twice a day, not on every request. See `PAGE_TTL_MS`
+  in `localscan.js`. 22 URLs on a 12 hour TTL, each sending at most
+  `MAX_PAGE_CHARS` to a small model, comes to well under a dollar a month at
+  gpt-4o-mini prices, and does not scale with app traffic.
 
 If you don't want this cost at all, simply leave `OPENAI_API_KEY` unset. The
 source returns nothing and the rest of the app is unaffected, the same as any
