@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { fetchLocalScan } from "../sources/localscan.js";
+import { fetchLocalScan, auditLocalScan } from "../sources/localscan.js";
 import { jsonResponse, htmlResponse, withEnv, withForbiddenFetch, withStubbedFetch } from "./helpers.js";
 
 // Every test builds its own throwaway region and its own throwaway page URL.
@@ -599,4 +599,34 @@ test("an unchanged page is re-extracted once it passes the max age", async () =>
   );
 
   assert.equal(extractions, 2, "past the max age the extraction must be redone");
+});
+
+test("the audit separates a url that cannot be fetched from one that is merely thin", async () => {
+  // Regression guard. extractForPage() catches a failed fetch and returns the
+  // same thin entry it returns for a page with no text, which is right for the
+  // scan path and wrong for the audit: the first full run reported "failed to
+  // fetch 0%" while whole towns were failing every request, because a dead
+  // domain and a JavaScript-rendered venue page were landing in one bucket.
+  // Those two want opposite treatment, so the two cases have to stay tellable
+  // apart.
+  const region = fakeRegion();
+  const dead = seedFor(region, { url: `https://dead-${n}.test/whats-on` });
+  const bare = seedFor(region, { url: `https://bare-${n}.test/whats-on` });
+
+  const rows = await withEnv({ OPENAI_API_KEY: "k", ...NO_DELAY }, async () => {
+    globalThis.fetch = async (url) => {
+      if (String(url).includes("dead-")) throw new Error("fetch failed");
+      return htmlResponse("<html><body>nothing here</body></html>");
+    };
+    return auditLocalScan(region, [dead, bare]);
+  });
+
+  const byUrl = new Map(rows.map((r) => [r.url, r]));
+  assert.equal(byUrl.get(dead.url).why, "fetch");
+  assert.match(byUrl.get(dead.url).error, /fetch failed/);
+  assert.equal(byUrl.get(bare.url).why, "thin");
+  assert.equal(byUrl.get(bare.url).error, null, "a thin page is not an error, it is just empty");
+  // Both are thin as far as the scan path is concerned, which is the whole
+  // reason the audit needs its own signal.
+  assert.ok(byUrl.get(dead.url).thin && byUrl.get(bare.url).thin);
 });

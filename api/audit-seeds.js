@@ -81,10 +81,15 @@ for (const [i, id] of regionIds.entries()) {
 }
 
 // ---- the report -------------------------------------------------------------
+// Bucket on `why`, not on `thin` alone. A page that could not be fetched at
+// all is also flagged thin, so bucketing on the flag lumps a domain that does
+// not exist together with a real venue that renders its listings in
+// JavaScript. The first run did exactly that and printed "failed to fetch 0%"
+// while two whole towns were failing every single request.
 const live = rows.filter((r) => r.events > 0);
-const empty = rows.filter((r) => r.events === 0 && !r.thin && !r.error);
-const thin = rows.filter((r) => r.thin);
-const errored = rows.filter((r) => r.error);
+const errored = rows.filter((r) => r.why === "fetch" || r.why === "extract");
+const thin = rows.filter((r) => r.why === "thin");
+const empty = rows.filter((r) => r.events === 0 && !r.thin);
 const totalEvents = rows.reduce((n, r) => n + r.events, 0);
 
 const pct = (n) => (rows.length ? Math.round((n / rows.length) * 100) : 0);
@@ -95,11 +100,29 @@ const lines = [
   `events found         ${totalEvents}`,
   "",
   `producing events     ${live.length} (${pct(live.length)}%)`,
-  `read but empty       ${empty.length} (${pct(empty.length)}%)`,
+  `read but empty       ${empty.length} (${pct(empty.length)}%)   cost an extraction and returned nothing: this is where the waste is`,
   `too thin to read     ${thin.length} (${pct(thin.length)}%)   fetched but almost no text, so no LLM call was made`,
-  `failed to fetch      ${errored.length} (${pct(errored.length)}%)`,
+  `failed to fetch      ${errored.length} (${pct(errored.length)}%)   unreachable: dead domain, or blocking us`,
   "",
 ];
+
+// A town where every single url fails to resolve is the signature of a
+// discovery run that invented plausible looking domains rather than finding
+// real ones. Worth calling out separately: those towns need re-researching,
+// not pruning.
+const hostFails = new Map();
+for (const r of errored) {
+  let host = "";
+  try { host = new URL(r.url).host; } catch { host = r.url; }
+  hostFails.set(host, (hostFails.get(host) || 0) + 1);
+}
+if (hostFails.size) {
+  lines.push(`--- unreachable hosts (${hostFails.size}) ---`);
+  for (const [host, n] of [...hostFails.entries()].sort((a, b) => b[1] - a[1])) {
+    lines.push(`  ${String(n).padStart(3)}  ${host}`);
+  }
+  lines.push("");
+}
 
 const byTown = new Map();
 for (const r of rows) {
@@ -116,10 +139,15 @@ for (const r of [...live].sort((a, b) => b.events - a.events).slice(0, 25)) {
   lines.push(`  ${String(r.events).padStart(3)}  ${r.regionId.padEnd(18)} ${r.url}`);
 }
 
+// Ordered by how confidently each can go. Unreachable first: nothing is lost
+// by deleting a url that does not answer. Then the empty ones, which are the
+// only bucket that actually costs money per scan. Thin pages come last and are
+// the weakest case for pruning, since they are free and several of them are
+// real venues that simply need rendering.
 lines.push("", "--- dead weight, candidates to prune ---");
-for (const r of [...thin, ...errored, ...empty].slice(0, 60)) {
-  const why = r.error ? `error: ${r.error}` : r.thin ? "too thin" : "empty";
-  lines.push(`  ${r.regionId.padEnd(18)} ${why.padEnd(28)} ${r.url}`);
+for (const r of [...errored, ...empty, ...thin].slice(0, 60)) {
+  const why = r.error ? `unreachable: ${r.error}` : r.thin ? "too thin" : "empty";
+  lines.push(`  ${r.regionId.padEnd(18)} ${why.slice(0, 28).padEnd(28)} ${r.url}`);
 }
 const rest = thin.length + errored.length + empty.length - 60;
 if (rest > 0) lines.push(`  ... and ${rest} more`);

@@ -417,10 +417,18 @@ async function extractForPage(seed, region) {
   const cached = pageCache.get(seed.url);
   if (isFresh(cached)) return cached;
 
-  const thinEntry = () => {
+  // `why` matters only to the audit, which otherwise cannot tell a domain that
+  // does not resolve from a real page that renders its listings in JavaScript.
+  // Those two want opposite treatment: the first should be deleted, the second
+  // is worth keeping and fetching differently. The scan path ignores it and
+  // treats every thin entry alike.
+  const thinEntry = (why, detail = "") => {
     // A page that is down or unreadable right now should be retried sooner
     // than the full 12 hour TTL, which THIN_RETRY_MS already does.
-    const entry = { at: Date.now(), thin: true, extracted: [], image: "", townLabel: region.label };
+    const entry = {
+      at: Date.now(), thin: true, why, detail,
+      extracted: [], image: "", townLabel: region.label,
+    };
     pageCache.set(seed.url, entry);
     return entry;
   };
@@ -430,10 +438,10 @@ async function extractForPage(seed, region) {
     page = await fetchPage(seed.url);
   } catch (e) {
     console.warn(`[localscan/${region.id}] ${seed.url}: ${e.message}`);
-    return thinEntry();
+    return thinEntry("fetch", e?.message || String(e));
   }
 
-  if (isThin(page.text)) return thinEntry();
+  if (isThin(page.text)) return thinEntry("thin", `${page.text.length} chars`);
 
   // The page came back unchanged since the last read, so the extraction we
   // already have is still the right answer and there is no reason to buy it
@@ -460,7 +468,7 @@ async function extractForPage(seed, region) {
     extracted = await extractEvents(page.text, { townLabel: region.label, todayISO });
   } catch (e) {
     console.warn(`[localscan/${region.id}] extraction failed for ${seed.url}: ${e.message}`);
-    return thinEntry();
+    return thinEntry("extract", e?.message || String(e));
   }
 
   const entry = { at: Date.now(), thin: false, hash, extracted, image: page.image, townLabel: region.label };
@@ -607,10 +615,18 @@ export async function auditLocalScan(region, seeds = null) {
   const concurrency = Number(process.env.LOCALSCAN_AUDIT_CONCURRENCY ?? 12);
   await pool(list, concurrency, async (seed) => {
     const t0 = Date.now();
-    let events = [], error = null, thin = false;
+    let events = [], error = null, thin = false, why = null, detail = "";
     try {
       const page = await extractForPage(seed, region);
       thin = !!page.thin;
+      // extractForPage never throws for a page that is simply unreachable: it
+      // catches and returns a thin entry, which is right for the scan path and
+      // useless here. The first audit run therefore reported "failed to fetch
+      // 0%" while whole towns were failing every request. `why` is how a dead
+      // domain becomes visible again.
+      why = page.why ?? null;
+      detail = page.detail ?? "";
+      if (why === "fetch" || why === "extract") error = detail || why;
       // Deadline 0 is in the past, which makes scanPage skip geocoding
       // entirely and fall back to the region centre. An audit only cares
       // whether a page yields events, and Nominatim's one request per second
@@ -625,6 +641,7 @@ export async function auditLocalScan(region, seeds = null) {
       label: seed.label || "",
       kind: seed.kind || "web",
       thin,
+      why,
       error,
       events: events.length,
       sample: events[0]?.title || null,
