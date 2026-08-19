@@ -4,14 +4,24 @@ import SwiftUI
 /// town as a page title with today's date under it, the sort control, the date
 /// ranges, the categories, the status line, then the cards.
 ///
-/// Everything above the status line is pinned chrome sitting on glass, so the
-/// filters stay reachable while the list moves. The status line itself is the
-/// first row of the list rather than part of the chrome: it is the one label
-/// the design sets in `Tok.faint`, and faint is solved against `panel2`, not
-/// against a material.
+/// The header collapses as you read down the feed and returns the moment you
+/// head back up, so twenty events are not read through a letterbox. The town
+/// name survives the collapse; everything else goes. See `onScroll`.
 struct DiscoverView: View {
     @EnvironmentObject var app: AppState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var selected: Event?
+
+    /// Collapsed chrome state, and the two values needed to decide it.
+    ///
+    /// The header is six stacked rows: wordmark, date and town, the out of
+    /// market notice, the sort control, the date ranges and the categories.
+    /// That is most of a phone screen, and pinned it meant a feed of twenty
+    /// events was read through a letterbox. It now behaves the way a large
+    /// title does everywhere else on iOS: it goes away when you are reading and
+    /// comes back the moment you head upward.
+    @State private var collapsed = false
+    @State private var lastOffset: CGFloat = 0
 
     var body: some View {
         ZStack {
@@ -26,15 +36,89 @@ struct DiscoverView: View {
 
     private var chrome: some View {
         VStack(alignment: .leading, spacing: S.s3) {
-            BrandStrip()
-            titleBlock
-            outOfMarketNotice
-            sortControl
-            rangeRow
-            categoryRow
+            if collapsed {
+                compactBar
+            } else {
+                BrandStrip()
+                titleBlock
+                outOfMarketNotice
+                sortControl
+                rangeRow
+                categoryRow
+            }
         }
         .padding(.bottom, S.s3)
         .topChrome()
+        .animation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.9),
+                   value: collapsed)
+    }
+
+    /// What survives the collapse: the town, and nothing else.
+    ///
+    /// Something has to, or a feed scrolled halfway down says nothing about
+    /// where it is for, and that is the one fact every row on screen depends
+    /// on. The chevron matches the expanded title so it still reads as the
+    /// same control, and it opens the same picker.
+    private var compactBar: some View {
+        HStack(spacing: S.s2) {
+            Text(app.placeName)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(Tok.text)
+                .lineLimit(1)
+            Image(systemName: "chevron.down")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Tok.muted)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, S.s5)
+        .frame(height: 30)
+        .transition(.opacity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Showing events for \(app.placeName)")
+    }
+
+    /// Collapse on the way down, restore on the way up.
+    ///
+    /// Direction rather than a fixed threshold, because a threshold alone means
+    /// a reader deep in the feed has to scroll all the way back to the top to
+    /// reach the filters. Restoring on any upward movement is what Safari and
+    /// Mail do and it is what "swipe back up and it comes back" means.
+    ///
+    /// The 6 point deadzone is not decoration: without it, the sub-pixel jitter
+    /// a finger produces while holding still flips this on every frame.
+    ///
+    /// Collapsing changes the header's height, which changes the safe area
+    /// inset, which moves the content and produces another reading. That
+    /// feedback is SELF STABILISING rather than oscillating, and it is worth
+    /// knowing why before anyone tries to damp it: a shorter header shifts the
+    /// content up, which reads as further scrolling down, which is the state it
+    /// is already in. Expanding pushes content down and reads as scrolling up.
+    /// Each change reinforces itself instead of fighting.
+    private func onScroll(_ y: CGFloat) {
+        let dy = y - lastOffset
+        lastOffset = y
+
+        // Near the top the header is always whole, whatever the last gesture
+        // was. Rubber banding at the very top would otherwise read as a scroll
+        // downward and collapse it just as the user arrives.
+        if y > -12 {
+            if collapsed { collapsed = false }
+            return
+        }
+        guard abs(dy) > 6 else { return }
+        let wantsCollapsed = dy < 0
+        if wantsCollapsed != collapsed { collapsed = wantsCollapsed }
+    }
+
+    /// Restores the full header and forgets where the feed was.
+    ///
+    /// Resetting lastOffset matters as much as the flag: a stale value from the
+    /// previous list would make the first reading of the next one look like a
+    /// large jump in whichever direction, and collapse the header before the
+    /// user has touched anything.
+    private func expand() {
+        collapsed = false
+        lastOffset = 0
     }
 
     /// The town is the thing worth reading, so it gets the size. The wordmark
@@ -180,9 +264,10 @@ struct DiscoverView: View {
 
     @ViewBuilder private var content: some View {
         if app.loading && app.events.isEmpty {
-            LoadingState()
+            LoadingState().onAppear { expand() }
         } else if let err = app.errorMessage, app.events.isEmpty {
             ErrorState(message: err) { Task { await app.load() } }
+                .onAppear { expand() }
         } else if app.visibleEvents.isEmpty {
             // `widen` is left at its default, which is exactly "try this week".
             // Widening stops at the free window when locked, so the button
@@ -192,6 +277,13 @@ struct DiscoverView: View {
                 app.range = app.unlocked ? .all : .week
                 Task { await app.load() }
             }
+            // Without this the header can strand itself. Filter down to
+            // something with no results while scrolled deep into the feed and
+            // the chrome is collapsed, the list it was collapsed over is gone,
+            // and there is nothing left to scroll upward to bring the filters
+            // back: the only controls that can undo the filter are the ones
+            // that just disappeared.
+            .onAppear { expand() }
         } else {
             ScrollView {
                 // No horizontal padding and no inter-row spacing: each card
@@ -199,6 +291,7 @@ struct DiscoverView: View {
                 // lets a row separator run the full width the way the design
                 // shows while the content still sits on a 20pt gutter.
                 LazyVStack(alignment: .leading, spacing: 0) {
+                    scrollReader
                     sectionHeader
                     ForEach(Array(app.visibleEvents.enumerated()), id: \.element.id) { i, e in
                         Button { selected = e } label: {
@@ -214,8 +307,28 @@ struct DiscoverView: View {
                 }
                 .padding(.bottom, S.s6)
             }
+            .coordinateSpace(name: Self.feedSpace)
+            .onPreferenceChange(FeedOffsetKey.self) { onScroll($0) }
             .refreshable { await app.load() }
         }
+    }
+
+    private static let feedSpace = "feed"
+
+    /// Reports how far the feed has scrolled.
+    ///
+    /// A zero height GeometryReader at the top of the content, publishing its
+    /// own minY in the scroll view's coordinate space. iOS 18 has
+    /// onScrollGeometryChange for exactly this and the app targets 17, so this
+    /// is the version that works on the deployment target rather than the tidy
+    /// one. It draws nothing and takes no space.
+    private var scrollReader: some View {
+        GeometryReader { geo in
+            Color.clear.preference(
+                key: FeedOffsetKey.self,
+                value: geo.frame(in: .named(Self.feedSpace)).minY)
+        }
+        .frame(height: 0)
     }
 
     /// Names what the run of cards below actually is, rather than repeating
@@ -284,6 +397,17 @@ struct DiscoverView: View {
         let noun = n == 1 ? "event" : "events"
         let order = app.sort == .nearest ? "nearest first" : "soonest first"
         return "\(n) \(noun) \(app.originPhrase), \(order)"
+    }
+}
+
+/// Carries the feed's scroll offset up to DiscoverView.
+///
+/// Last one wins rather than summing, because exactly one reader publishes it
+/// and a sum would be meaningless if that ever stopped being true.
+private struct FeedOffsetKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 
