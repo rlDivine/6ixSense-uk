@@ -67,6 +67,15 @@ const CATEGORY_ALIASES = new Map(Object.entries({
   market: "Markets", markets: "Markets", "pop-up": "Markets", "pop up": "Markets",
   museum: "Museums", museums: "Museums", exhibition: "Museums",
   exhibitions: "Museums", heritage: "Museums", tours: "Museums", tour: "Museums",
+  // Outdoors is the sixth of the client's colour families, and before this it
+  // was the only one nothing could reach: every walk and open-air listing fell
+  // through to "Things to do" and rendered in the neutral fallback. British
+  // listings put a lot in here, especially in summer.
+  outdoor: "Outdoors", outdoors: "Outdoors", walk: "Outdoors", walks: "Outdoors",
+  hike: "Outdoors", hiking: "Outdoors", garden: "Outdoors", gardens: "Outdoors",
+  park: "Outdoors", parks: "Outdoors", "open air": "Outdoors",
+  "open-air": "Outdoors", nature: "Outdoors", wildlife: "Outdoors",
+  swim: "Outdoors", swimming: "Outdoors", cycling: "Outdoors",
   theatre: "Theatre", theater: "Theatre", arts: "Theatre",
   "arts & theatre": "Theatre", "performing arts": "Theatre",
   film: "Film", "film & media": "Film", cinema: "Film",

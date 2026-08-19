@@ -118,9 +118,15 @@ const geocodeBudgetMs = () => Number(process.env.LOCALSCAN_GEOCODE_BUDGET_MS ?? 
 // than shown. Real community listings are rarely announced this far ahead.
 const MAX_FUTURE_DAYS = 400;
 
+// Must stay a subset of what canonicalCategory() in util.js can produce, since
+// the model's answer is folded through it again on the way out. "Outdoors" is
+// here because the clients group these into six colour families and outdoors
+// was the only one nothing could reach: every walk, swim and open-air listing
+// used to land in "Things to do" and render in the neutral fallback.
 const CANONICAL_CATEGORIES = [
   "Music", "Live music", "Clubs", "Festivals", "Comedy", "Football", "Sport",
-  "Markets", "Museums", "Theatre", "Film", "Food", "Family", "Things to do",
+  "Markets", "Museums", "Theatre", "Film", "Food", "Family", "Outdoors",
+  "Things to do",
 ];
 
 // ---- seed validation, once at module load --------------------------------

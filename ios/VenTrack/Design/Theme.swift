@@ -3,17 +3,24 @@ import SwiftUI
 
 // MARK: - Colour tokens
 //
-// The Union flag, used with discipline rather than evenly. Navy (Pantone 280)
-// is the interface colour and does the work of every selected state. Red
-// (Pantone 186) is reserved for three things only: the logo, the primary
-// action, and "today". Reserving it is what stops the app looking like a wall
-// of buttons.
+// A near neutral ground with one rationed accent, per the visual overhaul
+// handoff. The subject matter is already colourful, since every event carries a
+// photograph, so the interface recedes and lets those carry the colour.
 //
-// Neither flag colour survives a straight lift into a dark interface, so the
-// dark theme sits on a navy derived from the blue and swaps the roles: near
-// white carries the selected states, and the red is lifted to read on navy.
+// Three rules that are easy to undo by accident:
 //
-// Every token is a flat colour. There are no gradients anywhere in the app.
+//   Every value is a flat colour. Translucency comes from .ultraThinMaterial,
+//   never from a colour ramp. There is no gradient anywhere in the app.
+//
+//   No purple and no pink. The dark accent is RE-PICKED, not lightened. The
+//   old dark accent was the flag red brightened to survive a dark panel, and
+//   lightening a red at that hue angle is exactly what produces salmon. The
+//   value below sits on the orange side of red, where lifting it in value
+//   never reaches pink. Do not nudge it back toward 0xC8102E.
+//
+//   activeBg is deliberately NOT the accent. Selection is monochrome, which is
+//   what lets red still mean "this is on today" rather than appearing a dozen
+//   times a screen and meaning nothing.
 
 extension Color {
     init(hex: UInt32) {
@@ -31,10 +38,18 @@ extension Color {
 }
 
 enum Tok {
-    static let bg       = Color(dark: 0x141926, light: 0xF6F7FB)
-    static let panel    = Color(dark: 0x1C2231, light: 0xFFFFFF)
-    static let panel2   = Color(dark: 0x252C3D, light: 0xEEF1F7)
-    static let hairline = Color(dark: 0x2F3749, light: 0xE3E7F0)
+    /// The page. A warm white, and a dark that is cool grey with no navy in it.
+    static let bg       = Color(dark: 0x0C0D0F, light: 0xFBFAF8)
+    /// Only where a surface genuinely lifts off the page, which in practice is
+    /// the map preview and sheets. Feed rows do NOT sit on this: they sit on
+    /// `bg` and are separated by a single hairline. That change is most of what
+    /// stops the app reading as a dashboard.
+    static let panel    = Color(dark: 0x16181B, light: 0xFFFFFF)
+    /// Wells, chips, the search field, skeletons.
+    static let panel2   = Color(dark: 0x1F2226, light: 0xF2F0EC)
+    /// The one separator. Between feed rows, around the detail fact strip,
+    /// between preference rows, and nowhere a boundary is already obvious.
+    static let hairline = Color(dark: 0x2B2F34, light: 0xE4E1DB)
 
     /// Tint laid over the material on translucent chrome, so glass takes the
     /// app's colour instead of the system's neutral grey.
@@ -44,41 +59,121 @@ enum Tok {
     /// black one. At this alpha `text` clears 4.5:1 in both themes and so does
     /// `muted`; at 0.85 muted drops to 4.29:1 dark and 4.30:1 light and fails.
     /// The web client's --glass is the same colour at the same alpha.
-    static let glass = Color(dark: 0x1C2231, light: 0xFFFFFF).opacity(0.88)
+    static let glass = Color(dark: 0x16181B, light: 0xFFFFFF).opacity(0.88)
 
     /// Three weights of text. Using all three, rather than just text and muted,
     /// is most of what gives a list its hierarchy.
-    static let text     = Color(dark: 0xE4E7EE, light: 0x0B1633)
-    static let muted    = Color(dark: 0xA3ABBD, light: 0x59627B)
-    /// Solved against the worst background each theme puts it on, which is
-    /// panel2 in both cases. The earlier values failed 4.5:1 on the card
-    /// overline and footer, which are real text, not decoration. The revised
-    /// handoff asks for 0x8A92A4 on dark, but against the lifted panel2 that
-    /// only reaches 4.47:1 and so misses the bar again. 0x8D95A7 is the
-    /// smallest lift that clears it, at 4.64:1.
-    static let faint    = Color(dark: 0x8D95A7, light: 0x686E7E)
+    static let text     = Color(dark: 0xF1F2F3, light: 0x1A1A1C)
+    static let muted    = Color(dark: 0x9EA3A9, light: 0x5F6165)
+    /// Captions and overlines that should recede.
+    ///
+    /// LIFTED FROM THE HANDOFF, deliberately. It specifies 0x6C7278 dark and
+    /// 0x86888E light, and both fail 4.5:1 on every surface they are used on:
+    /// 4.00 and 3.40 on `bg`, 3.28 and 3.11 on `panel2`. This is not decoration,
+    /// it is the card's overline and footer, so the brief's own accessibility
+    /// rule applies and the handoff's section 10 asks for exactly this
+    /// measurement. These are the smallest hue-preserving lifts that clear the
+    /// bar against the worst surface each theme puts it on, which is panel2:
+    /// 4.52 dark and 4.54 light. Darkening either one puts real text below AA.
+    static let faint    = Color(dark: 0x84898E, light: 0x6C6D72)
 
-    /// Flag red, for text and indicators. On dark it has to be light enough to
-    /// read on navy.
-    static let accent   = Color(dark: 0xF4707F, light: 0xC8102E)
-    /// The same red as a filled background under a white label, which needs the
+    /// Rationed. "On today", the active tab, the price on the paywall. Nothing
+    /// else. See the note above the enum on why the dark value is not a
+    /// lightened flag red.
+    ///
+    /// One live constraint: against `panel2` this reaches 4.33:1 dark, which is
+    /// AA for large text only. The handoff says not to lighten it further, so
+    /// the rule is the other way round: do not put SMALL accent text on
+    /// `panel2`. On `bg` it has comfortable headroom at 5.27:1.
+    static let accent   = Color(dark: 0xE2574A, light: 0xB8112B)
+    /// The same red as a filled background under a white label, which wants the
     /// opposite of the above: dark enough for white to clear 4.5:1. One colour
-    /// cannot do both on a dark theme, so fills get their own token. On light,
-    /// Pantone 186 already carries white at 5.9:1 and no split is needed.
-    static let accentFill = Color(dark: 0xC8324A, light: 0xC8102E)
-    /// Flag blue, for links and secondary emphasis.
-    static let link     = Color(dark: 0x9DB6E8, light: 0x012169)
+    /// cannot do both on a dark theme, so fills keep their own token. White on
+    /// this reaches 5.16:1 dark and 6.66:1 light.
+    static let accentFill = Color(dark: 0xC2402F, light: 0xB8112B)
+    /// Directions, restore, secondary emphasis.
+    static let link     = Color(dark: 0x7FA7D4, light: 0x0A3C86)
 
-    /// Selected state. Flag navy on light, near white on dark, with the
-    /// matching foreground so a filled chip is always legible.
-    static let activeBg = Color(dark: 0xE4E7EE, light: 0x012169)
-    static let activeFg = Color(dark: 0x161B27, light: 0xFFFFFF)
+    /// Selected state, monochrome on purpose. Near black on light and near
+    /// white on dark, with the matching foreground so a filled chip is always
+    /// legible. Both directions land at 17:1.
+    static let activeBg = Color(dark: 0xF1F2F3, light: 0x1A1A1C)
+    static let activeFg = Color(dark: 0x0C0D0F, light: 0xFFFFFF)
 
     /// Kept for the Free label, which uses the accent rather than reaching for
     /// a green that belongs to neither flag colour.
     static let freeFg   = accent
     /// Older name for `panel2`, kept so nothing has to be renamed twice.
     static let chip     = panel2
+}
+
+// MARK: - Radius
+//
+// Five steps plus full round, where the app previously had one value used
+// everywhere. This is what restores object hierarchy: a sheet at 28 and a chip
+// at full round read as different KINDS of thing. Do not normalise them back
+// toward each other.
+
+enum R {
+    /// Category marks and small indicators.
+    static let mark: CGFloat   = 8
+    /// Card thumbnails.
+    static let thumb: CGFloat  = 10
+    /// Wells, rectangular chips, the search field, the notice.
+    static let well: CGFloat   = 12
+    /// Buttons, primary and secondary.
+    static let button: CGFloat = 14
+    /// Cards and feature images.
+    static let card: CGFloat   = 18
+    /// Sheets and the map tray.
+    static let sheet: CGFloat  = 28
+}
+
+// MARK: - Spacing, on a four point base
+
+enum S {
+    static let s1: CGFloat = 4
+    static let s2: CGFloat = 8
+    static let s3: CGFloat = 12
+    static let s4: CGFloat = 16
+    /// The screen gutter.
+    static let s5: CGFloat = 20
+    static let s6: CGFloat = 24
+    static let s7: CGFloat = 32
+}
+
+// MARK: - Type
+//
+// SF Pro across a real range, not a second typeface. The app has to read as
+// obviously native and a display face fights that. What was wrong was never the
+// typeface, it was that everything sat at 13pt semibold with nothing to anchor
+// a screen and nothing that genuinely receded.
+//
+// The gap that matters is 34 down to 11. If a new screen needs a size, take it
+// from this list rather than inventing one between two existing steps.
+//
+// Nothing here is .fixedSize, so all of it scales with Dynamic Type.
+
+enum F {
+    /// Town name, detail title, paywall headline.
+    static var display: Font  { .system(size: 34, weight: .bold) }
+    /// Empty and error headlines, sheet titles.
+    static var title: Font    { .system(size: 27, weight: .bold) }
+    /// The event title. The card's anchor.
+    static var headline: Font { .system(size: 20, weight: .semibold) }
+    /// Descriptions, preference rows, list values.
+    static var body: Font     { .system(size: 17, weight: .regular) }
+    /// Venue and supporting metadata.
+    static var callout: Font  { .system(size: 15, weight: .medium) }
+    /// Sub values under a fact.
+    static var footnote: Font { .system(size: 13, weight: .regular) }
+    /// Overlines, section headers, units. Always uppercase, always tracked out.
+    static var caption: Font  { .system(size: 11, weight: .semibold) }
+
+    /// Distance figures. Monospaced so a column of them aligns down the feed,
+    /// which is half of what makes the right hand column scannable without
+    /// reading any words.
+    static var distance: Font { .system(size: 20, weight: .bold).monospacedDigit() }
 }
 
 // MARK: - Category palette
@@ -114,7 +209,11 @@ struct CatStyle {
     }
 
     /// Flat tint behind a card image, used when an event has no photo of its
-    /// own. This replaced a gradient: the tint alone carries the category.
+    /// own. This replaced a gradient: the tint alone carries the family.
+    ///
+    /// CONTAINED to a thumbnail or a feature image. Never a wash behind a whole
+    /// card: that was the old habit that made the feed read as a colour coded
+    /// spreadsheet, and it is the thing the six family merge exists to stop.
     ///
     /// The alpha differs by theme because the placeholder glyph is drawn in the
     /// same hue on top of this. The light surfaces need the lighter tint for
@@ -126,41 +225,104 @@ struct CatStyle {
         return Color(UIColor { tc in
             let dark = tc.userInterfaceStyle == .dark
             return UIColor(Color(hex: dark ? d : l))
-                .withAlphaComponent(dark ? 0.20 : 0.12)
+                .withAlphaComponent(dark ? 0.16 : 0.11)
         })
+    }
+}
+
+/// Six families, not thirteen hues.
+///
+/// Thirteen hues at similar saturation across cards, pins and chips read as a
+/// colour coded spreadsheet, and five of them were the purples and pinks the
+/// overhaul had to remove. Merging to six families removes those as a side
+/// effect of a structural decision rather than as a patch, and six still covers
+/// every listing type the corpus produces.
+///
+/// Colour is an accent INSIDE a card, never the card's identity: a 14x3 rule
+/// beside the overline, a map pin, a corner rule on a feature image, or a
+/// contained thumbnail tint. Never a wash behind a whole card.
+enum Family: String, CaseIterable {
+    case music, stage, culture, sport, food, outdoor
+
+    /// Always rendered as text beside the rule. Family colour is never the only
+    /// carrier of meaning, which is both an accessibility rule and the reason
+    /// the greyscale test still passes.
+    var label: String {
+        switch self {
+        case .music:   return "Music"
+        case .stage:   return "Stage"
+        case .culture: return "Culture"
+        case .sport:   return "Sport"
+        case .food:    return "Food"
+        case .outdoor: return "Outdoor"
+        }
+    }
+
+    /// An SF Symbol, never an emoji: symbols inherit tint, weight and Dynamic
+    /// Type, which is the whole reason the emoji had to go.
+    var symbol: String {
+        switch self {
+        case .music:   return "music.note"
+        case .stage:   return "theatermasks"
+        case .culture: return "building.columns"
+        case .sport:   return "sportscourt"
+        case .food:    return "fork.knife"
+        case .outdoor: return "mountain.2"
+        }
+    }
+
+    var style: CatStyle {
+        switch self {
+        case .music:   return CatStyle(dark: 0x7BA8D8, light: 0x2F6FB0)
+        case .stage:   return CatStyle(dark: 0xD3A45F, light: 0x9A6420)
+        case .culture: return CatStyle(dark: 0x97A6B6, light: 0x4A5A6B)
+        case .sport:   return CatStyle(dark: 0x6FBE8C, light: 0x2C6E49)
+        case .food:    return CatStyle(dark: 0xDC8A66, light: 0xA5492A)
+        case .outdoor: return CatStyle(dark: 0x68B8AC, light: 0x2D6E66)
+        }
     }
 }
 
 enum Categories {
     /// Used for "Things to do", the feed's generic bucket, and for any wording
     /// the canonicaliser has not seen yet. A neutral slate rather than a hue,
-    /// so an uncategorised listing never borrows another category's meaning.
-    static let fallback = CatStyle(dark: 0x98A2BC, light: 0x5A6580)
+    /// so an uncategorised listing never borrows a family's meaning.
+    static let fallback = CatStyle(dark: 0x9AA0A6, light: 0x5F6165)
 
-    /// Keys are lowercased because `style(_:)` lowercases what it is given.
-    /// "Live music" deliberately shares the Music hue: it is a sub-type of it,
-    /// not a rival to it, and giving it its own blue only makes two categories
-    /// that look almost the same.
-    static let map: [String: CatStyle] = [
-        "music":      .init(dark: 0x7BA4F2, light: 0x2563C9),
-        "live music": .init(dark: 0x7BA4F2, light: 0x2563C9),
-        "clubs":      .init(dark: 0xAC8BF2, light: 0x6D3FC4),
-        "festivals":  .init(dark: 0xF4707F, light: 0xC8102E),
-        "comedy":     .init(dark: 0xE58FCE, light: 0xB23A8C),
-        "football":   .init(dark: 0x4FC78C, light: 0x17794A),
-        "sport":      .init(dark: 0x5FC9BB, light: 0x2B7A6F),
-        "markets":    .init(dark: 0xE0A75C, light: 0xA5651B),
-        "museums":    .init(dark: 0x4FB8D4, light: 0x0F6F86),
-        "theatre":    .init(dark: 0xE07FA5, light: 0x9C2F5E),
-        "film":       .init(dark: 0x949AE8, light: 0x4A4F9E),
-        "food":       .init(dark: 0xF0946A, light: 0xB5541F),
-        "family":     .init(dark: 0xCCB84F, light: 0x7A6A12),
+    /// The canonical vocabulary the API emits, folded onto the six families.
+    /// api/sources/util.js spells these, so a listing arrives here already
+    /// spelled the way this table spells it. Keys are lowercased because
+    /// `family(_:)` lowercases what it is given.
+    ///
+    /// "Family" folds to culture rather than getting its own hue: family
+    /// listings in the corpus are overwhelmingly museums, libraries and
+    /// community activities, which is what culture already is.
+    static let families: [String: Family] = [
+        "music": .music, "live music": .music, "clubs": .music,
+        "festivals": .music,
+        "comedy": .stage, "theatre": .stage, "film": .stage,
+        "museums": .culture, "family": .culture,
+        "football": .sport, "sport": .sport,
+        "markets": .food, "food": .food,
+        "outdoors": .outdoor,
     ]
+
+    /// Nil for "Things to do" and anything unrecognised, which is the signal to
+    /// use `fallback` and show no family name at all rather than inventing one.
+    static func family(_ category: String) -> Family? {
+        families[category.lowercased()]
+    }
+
     static func style(_ category: String) -> CatStyle {
-        map[category.lowercased()] ?? fallback
+        family(category)?.style ?? fallback
     }
     static func wash(_ category: String) -> Color {
         style(category).wash
+    }
+    /// The family name for the card footer, or the category itself when it
+    /// belongs to no family, so the footer is never blank.
+    static func label(_ category: String) -> String {
+        family(category)?.label ?? category
     }
 }
 
@@ -180,48 +342,39 @@ struct CategoryGlyph: View {
 
 extension Categories {
     /// SF Symbol for the card placeholder and for native map markers, which
-    /// cannot render emoji. One case per canonical category, then a tolerant
-    /// chain for anything the canonicaliser has not folded yet: a source can
-    /// always invent a new word, and a missing glyph is worse than a loose one.
+    /// cannot render emoji.
+    ///
+    /// The family carries the symbol now, so a category that folds to a family
+    /// simply borrows it and the six stay visually consistent with their rules
+    /// and pins. The tolerant chain below is only for wording the canonicaliser
+    /// has not folded yet: a source can always invent a new word, and a loose
+    /// glyph is better than a missing one.
     static func symbol(_ category: String) -> String {
+        if let f = family(category) { return f.symbol }
+
         let c = category.lowercased()
-        switch c {
-        case "music":        return "music.note"
-        case "live music":   return "guitars.fill"
-        case "clubs":        return "figure.socialdance"
-        case "festivals":    return "party.popper.fill"
-        case "comedy":       return "music.mic"
-        case "football":     return "soccerball"
-        case "sport":        return "sportscourt.fill"
-        case "markets":      return "bag.fill"
-        case "museums":      return "building.columns.fill"
-        case "theatre":      return "theatermasks.fill"
-        case "film":         return "film.fill"
-        case "food":         return "fork.knife"
-        case "family":       return "balloon.2.fill"
-        case "things to do": return "sparkles"
-        default:
-            // Ordered so the narrower word wins: "club night" must not be
-            // caught by the music test, and "football" must not be caught by
-            // the general sport one.
-            if c.contains("club") || c.contains("night") || c.contains("rave") { return "figure.socialdance" }
-            if c.contains("festival") || c.contains("carnival") { return "party.popper.fill" }
-            if c.contains("comedy") || c.contains("stand-up") || c.contains("standup") { return "music.mic" }
-            if c.contains("football") || c.contains("soccer") { return "soccerball" }
-            if c.contains("sport") || c.contains("rugby") || c.contains("cricket")
-                || c.contains("racing") || c.contains("match") || c.contains("fixture") { return "sportscourt.fill" }
-            if c.contains("music") || c.contains("concert") || c.contains("gig") { return "music.note" }
-            if c.contains("market") || c.contains("pop-up") || c.contains("popup") { return "bag.fill" }
-            if c.contains("museum") || c.contains("exhibit") || c.contains("gallery")
-                || c.contains("heritage") { return "building.columns.fill" }
-            if c.contains("theat") || c.contains("art") { return "theatermasks.fill" }
-            if c.contains("film") || c.contains("cinema") || c.contains("screening") { return "film.fill" }
-            if c.contains("food") || c.contains("drink") { return "fork.knife" }
-            if c.contains("family") || c.contains("kid") || c.contains("child") { return "balloon.2.fill" }
-            if c.contains("tour") || c.contains("walk") || c.contains("outdoor") { return "figure.walk" }
-            if c.contains("free") { return "ticket.fill" }
-            return "sparkles"
-        }
+        // Ordered so the narrower word wins: "club night" must not be caught by
+        // the music test, and "football" must not be caught by the general
+        // sport one.
+        if c.contains("club") || c.contains("night") || c.contains("rave") { return Family.music.symbol }
+        if c.contains("festival") || c.contains("carnival") { return Family.music.symbol }
+        if c.contains("comedy") || c.contains("stand-up") || c.contains("standup") { return Family.stage.symbol }
+        if c.contains("football") || c.contains("soccer") { return "soccerball" }
+        if c.contains("sport") || c.contains("rugby") || c.contains("cricket")
+            || c.contains("racing") || c.contains("match") || c.contains("fixture") { return Family.sport.symbol }
+        if c.contains("music") || c.contains("concert") || c.contains("gig") { return Family.music.symbol }
+        if c.contains("market") || c.contains("pop-up") || c.contains("popup") { return "bag" }
+        if c.contains("museum") || c.contains("exhibit") || c.contains("gallery")
+            || c.contains("heritage") { return Family.culture.symbol }
+        if c.contains("theat") || c.contains("art") { return Family.stage.symbol }
+        if c.contains("film") || c.contains("cinema") || c.contains("screening") { return "film" }
+        if c.contains("food") || c.contains("drink") { return Family.food.symbol }
+        if c.contains("family") || c.contains("kid") || c.contains("child") { return Family.culture.symbol }
+        if c.contains("walk") || c.contains("outdoor") || c.contains("garden")
+            || c.contains("park") || c.contains("swim") { return Family.outdoor.symbol }
+        if c.contains("tour") { return Family.culture.symbol }
+        if c.contains("free") { return "ticket" }
+        return "sparkles"
     }
 }
 
