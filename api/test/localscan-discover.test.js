@@ -59,3 +59,14 @@ test("insertion refuses to guess where to write if the marker is gone", () => {
   const out = insertCandidates("before\n  // --- END SEEDS ---\nafter", ["  { a: 1 },"]);
   assert.ok(out.indexOf("{ a: 1 }") < out.indexOf("END SEEDS"), "new lines go above the marker");
 });
+
+test("the seed file has exactly one insertion marker", async () => {
+  // insertCandidates replaces the FIRST occurrence, so a second marker
+  // introduced by a merge would silently start putting proposed entries into
+  // the middle of the list instead of the end. A conflict resolution across
+  // two batches duplicated it exactly once, which is how this test came to be.
+  const fs = await import("node:fs");
+  const text = fs.readFileSync(new URL("../sources/localscan-seeds.js", import.meta.url), "utf8");
+  const markers = text.split("// --- END SEEDS ---").length - 1;
+  assert.equal(markers, 1, `found ${markers} END SEEDS markers`);
+});
