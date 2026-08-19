@@ -35,6 +35,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      # Required, unlike in the discovery workflow. That one only touches
+      # localscan-discover.js, which imports nothing outside this repo. The
+      # audit goes through localscan.js, which needs cheerio to parse a page,
+      # and the first run failed in six seconds without this.
+      - name: Install dependencies
+        working-directory: api
+        run: npm ci --omit=dev
 
       - name: Audit the seed list
         working-directory: api
