@@ -255,11 +255,43 @@ test("every canonical category has a colour in the web client", async () => {
   // webapp/, not public/: public/ is the marketing site now, and the web app
   // moved out of it when the landing page took over the root.
   const js = fs.readFileSync(new URL("../webapp/app.js", import.meta.url), "utf8");
+
+  // Matches a CATS entry whose value is either an inline literal or a
+  // reference into FAMILY. It used to require the literal, which quietly
+  // stopped matching anything the day thirteen hues were merged into six
+  // families and every value became FAMILY.something: the test then reported
+  // ten categories as having no colour when all thirteen still resolved.
+  const block = js.slice(js.indexOf("const CATS = {"), js.indexOf("const CAT_FALLBACK"));
   const named = new Set(
-    [...js.matchAll(/^\s*"?([A-Za-z][A-Za-z &-]*?)"?:\s*\{\s*c:\s*"#/gm)].map((m) => m[1].toLowerCase())
+    [...block.matchAll(/^\s*"?([A-Za-z][A-Za-z &-]*?)"?:\s*(?:FAMILY\.[a-z]+|\{\s*c:\s*"#)/gm)]
+      .map((m) => m[1].toLowerCase())
   );
-  const required = ["Music", "Live music", "Clubs", "Festivals", "Comedy", "Football",
-    "Sport", "Markets", "Museums", "Theatre", "Film", "Food", "Family"];
+
+  // Derived from the alias table rather than duplicated here, so a category
+  // added to the API is covered without anyone remembering to update a list.
+  const util = fs.readFileSync(new URL("../sources/util.js", import.meta.url), "utf8");
+  const aliases = util.slice(util.indexOf("const CATEGORY_ALIASES"), util.indexOf("export function canonicalCategory"));
+  const required = [...new Set([...aliases.matchAll(/:\s*"([A-Z][^"]*)"/g)].map((m) => m[1]))]
+    .filter((c) => c !== "Things to do");   // the generic bucket uses CAT_FALLBACK
+
+  assert.ok(required.length >= 13, `expected the real category list, got ${required.length}`);
   const missing = required.filter((c) => !named.has(c.toLowerCase()));
   assert.deepEqual(missing, [], `categories with no colour: ${missing.join(", ")}`);
+});
+
+test("the six colour families are all reachable from a real category", async () => {
+  // Guards the merge. A family nothing maps onto is a sixth of the palette
+  // that renders nowhere, which is what Outdoors was before it was added to
+  // the API's vocabulary: every walk and open-air listing fell through to
+  // "Things to do" and drew in the neutral fallback.
+  const fs = await import("node:fs");
+  const js = fs.readFileSync(new URL("../webapp/app.js", import.meta.url), "utf8");
+  const block = js.slice(js.indexOf("const CATS = {"), js.indexOf("const CAT_FALLBACK"));
+  const used = new Set([...block.matchAll(/FAMILY\.([a-z]+)/g)].map((m) => m[1]));
+  const declared = [...js.slice(js.indexOf("const FAMILY = {"), js.indexOf("const CATS = {"))
+    .matchAll(/^\s*([a-z]+):\s*\{/gm)].map((m) => m[1]);
+
+  assert.deepEqual(declared.sort(), ["culture", "food", "music", "outdoor", "sport", "stage"]);
+  const unreachable = declared.filter((f) => !used.has(f));
+  assert.deepEqual(unreachable, [], `families no category maps onto: ${unreachable.join(", ")}`);
 });

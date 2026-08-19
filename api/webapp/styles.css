@@ -15,25 +15,25 @@
    ============================================================ */
 :root,
 [data-theme="dark"] {
-  --bg: #141926;
-  --surface: #1c2231;
-  --surface-2: #252c3d;
-  --hairline: #2f3749;
-  --ink: #e4e7ee;          /* primary text */
-  --ink-2: #a3abbd;        /* secondary text */
+  --bg: #0c0d0f;
+  --surface: #16181b;
+  --surface-2: #1f2226;
+  --hairline: #2b2f34;
+  --ink: #f1f2f3;          /* primary text */
+  --ink-2: #9ea3a9;        /* secondary text */
   /* Overlines and tertiary text. surface-2 is the worst case background this
      sits on, not surface, and it is the pair most often forgotten. The revised
      handoff specifies #8a92a4, which lands at 4.47:1 there and so misses the
      4.5:1 text bar. #8d95a7 is the smallest lift that clears it, at 4.64:1. */
-  --ink-3: #8d95a7;
-  --accent: #f4707f;       /* flag red on navy, for text and indicators. 4.9:1 on surface-2 */
-  --accent-fill: #c8324a;  /* same red darkened, so a white label on it clears 4.5:1 */
-  --link: #9db6e8;         /* flag blue, lightened for the same reason */
-  --active-bg: #e4e7ee;    /* selected state: near white on dark */
-  --active-fg: #161b27;
+  --ink-3: #84898e;
+  --accent: #e2574a;       /* re-picked, not lightened: on the orange side of red so lifting it never reaches salmon */
+  --accent-fill: #c2402f;  /* same red darkened, so a white label on it clears 4.5:1 (5.16:1) */
+  --link: #7fa7d4;         /* directions, restore, secondary emphasis */
+  --active-bg: #f1f2f3;    /* selection is monochrome, never the accent */
+  --active-fg: #0c0d0f;
   --shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
   --shadow-sm: none;
-  --wash-alpha: 0.20;
+  --wash-alpha: 0.16;
 
   /* Liquid glass. Translucent, never a gradient.
      0.88 is not a taste value. Chrome on glass has event photos scrolling
@@ -43,25 +43,25 @@
      clear 4.5:1 over any backdrop. --ink-3 does not, so it is never used on a
      glass surface. Re-solved against the softened dark palette: the three
      channels below are --surface, so this must move whenever --surface does. */
-  --glass: rgba(28, 34, 49, 0.88);
+  --glass: rgba(22, 24, 27, 0.88);
   --glass-blur: saturate(160%) blur(18px);
 }
 [data-theme="light"] {
-  --bg: #f6f7fb;
+  --bg: #fbfaf8;
   --surface: #ffffff;
-  --surface-2: #eef1f7;
-  --hairline: #e3e7f0;
-  --ink: #0b1633;
-  --ink-2: #59627b;
-  --ink-3: #686e7e;        /* 4.5:1 on surface-2, the worst case */
-  --accent: #c8102e;       /* Pantone 186 */
-  --accent-fill: #c8102e;  /* white on Pantone 186 is already 5.9:1, so no split needed */
-  --link: #012169;         /* Pantone 280 */
-  --active-bg: #012169;    /* selected state: flag navy on light */
+  --surface-2: #f2f0ec;
+  --hairline: #e4e1db;
+  --ink: #1a1a1c;
+  --ink-2: #5f6165;
+  --ink-3: #6c6d72;        /* 4.54:1 on surface-2, the worst case */
+  --accent: #b8112b;       /* rationed: on today, active tab, the price */
+  --accent-fill: #b8112b;  /* white on this is 6.66:1, so no split is needed on light */
+  --link: #0a3c86;         /* directions, restore, secondary emphasis */
+  --active-bg: #1a1a1c;    /* selection is monochrome, never the accent */
   --active-fg: #ffffff;
   --shadow: 0 12px 30px rgba(11, 22, 51, 0.14);
   --shadow-sm: 0 1px 2px rgba(11, 22, 51, 0.06);
-  --wash-alpha: 0.12;
+  --wash-alpha: 0.11;
   --glass: rgba(255, 255, 255, 0.88);
   --glass-blur: saturate(160%) blur(18px);
 }

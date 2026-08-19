@@ -15,22 +15,43 @@
 //
 // Icons are inline SVG, not emoji, so they inherit the category colour, stay
 // the same weight on every platform, and never depend on an emoji font.
-const CATS = {
-  Music:        { c: "#2563C9", d: "#7BA4F2", i: "note" },
-  "Live music": { c: "#2563C9", d: "#7BA4F2", i: "note" },
-  Clubs:        { c: "#6D3FC4", d: "#AC8BF2", i: "disc" },
-  Festivals:    { c: "#C8102E", d: "#F4707F", i: "flag" },
-  Comedy:       { c: "#B23A8C", d: "#E58FCE", i: "mic" },
-  Football:     { c: "#17794A", d: "#4FC78C", i: "ball" },
-  Sport:        { c: "#2B7A6F", d: "#5FC9BB", i: "whistle" },
-  Markets:      { c: "#A5651B", d: "#E0A75C", i: "bag" },
-  Museums:      { c: "#0F6F86", d: "#4FB8D4", i: "museum" },
-  Theatre:      { c: "#9C2F5E", d: "#E07FA5", i: "masks" },
-  Film:         { c: "#4A4F9E", d: "#949AE8", i: "film" },
-  Food:         { c: "#B5541F", d: "#F0946A", i: "food" },
-  Family:       { c: "#7A6A12", d: "#CCB84F", i: "balloon" },
+// Six families, not thirteen hues, matching ios/VenTrack/Design/Theme.swift.
+//
+// Merging them is what removed every purple, magenta and pink from the app:
+// clubs and festivals fold into music, comedy and theatre and film into stage,
+// exhibitions into culture. Each canonical category the API emits maps onto one
+// of the six, so `c` and `d` repeat across the keys on purpose.
+//
+// Family colour is an accent INSIDE a card: a 14x3 rule, a map pin, a corner
+// rule on a feature image, or a contained thumbnail tint. Never a wash behind a
+// whole card, which is what made the feed read as a colour coded spreadsheet.
+const FAMILY = {
+  music:   { c: "#2F6FB0", d: "#7BA8D8", i: "note" },
+  stage:   { c: "#9A6420", d: "#D3A45F", i: "masks" },
+  culture: { c: "#4A5A6B", d: "#97A6B6", i: "museum" },
+  sport:   { c: "#2C6E49", d: "#6FBE8C", i: "ball" },
+  food:    { c: "#A5492A", d: "#DC8A66", i: "food" },
+  outdoor: { c: "#2D6E66", d: "#68B8AC", i: "peaks" },
 };
-const CAT_FALLBACK = { c: "#5A6580", d: "#98A2BC", i: "ticket" };
+const CATS = {
+  Music:        FAMILY.music,
+  "Live music": FAMILY.music,
+  Clubs:        FAMILY.music,
+  Festivals:    FAMILY.music,
+  Comedy:       FAMILY.stage,
+  Theatre:      FAMILY.stage,
+  Film:         FAMILY.stage,
+  Museums:      FAMILY.culture,
+  // Family listings in the corpus are overwhelmingly museums, libraries and
+  // community activities, which is what culture already is.
+  Family:       FAMILY.culture,
+  Football:     FAMILY.sport,
+  Sport:        FAMILY.sport,
+  Markets:      FAMILY.food,
+  Food:         FAMILY.food,
+  Outdoors:     FAMILY.outdoor,
+};
+const CAT_FALLBACK = { c: "#5F6165", d: "#9AA0A6", i: "ticket" };
 
 // Single-colour line icons on a 24 grid, stroked rather than filled so they
 // stay legible at 16px and at 48px without a second set of artwork.
@@ -49,6 +70,7 @@ const ICON_PATHS = {
   ticket: '<path d="M4 7.2h16v3a2 2 0 0 0 0 3.6v3H4v-3a2 2 0 0 0 0-3.6z"/><path d="M13.2 7.2v9.6"/>',
   disc: '<circle cx="12" cy="12" r="8.8"/><circle cx="12" cy="12" r="2.4"/>',
   whistle: '<path d="M13.6 9.2h6.2v4.2a4.2 4.2 0 0 1-4.2 4.2H9.4a4.2 4.2 0 1 1 0-8.4h4.2z"/><path d="M13.6 9.2 15.8 5"/><circle cx="9.4" cy="13.4" r="1.2"/>',
+  peaks: '<path d="M2.4 18.6 8.2 8.4l4 6.6"/><path d="M10.6 18.6 15.4 10l6.2 8.6z"/><path d="M2.4 18.6h19.2"/>',
   museum: '<path d="M3.6 9.6 12 4.2l8.4 5.4"/><path d="M5.4 9.6v8.2M9.8 9.6v8.2M14.2 9.6v8.2M18.6 9.6v8.2"/><path d="M3.4 20.2h17.2"/>',
   masks: '<path d="M10.6 4.2H4.4v6.6a3.1 3.1 0 0 0 6.2 0z"/><path d="M19.6 8.4h-6.2V15a3.1 3.1 0 0 0 6.2 0z"/><path d="M6.2 7.4h2.6M15.2 11.6h2.6"/>',
 };
@@ -291,6 +313,9 @@ const MOTIF_BY_CAT = {
   film: "sprockets",
   food: "plate",
   family: "confetti",
+  // Outdoors is a canonical category now, and without an entry here every walk
+  // and open-air listing would fall through to the generic "tiles" motif.
+  outdoors: "hills",
 };
 
 // Two decimals is past the point where the difference is visible at 84px, and
@@ -365,6 +390,21 @@ const MOTIFS = {
   /// Museums. Columns whose rounded tops read as an arcade. They run past the
   /// bottom edge and are clipped, so they sit on the floor of the tile rather
   /// than floating in it.
+  /// Outdoors. Three overlapping ridgelines, the middle one taller, with the
+  /// crest positions varying per event so two walks side by side are not the
+  /// same picture twice. Flat fills at two opacities, no gradient.
+  hills(t, rnd) {
+    const base = 118;
+    const peaks = [
+      { x: 22 + rnd() * 10, h: 42, o: "0.20" },
+      { x: 50 + rnd() * 10, h: 66, o: "0.32" },
+      { x: 78 + rnd() * 10, h: 38, o: "0.22" },
+    ];
+    return peaks.map((p) =>
+      `<path d="M${n(p.x - 34)} ${base}L${n(p.x)} ${n(base - p.h)}L${n(p.x + 34)} ${base}Z"` +
+      ` fill="${t}" fill-opacity="${p.o}"/>`
+    ).join("");
+  },
   arches(t) {
     const w = 19, gap = 6, x0 = (100 - (3 * w + 2 * gap)) / 2;
     let out = "";
@@ -1011,7 +1051,7 @@ function applyTheme() {
     b.setAttribute("aria-pressed", on ? "true" : "false");
   });
   const mc = document.querySelector('meta[name="theme-color"]');
-  if (mc) mc.content = state.theme === "dark" ? "#141926" : "#f6f7fb";
+  if (mc) mc.content = state.theme === "dark" ? "#0c0d0f" : "#fbfaf8";
   if (tileLayer) tileLayer.setUrl(tileURL()); // swap map tiles to match theme
   // Category colours are written into inline styles, so a theme change has to
   // repaint the list rather than relying on the cascade.
