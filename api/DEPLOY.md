@@ -234,6 +234,63 @@ names are also American cities, and search engines favour the American one. The
 PR body carries the model's stated reason for each page, which is what to read
 it against.
 
+### Checking what the list actually does, and pruning it
+
+A discovered page is a guess until something reads it. Some are real listings
+pages, some are venues that render their listings in JavaScript and hand a
+plain fetch nothing, and a few are domains the model invented because the town
+genuinely has no indexed events page. All three look identical in the seed
+file, and a page that yields nothing is not visibly broken: it just costs a
+fetch every TTL window for ever.
+
+`GET /api/diag` cannot tell you which is which. Diag reports per **source**, so
+it says localscan returned twelve events for a town and never says which of
+that town's twenty two pages produced them.
+
+`api/audit-seeds.js` answers it per page. Run it from **Actions, localscan seed
+audit, Run workflow** (blank for every seeded town, or a space separated list
+of region ids). It reads every page and writes both a job summary and an
+`audit.json` artifact with one row per page. It writes nothing to the
+repository. A full pass over the current list takes about half an hour and
+costs around twenty pence.
+
+The report splits four outcomes, and they do **not** deserve equal treatment:
+
+| Outcome | What it means | Costs per scan |
+| --- | --- | --- |
+| producing events | working as intended | a fetch and an extraction |
+| read but empty | substantial page, model found no events | a fetch and an extraction |
+| too thin to read | fetched, almost no text, so `isThin()` stopped it before the model | a fetch only |
+| failed to fetch | did not answer at all | a failed fetch |
+
+**The waste is the "read but empty" bucket, not the thin one.** Thin pages
+never reach the model, so they are close to free, and many are real venues
+worth keeping for whenever a rendering fetch exists. The empty ones pay for an
+extraction on every single scan and return nothing.
+
+Then prune on the JSON rather than by hand:
+
+```bash
+cd api
+node prune-seeds.js /path/to/audit.json            # show what would go
+node prune-seeds.js /path/to/audit.json --write    # remove it
+```
+
+It deletes unreachable urls and read-but-empty pages, keeps thin ones unless
+you pass `--include-thin`, recounts the town headers, and names any town left
+watching nothing. Those towns need researching again, which pruning cannot do:
+send them back through the discovery job with
+`LOCALSCAN_DISCOVER_SCOPE=unseeded`.
+
+A url seeded for several towns is judged on its best row, not per town. Shared
+district pages are common and one can look dead for one town while being the
+best page another town has.
+
+One caveat on old artifacts. An `audit.json` produced before the fix that
+records **why** a page was unreadable cannot tell an unreachable url apart from
+a thin one, and pruning off such a file would delete exactly the pages worth
+keeping. `prune-seeds.js` refuses those rather than guessing; re-run the audit.
+
 ### Adding a page to watch
 
 Open `api/sources/localscan-seeds.js` and add one line per page:
