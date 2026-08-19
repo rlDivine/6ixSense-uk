@@ -77,8 +77,10 @@ Putting numbers on that, because 350 URLs is a different regime from the 22
 this started with, and because the research cost and the running cost are
 different things that are easy to conflate.
 
-**Researching a town is one-time.** A full sweep of the country through
-`discover-seeds.js` is roughly $12, paid once.
+**Researching a town is one-time.** About $0.0033 a town, so a full sweep of
+the country through `discover-seeds.js` is roughly **$1.50**, paid once. That
+figure is measured: 427 research calls in the August 2026 sweep came to about
+$1.40 on the OpenAI dashboard.
 
 **The pages it finds are a subscription.** At roughly 2,000 input and 400
 output tokens per page on gpt-4o-mini, one extraction costs about $0.00054.
@@ -206,10 +208,21 @@ LOCALSCAN_DISCOVER_SCOPE=unseeded LOCALSCAN_DISCOVER_TARGET=20 \
 ```
 
 Each run skips towns already at the target, so repeating the command walks
-forward through the country on its own, one reviewable PR at a time. Roughly 18
-runs covers the 426 towns that currently watch nothing, at an estimated $13
-total. `LOCALSCAN_DISCOVER_LIMIT` changes the batch size and
+forward through the country on its own, one reviewable PR at a time. Covering
+every remaining town costs on the order of a pound in total.
+`LOCALSCAN_DISCOVER_LIMIT` changes the batch size and
 `LOCALSCAN_DISCOVER_SCOPE=all` revisits seeded towns too.
+
+To run batches **concurrently** rather than one after another, give each one a
+different `LOCALSCAN_DISCOVER_OFFSET`. Without it every concurrent run reads
+the seed file from the same commit, sees the same towns as unseeded, and
+researches the same first 25. Offsets of 0, 25, 50 and so on partition the
+country instead.
+
+Expect roughly one town in five to produce anything. In the August 2026 sweep,
+385 towns were searched and 82 returned candidates. Many small British towns
+have no indexed page listing their events, and the job returns nothing rather
+than inventing something.
 
 This uses OpenAI's own `web_search` tool, so it is not subject to whatever
 search limits a coding session has, and it can be run repeatedly from any

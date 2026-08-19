@@ -83,13 +83,16 @@ const REGIONS_PER_RUN = Number(process.env.LOCALSCAN_DISCOVER_LIMIT ?? 25);
 // different offset and they partition the country instead of duplicating it.
 const REGIONS_OFFSET = Number(process.env.LOCALSCAN_DISCOVER_OFFSET ?? 0);
 
-// Rough cost of one region's research call, in US dollars, for the estimate
-// printed before anything is spent. A web_search-backed Responses call is
-// dominated by the search tool rather than the tokens; this is deliberately a
-// pessimistic round number rather than a precise one, because the point of it
-// is to stop somebody starting a 457 region run without knowing it is not
-// free, not to invoice them.
-const EST_COST_PER_REGION_USD = 0.03;
+// Cost of one region's research call, in US dollars, for the estimate printed
+// before anything is spent.
+//
+// Measured, not guessed. 427 research calls across the August 2026 sweep came
+// to about $1.40 on the OpenAI dashboard, so roughly $0.0033 each; this rounds
+// up. The previous value here was $0.03, a deliberately pessimistic round
+// number written before anything had run, and it overstated a full national
+// sweep by nearly ten times. An estimate that scares somebody off a job that
+// actually costs a pound is not a safe error, it is just a wrong one.
+const EST_COST_PER_REGION_USD = 0.004;
 
 // ---- which regions to research --------------------------------------------
 
