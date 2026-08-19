@@ -61,12 +61,20 @@ if (only.length && regionIds.length !== only.length) {
 console.log(`[audit] ${regionIds.length} town(s), ${SEEDS.length} entries, ` +
             `${new Set(SEEDS.map((s) => s.url)).size} distinct pages`);
 
+// Written after every town, not once at the end. The first full run took over
+// an hour and would have produced nothing at all if it had hit the job's
+// timeout, because the report was the last thing to happen. Partial results
+// from a run that was cut off are still worth having.
+const out = process.env.AUDIT_REPORT_PATH;
+const jsonPath = out ? out.replace(/\.[^.]+$/, "") + ".json" : null;
+
 const rows = [];
 for (const [i, id] of regionIds.entries()) {
   const region = CITIES.find((c) => c.id === id);
   if (!region) continue;
   const found = await auditLocalScan(region);
   rows.push(...found);
+  if (jsonPath) fs.writeFileSync(jsonPath, JSON.stringify(rows, null, 2));
   const yielded = found.filter((r) => r.events > 0).length;
   console.log(`[audit] ${String(i + 1).padStart(3)}/${regionIds.length} ` +
               `${id.padEnd(22)} ${String(yielded).padStart(3)}/${String(found.length).padEnd(3)} pages yielded`);
@@ -119,9 +127,7 @@ if (rest > 0) lines.push(`  ... and ${rest} more`);
 const report = lines.join("\n");
 console.log(report);
 
-const out = process.env.AUDIT_REPORT_PATH;
 if (out) {
   fs.writeFileSync(out, report);
-  fs.writeFileSync(out.replace(/\.[^.]+$/, "") + ".json", JSON.stringify(rows, null, 2));
   console.log(`[audit] written to ${out}`);
 }

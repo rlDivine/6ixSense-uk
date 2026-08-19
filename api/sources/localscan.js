@@ -599,7 +599,13 @@ export async function auditLocalScan(region, seeds = null) {
     : (SEEDS_BY_REGION.get(region.id) || []).slice(0, maxSeedsPerRegion());
 
   const rows = [];
-  await pool(list, 3, async (seed) => {
+  // Higher than the request path's 3 on purpose. That number is tuned for a
+  // live request: it is polite to the sites and fits a 70 second budget. An
+  // audit is a one-off with neither constraint, and at 3 a 941 page pass takes
+  // over an hour because every unreachable host burns the full 12 second fetch
+  // timeout before giving up.
+  const concurrency = Number(process.env.LOCALSCAN_AUDIT_CONCURRENCY ?? 12);
+  await pool(list, concurrency, async (seed) => {
     const t0 = Date.now();
     let events = [], error = null, thin = false;
     try {
