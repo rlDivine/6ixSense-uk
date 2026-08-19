@@ -572,7 +572,30 @@ export const SEEDS = [
   { regionId: "southampton", url: "https://www.facebook.com/SouthamptonCommonForum/events", kind: "facebook", label: "Southampton Common Forum (Facebook events)" },
   { regionId: "southampton", url: "https://www.facebook.com/SeaCityMuseum/", kind: "facebook", label: "SeaCity Museum (Facebook page)" },
 
-  // --- END SEEDS ---
+    { regionId: "barnsley", url: "https://www.barnsley.gov.uk/services/tourism-and-events/events-in-barnsley/", kind: "web", label: "Barnsley Council Events" }, // Official council page listing upcoming events in Barnsley, including markets, festivals, and exhibitions, with dates extending into November 2026.
+  { regionId: "barnsley", url: "https://www.barnsley.gov.uk/services/community-and-volunteering/whats-on-in-your-local-area/", kind: "web", label: "Barnsley Community Events" }, // Council's community events calendar featuring weekly activities and events funded by local area councils, with listings through November 2026.
+  { regionId: "barnsley", url: "https://visitbarnsley.co.uk/whats-on", kind: "web", label: "Visit Barnsley Events" }, // Tourism website showcasing a variety of events in Barnsley, including exhibitions, markets, and festivals, with events listed through February 2027.
+  { regionId: "barnsley", url: "https://www.theglassworksbarnsley.com/events/", kind: "web", label: "The Glass Works Barnsley Events" }, // Events calendar for The Glass Works Barnsley, featuring markets and special events, with listings through November 2026.
+  { regionId: "barnsley", url: "https://www.experience-barnsley.com/whats-on", kind: "web", label: "Experience Barnsley Museum Events" }, // Museum's events page listing exhibitions and activities, including the 'Cleopatra and the Queens of Egypt' exhibition running through February 2027.
+  { regionId: "barnsley", url: "https://www.yorkshire.com/barnsley/events", kind: "web", label: "Yorkshire.com Barnsley Events" }, // Comprehensive list of events in Barnsley, including live music, theatre, and festivals, with events listed through October 2026.
+  { regionId: "barnsley", url: "https://www.stayhappening.com/barnsley", kind: "web", label: "StayHappening Barnsley Events" }, // Event listing site featuring upcoming events in Barnsley, including comedy shows, live music, and theatre performances, with events listed through October 2026.
+  { regionId: "rotherham", url: "https://www.rotherham.gov.uk/events", kind: "web", label: "Rotherham Borough Council Events" }, // Official council page listing upcoming events in Rotherham, expected to be updated regularly.
+  { regionId: "rotherham", url: "https://www.rotherham.gov.uk/whats-on", kind: "web", label: "Rotherham Borough Council What's On" }, // Council's 'What's On' page featuring a variety of local events, regularly updated.
+  { regionId: "lowestoft", url: "https://www.waveney.gov.uk/events", kind: "web", label: "Waveney District Council Events" }, // Official council page listing upcoming events in the Lowestoft area, expected to be updated regularly.
+  { regionId: "lowestoft", url: "https://www.lowestofttowncouncil.gov.uk/events", kind: "web", label: "Lowestoft Town Council Events" }, // Town council's events page providing information on local happenings, likely to be updated periodically.
+  { regionId: "lowestoft", url: "https://www.theberneyarms.co.uk/whats-on", kind: "web", label: "The Berney Arms Events" }, // Local pub listing upcoming events, including live music and community gatherings, with regular updates.
+  { regionId: "lowestoft", url: "https://www.lowestoftmuseum.org.uk/whats-on", kind: "web", label: "Lowestoft Museum Events" }, // Museum's events page detailing exhibitions and activities, updated to reflect ongoing and upcoming events.
+  { regionId: "lowestoft", url: "https://www.lowestoftarts.org.uk/whats-on", kind: "web", label: "Lowestoft Arts Centre Events" }, // Arts centre's listings of performances and workshops, regularly updated to showcase local talent.
+  { regionId: "lowestoft", url: "https://www.lowestoft.co.uk/whats-on", kind: "web", label: "Lowestoft.co.uk Events" }, // Local community website featuring a calendar of events in Lowestoft, updated to include various local happenings.
+  { regionId: "lowestoft", url: "https://www.lowestoftjournal.co.uk/whats-on", kind: "web", label: "Lowestoft Journal What's On" }, // Local newspaper's events section providing information on upcoming events in the area, updated regularly.
+  { regionId: "lowestoft", url: "https://www.facebook.com/LowestoftEvents", kind: "facebook", label: "Lowestoft Events Facebook Page" }, // Community-run Facebook page listing local events, with regular updates and community engagement.
+  { regionId: "lowestoft", url: "https://www.facebook.com/LowestoftArtsCentre", kind: "facebook", label: "Lowestoft Arts Centre Facebook Page" }, // Arts centre's official Facebook page sharing information on upcoming events and activities.
+  { regionId: "dorking", url: "https://www.molevalley.gov.uk/leisure-culture/dorking-markets/", kind: "web", label: "Mole Valley District Council Markets" }, // Provides information on Dorking's Friday Market and other seasonal events, indicating ongoing market activities.
+  { regionId: "dorking", url: "https://circulardorking.org.uk/events/", kind: "web", label: "Circular Dorking Events" }, // Lists upcoming events in Dorking, including festivals and community activities, suggesting regular event planning.
+  { regionId: "dorking", url: "https://whitehorsedorking.com/whats-on/", kind: "web", label: "The White Horse Dorking Events" }, // Details regular events at The White Horse pub, such as quiz nights and live music, indicating ongoing programming.
+  { regionId: "dorking", url: "https://www.hellodorking.com/whats-happening-in-dorking-17th-19th-april-2026/", kind: "web", label: "Hello Dorking Events" }, // Provides a detailed list of events happening in Dorking over a specific weekend, indicating regular event updates.
+
+// --- END SEEDS ---
   // Do not remove or move this line. localscan-discover.js finds it by exact
   // text match and inserts proposed new entries directly above it, in the
   // pull requests it opens. Anything below this line is not part of the
