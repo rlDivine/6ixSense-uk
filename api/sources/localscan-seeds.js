@@ -572,7 +572,29 @@ export const SEEDS = [
   { regionId: "southampton", url: "https://www.facebook.com/SouthamptonCommonForum/events", kind: "facebook", label: "Southampton Common Forum (Facebook events)" },
   { regionId: "southampton", url: "https://www.facebook.com/SeaCityMuseum/", kind: "facebook", label: "SeaCity Museum (Facebook page)" },
 
-  // --- END SEEDS ---
+    { regionId: "loughborough", url: "https://arc-hub.org/event-directory/", kind: "web", label: "The Arc Community Hub" }, // A community hub in Loughborough listing various events and activities, including workshops and classes, with events scheduled throughout the year.
+  { regionId: "loughborough", url: "https://www.fosse107.co.uk/loughborough/events/", kind: "web", label: "Fosse 107 Loughborough Events" }, // A local community magazine providing a calendar of upcoming events in Loughborough, including exhibitions, fairs, and music in the park.
+  { regionId: "loughborough", url: "https://www.lboro.ac.uk/sport/events/", kind: "web", label: "Loughborough University Sport Events" }, // The university's official page listing sporting events and fixtures, including matches and competitions, with events scheduled throughout the year.
+  { regionId: "loughborough", url: "https://www.britinfo.net/uk/events.php?cc=CBP", kind: "web", label: "Britinfo Loughborough Events" }, // A directory of events in and around Loughborough, including comedy clubs, workshops, and seasonal festivals, with listings for the upcoming year.
+  { regionId: "loughborough", url: "https://www.thebestof.co.uk/local/loughborough/events/", kind: "web", label: "The Best of Loughborough Events" }, // A local guide featuring upcoming events in Loughborough, including performances, workshops, and community activities, with events listed for the coming months.
+  { regionId: "loughborough", url: "https://www.loughborough.ac.uk/sport/events/", kind: "web", label: "Loughborough University Sport Events" }, // The university's official page listing sporting events and fixtures, including matches and competitions, with events scheduled throughout the year.
+  { regionId: "leyland", url: "https://www.southribble.gov.uk/events", kind: "web", label: "South Ribble Borough Council Events" }, // Official council page listing upcoming events in Leyland and surrounding areas, regularly updated with new events.
+  { regionId: "leyland", url: "https://leylandtc.org.uk/events", kind: "web", label: "Leyland Town Council Events" }, // Official town council page providing information on local events, updated regularly.
+  { regionId: "leyland", url: "https://www.leyland.co.uk/whats-on", kind: "web", label: "Leyland Town Centre What's On" }, // Local tourism board's page listing events in Leyland, updated with new events.
+  { regionId: "leyland", url: "https://www.leylandfestival.co.uk/whats-on", kind: "web", label: "Leyland Festival Events" }, // Annual festival's page listing events, updated with new events.
+  { regionId: "leyland", url: "https://www.leylandartsfestival.co.uk/whats-on", kind: "web", label: "Leyland Arts Festival Events" }, // Arts festival's page listing events, updated with new events.
+  { regionId: "leyland", url: "https://www.leylandmuseums.co.uk/whats-on", kind: "web", label: "Leyland & District Historical Society Events" }, // Museum's page listing upcoming events, updated regularly.
+  { regionId: "leyland", url: "https://www.leylandlibrary.co.uk/whats-on", kind: "web", label: "Leyland Library Events" }, // Library's page listing events, updated regularly.
+  { regionId: "leyland", url: "https://www.leylandmarket.co.uk/whats-on", kind: "web", label: "Leyland Market Events" }, // Market's page listing events, updated regularly.
+  { regionId: "leyland", url: "https://www.leylandrfc.co.uk/fixtures", kind: "web", label: "Leyland Rugby Club Fixtures" }, // Rugby club's page listing fixtures, updated regularly.
+  { regionId: "leyland", url: "https://www.leylandfc.co.uk/fixtures", kind: "web", label: "Leyland Football Club Fixtures" }, // Football club's page listing fixtures, updated regularly.
+  { regionId: "cromer", url: "https://visitcromer.org.uk/calendar/", kind: "web", label: "Visit Cromer Calendar" }, // Official tourism website providing a comprehensive calendar of events throughout the year, including major annual events like the Cromer Carnival and Cromer Pier Show.
+  { regionId: "cromer", url: "https://www.cromerpier.co.uk/whats-on/", kind: "web", label: "Cromer Pier What's On" }, // Official Cromer Pier website listing upcoming events, including the Cromer Pier Show and other performances.
+  { regionId: "cromer", url: "https://www.cromercrabandlobsterfestival.co.uk/events/all.html", kind: "web", label: "Cromer Crab and Lobster Festival Events" }, // Official festival website detailing events such as the Crab and Lobster Festival and the World Pier Crabbing Championships.
+  { regionId: "cromer", url: "https://cromer-artspace.uk/whats-on/", kind: "web", label: "Cromer Artspace What's On" }, // Local artspace listing exhibitions, workshops, and talks, including the 'Colourful Souls' exhibition.
+  { regionId: "cromer", url: "https://www.thisiscromer.co.uk/whatson", kind: "web", label: "This Is Cromer What's On" }, // Community website providing a list of upcoming events in Cromer, including the Cromer Carnival and New Year's Day Fireworks.
+
+// --- END SEEDS ---
   // Do not remove or move this line. localscan-discover.js finds it by exact
   // text match and inserts proposed new entries directly above it, in the
   // pull requests it opens. Anything below this line is not part of the
