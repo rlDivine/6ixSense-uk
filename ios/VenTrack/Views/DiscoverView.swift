@@ -24,6 +24,10 @@ struct DiscoverView: View {
     /// Where the finger last turned around, within the current drag. See
     /// `onDrag`.
     @State private var pivot: CGFloat = 0
+    /// Whether the top of the feed is currently loaded, which is the closest
+    /// thing to "you are at the top" that this screen can observe. Set by the
+    /// section header appearing and disappearing. See `sectionHeader`.
+    @State private var atTop = true
 
     var body: some View {
         ZStack {
@@ -145,8 +149,7 @@ struct DiscoverView: View {
     /// A drag gesture has none of that plumbing in the way. UIKit delivers the
     /// translation continuously for as long as a finger is down, there is no
     /// preference to propagate, no coordinate space to resolve and no lazy
-    /// container to unload it. It is also a closer model of what was actually
-    /// asked for: swipe up and the header goes, swipe back down and it returns.
+    /// container to unload it.
     ///
     /// WHAT IT GIVES UP. Momentum. Flick hard and let go, and the feed keeps
     /// travelling while this sees nothing, so the header holds whatever state
@@ -162,12 +165,25 @@ struct DiscoverView: View {
     /// the hand has clearly changed its mind. Measuring from the point the
     /// finger last turned around makes every reversal count, however far into
     /// the drag it happens.
+    ///
+    /// GOING DOWN IS A GESTURE, COMING BACK IS A PLACE. Collapsing needs
+    /// nothing but the direction of travel. Restoring is gated on actually
+    /// being at the top of the feed, which is what `atTop` is for. An upward
+    /// swipe from the middle of the list is somebody travelling toward the top,
+    /// not somebody arriving, and giving them the filters back three screens
+    /// early puts a third of the screen back under a feed they are still moving
+    /// through. The header comes back when they get there.
     private func onDrag(_ translation: CGFloat) {
         // Negative is the finger travelling up the screen, which is the feed
         // travelling down.
         if collapsed {
             pivot = min(pivot, translation)
-            if translation > pivot + Self.flip {
+            // Only meaningful within the top region. Everywhere else the top
+            // sentinel is what restores the header, once it comes back into
+            // view. This branch exists for the short scroll that collapsed the
+            // header without ever pushing the sentinel out of the feed, where
+            // there is no reappearance to wait for.
+            if atTop, translation > pivot + Self.flip {
                 setCollapsed(false)
                 pivot = translation
             }
@@ -193,9 +209,15 @@ struct DiscoverView: View {
     ///
     /// Called only on an actual flip, never on every frame of the drag, so this
     /// starts one animation per collapse rather than one per touch event.
+    ///
+    /// Eased rather than sprung. A spring was the first choice and it was
+    /// wrong: a spring overshoots and settles, and a third of the screen
+    /// arriving and then wobbling back reads as bouncy on something this large.
+    /// Springs suit small objects that a finger is still holding. This is a
+    /// panel that leaves once, so it wants a plain curve with a definite end.
     private func setCollapsed(_ value: Bool) {
         guard value != collapsed else { return }
-        withAnimation(reduceMotion ? nil : Animation.spring(response: 0.34, dampingFraction: 0.88)) {
+        withAnimation(reduceMotion ? nil : Animation.easeInOut(duration: 0.28)) {
             collapsed = value
         }
     }
@@ -214,6 +236,9 @@ struct DiscoverView: View {
     private func expand() {
         collapsed = false
         pivot = 0
+        // A list that is not there cannot report its own top, and a stale false
+        // here would leave the next feed unable to restore its header.
+        atTop = true
     }
 
     /// The town is the thing worth reading, so it gets the size. The wordmark
@@ -420,6 +445,23 @@ struct DiscoverView: View {
 
     /// Names what the run of cards below actually is, rather than repeating
     /// the count already in the header.
+    ///
+    /// It is also the feed's top marker, which is worth explaining because it
+    /// looks like two jobs bolted onto one view and is in fact the same job.
+    /// This is the first thing in the lazy stack, so it is loaded exactly when
+    /// the top of the feed is near enough to matter and unloaded once the feed
+    /// has genuinely moved on. That is the property the first attempt at the
+    /// collapsing header tripped over, when a scroll reader was put here and
+    /// silently stopped reporting the moment it was unloaded. Used deliberately
+    /// rather than accidentally it is the signal that screen needs, and it
+    /// costs nothing: no geometry, no preferences, no measurement, just the two
+    /// events SwiftUI already sends.
+    ///
+    /// It is a region rather than a line. The lazy stack keeps a little either
+    /// side of what is on screen, so this reports the top of the feed being
+    /// close, not exactly reached. That is the right way round for this: the
+    /// header returns a moment before the very top rather than a moment after,
+    /// so it is already whole when the feed stops.
     private var sectionHeader: some View {
         Text(app.range == .today ? "TONIGHT" : "TONIGHT AND THIS WEEK")
             .font(F.caption)
@@ -428,6 +470,14 @@ struct DiscoverView: View {
             .padding(.horizontal, S.s5)
             .padding(.top, S.s5)
             .padding(.bottom, S.s3)
+            .onAppear {
+                atTop = true
+                // Arriving back at the top is the restore. This is what catches
+                // the case a drag cannot: a hard flick that carries the feed
+                // home long after the finger has left the screen.
+                setCollapsed(false)
+            }
+            .onDisappear { atTop = false }
     }
 
     /// The end of the free week is a STATED gate, never a blur or a fade.
