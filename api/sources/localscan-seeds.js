@@ -572,7 +572,23 @@ export const SEEDS = [
   { regionId: "southampton", url: "https://www.facebook.com/SouthamptonCommonForum/events", kind: "facebook", label: "Southampton Common Forum (Facebook events)" },
   { regionId: "southampton", url: "https://www.facebook.com/SeaCityMuseum/", kind: "facebook", label: "SeaCity Museum (Facebook page)" },
 
-  // --- END SEEDS ---
+    { regionId: "bedworth", url: "https://www.nuneatonandbedworth.gov.uk/events", kind: "web", label: "Nuneaton and Bedworth Borough Council Events" }, // Official council page listing various local events, including markets and community activities, with events scheduled throughout the year.
+  { regionId: "bedworth", url: "https://www.uktheatre.org/bedworth/bedworth-civic-hall/v127/", kind: "web", label: "UK Theatre Bedworth Civic Hall" }, // Venue page with current and forthcoming events at Bedworth's Civic Hall, including concerts and theatre performances.
+  { regionId: "bedworth", url: "https://www.nuneatonandbedworth.gov.uk/downloads/file/2598/agenda-08062026", kind: "web", label: "Believe in Bedworth Board Agenda" }, // Document detailing upcoming community events and projects in Bedworth, including the Christmas lights switch-on scheduled for 21st November 2026.
+  { regionId: "bedworth", url: "https://www.bedworth-society.co.uk/", kind: "web", label: "The Bedworth Society" }, // Local society hosting monthly public meetings and events from September to June, featuring guest speakers and community activities.
+  { regionId: "bedworth", url: "https://www.facebook.com/BedworthCivicHall", kind: "facebook", label: "Bedworth Civic Hall Facebook Page" }, // Official Facebook page of Bedworth Civic Hall, providing updates on upcoming events and community activities.
+  { regionId: "bedworth", url: "https://www.facebook.com/BedworthLibrary", kind: "facebook", label: "Bedworth Library Facebook Page" }, // Official Facebook page of Bedworth Library, listing events and activities for all ages.
+  { regionId: "dudley", url: "https://www.dudley.gov.uk/see-and-do/events/", kind: "web", label: "Dudley Council Events" }, // Official council page listing a variety of events throughout the year, including Armed Forces Day, Vintage Transport Fair, and Christmas events.
+  { regionId: "dudley", url: "https://www.dudley.gov.uk/things-to-do/events-in-the-area/", kind: "web", label: "Dudley Council Events in the Area" }, // Council page detailing events in the Dudley borough, such as Armed Forces Day, Vintage Transport Fair, and Christmas events.
+  { regionId: "dudley", url: "https://www.dudleyzoo.org.uk/events/whats-on-at-dzc/", kind: "web", label: "Dudley Zoo and Castle Events" }, // Official page listing seasonal events at Dudley Zoo and Castle, including Easter half term, St George’s Day, and family fun weekends.
+  { regionId: "dudley", url: "https://www.dudleycanaltrust.org.uk/events/", kind: "web", label: "Dudley Canal and Caverns Events" }, // Official page listing events at Dudley Canal and Caverns, including Halloween and Christmas events.
+  { regionId: "worthing", url: "https://worthingtowncentre.co.uk/whats-on/", kind: "web", label: "Worthing Town Centre BID" }, // Lists upcoming events in Worthing, including markets, festivals, and live music, with dates extending into November 2026.
+  { regionId: "worthing", url: "https://www.shazam.com/en-gb/event/venue/I2FF8C019D26B7A25", kind: "web", label: "The Factory Live" }, // Provides a calendar of upcoming concerts and events at The Factory Live, with listings through November 2026.
+  { regionId: "worthing", url: "https://www.shazam.com/event/venue/8dccbc4c-c38b-4c32-ad87-1c677d823e4e", kind: "web", label: "The Venue Worthing" }, // Offers a schedule of upcoming concerts and events at The Venue Worthing, with dates extending into October 2026.
+  { regionId: "worthing", url: "https://stayhappening.com/worthing", kind: "web", label: "StayHappening Worthing" }, // Aggregates various events in Worthing, including festivals, concerts, and community activities, with listings through November 2026.
+  { regionId: "worthing", url: "https://happeningnext.com/worthing", kind: "web", label: "HappeningNext Worthing" }, // Provides a comprehensive list of upcoming events in Worthing, including live music, festivals, and community gatherings, with dates extending into November 2026.
+
+// --- END SEEDS ---
   // Do not remove or move this line. localscan-discover.js finds it by exact
   // text match and inserts proposed new entries directly above it, in the
   // pull requests it opens. Anything below this line is not part of the
