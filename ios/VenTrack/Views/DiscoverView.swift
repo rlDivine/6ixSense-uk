@@ -6,7 +6,7 @@ import SwiftUI
 ///
 /// The header collapses as you read down the feed and returns the moment you
 /// head back up, so twenty events are not read through a letterbox. The town
-/// name survives the collapse; everything else goes. See `onScroll`.
+/// name survives the collapse; everything else goes. See `onDrag`.
 struct DiscoverView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -21,17 +21,8 @@ struct DiscoverView: View {
     /// title does everywhere else on iOS: it goes away when you are reading and
     /// comes back the moment you head upward.
     @State private var collapsed = false
-    /// The previous raw reading, or nil before the first one has arrived.
-    /// Optional rather than zero on purpose: zero is a perfectly possible
-    /// reading, so using it as "nothing yet" makes the first real delta a
-    /// fiction the size of the whole header.
-    @State private var lastOffset: CGFloat?
-    /// How far down the feed we believe we are, accumulated from the deltas
-    /// rather than read off any single measurement. See `onScroll` for why it
-    /// cannot be read directly.
-    @State private var depth: CGFloat = 0
-    /// The turning point the current direction started from, in `depth`. What
-    /// makes the collapse need a deliberate scroll rather than a twitch.
+    /// Where the finger last turned around, within the current drag. See
+    /// `onDrag`.
     @State private var pivot: CGFloat = 0
 
     var body: some View {
@@ -88,95 +79,76 @@ struct DiscoverView: View {
         .accessibilityLabel("Showing events for \(app.placeName)")
     }
 
-    /// Collapse on the way down, restore on the way up.
+    /// Collapse on the way down, restore on the way up. Driven by the FINGER,
+    /// not by the scroll position.
     ///
-    /// WHY THE RAW READING IS NEVER USED AS A POSITION. What the reader reports
-    /// is the top of the feed measured against the top of the scroll view, and
-    /// the scroll view is inset from above by this very header. At rest that
-    /// reading is not zero, it is the header's whole height, which on this
-    /// screen is over three hundred points. The first version treated it as a
-    /// position and guarded "near the top" with `y > -12`, so for the first
-    /// three hundred points of a scroll it concluded the feed had not moved,
-    /// and past that the collapse shrank the header, which lifted the reading
-    /// straight back over the guard, which expanded it again. It could not
-    /// settle in either state, so it looked like nothing happened at all.
+    /// This is the third mechanism, and the reason it is not the second one is
+    /// worth writing down so nobody reaches for that one again.
     ///
-    /// Only the DELTAS are trustworthy, so only the deltas are used, and the
-    /// position is accumulated from them. That makes the header's own height
-    /// cancel out rather than confound: collapsing removes some inset and the
-    /// content jumps up, which arrives here as a delta, which pushes `depth`
-    /// further in the direction it was already going and takes `pivot` with it.
-    /// Expanding does the mirror image. Neither can produce a reading that
-    /// argues for the opposite state, which is what the old version was
-    /// fighting.
+    /// Reading the scroll position on iOS 17 means a GeometryReader publishing
+    /// a preference out of the scroll content, because onScrollGeometryChange
+    /// is iOS 18. Two versions of that were built and neither ever moved the
+    /// header on a device. The first had a real bug: the reader was the lazy
+    /// stack's first child, so it was unloaded as soon as it scrolled out of
+    /// view and stopped reporting. The second fixed that and also stopped
+    /// treating the raw reading as a position, which it is not, since the
+    /// scroll view is inset from above by this very header and the reading at
+    /// rest is therefore the header's whole height rather than zero. It still
+    /// did nothing, which says the preference was not arriving at all rather
+    /// than arriving wrong, and no amount of arithmetic downstream fixes a
+    /// signal that is not there.
     ///
-    /// WHY A PIVOT AND NOT A DEADZONE. Direction alone is what makes the
-    /// filters reachable from deep in the feed without scrolling all the way
-    /// back to the top, and it is what "swipe back up and it comes back"
-    /// means. But a per-delta deadzone cannot tell a slow deliberate scroll
-    /// from jitter, because a slow scroll arrives as a long run of tiny
-    /// deltas and gets discarded frame by frame. Measuring from the point the
-    /// direction last turned catches both: 44 points of travel one way flips
-    /// it, however many frames that took.
+    /// A drag gesture has none of that plumbing in the way. UIKit delivers the
+    /// translation continuously for as long as a finger is down, there is no
+    /// preference to propagate, no coordinate space to resolve and no lazy
+    /// container to unload it. It is also a closer model of what was actually
+    /// asked for: swipe up and the header goes, swipe back down and it returns.
     ///
-    /// A KNOWN AND DELIBERATE INACCURACY. Because the header's own height is
-    /// folded into `depth` along with the real scrolling, `depth` drifts away
-    /// from the true position every time the header changes state. The drift is
-    /// always in the same direction, toward believing the feed is nearer the
-    /// top than it is, so the only thing it can cause is the header staying
-    /// whole slightly longer than it strictly had to. Correcting it would mean
-    /// telling a header-driven delta from a finger-driven one, which is exactly
-    /// the distinction that cannot be made from this signal, and getting it
-    /// wrong reintroduces the oscillation above.
-    private func onScroll(_ y: CGFloat) {
-        // The first reading only establishes a baseline. There is no previous
-        // value to subtract from it, and inventing one means starting with a
-        // delta the size of the header.
-        guard let previous = lastOffset else { lastOffset = y; return }
-        lastOffset = y
-
-        let dy = y - previous
-        guard dy != 0 else { return }
-        // Content moving up is a scroll downward, hence the sign. Clamped at
-        // zero because rubber banding past the top is not negative depth.
-        depth = max(0, depth - dy)
-
-        // The top of the feed always shows the whole header, whatever the last
-        // gesture was. This is a real position now rather than a raw reading,
-        // so it means what it says.
-        if depth < 60 {
-            if collapsed { collapsed = false }
-            pivot = depth
-            return
-        }
-
+    /// WHAT IT GIVES UP. Momentum. Flick hard and let go, and the feed keeps
+    /// travelling while this sees nothing, so the header holds whatever state
+    /// the finger left it in until the next touch. That is a fair trade and
+    /// arguably the better behaviour: chrome that changes state on its own
+    /// after the hand has left the screen is the fidgety version of this.
+    ///
+    /// WHY A PIVOT RATHER THAN A THRESHOLD ON THE TRANSLATION. The translation
+    /// is cumulative from the start of the drag, so a plain threshold would
+    /// fire once per drag and then be stuck: drag up 300 points and it collapses
+    /// correctly, but reversing 40 points inside that same drag leaves the
+    /// translation still deeply negative and the header still collapsed, when
+    /// the hand has clearly changed its mind. Measuring from the point the
+    /// finger last turned around makes every reversal count, however far into
+    /// the drag it happens.
+    private func onDrag(_ translation: CGFloat) {
+        // Negative is the finger travelling up the screen, which is the feed
+        // travelling down.
         if collapsed {
-            // Deepest point reached while collapsed. Coming back up from it by
-            // a deliberate amount is what restores the header.
-            pivot = max(pivot, depth)
-            if depth < pivot - 44 {
+            pivot = min(pivot, translation)
+            if translation > pivot + Self.flip {
                 collapsed = false
-                pivot = depth
+                pivot = translation
             }
         } else {
-            pivot = min(pivot, depth)
-            if depth > pivot + 44 {
+            pivot = max(pivot, translation)
+            if translation < pivot - Self.flip {
                 collapsed = true
-                pivot = depth
+                pivot = translation
             }
         }
     }
 
-    /// Restores the full header and forgets where the feed was.
+    /// How much travel in one direction it takes to flip the header. Enough
+    /// that a thumb resettling on the glass does not trigger it, short enough
+    /// that it feels like a response rather than a decision.
+    private static let flip: CGFloat = 44
+
+    /// Restores the full header and forgets the current gesture.
     ///
-    /// Resetting lastOffset matters as much as the flag: a stale value from the
-    /// previous list would make the first reading of the next one look like a
-    /// large jump in whichever direction, and collapse the header before the
-    /// user has touched anything.
+    /// Clearing the pivot matters as much as the flag: a stale turning point
+    /// from the previous list would make the first movement of the next one
+    /// look like a large reversal and flip the header before the user has
+    /// touched anything.
     private func expand() {
         collapsed = false
-        lastOffset = nil
-        depth = 0
         pivot = 0
     }
 
@@ -363,38 +335,22 @@ struct DiscoverView: View {
                     freeWindowGate
                 }
                 .padding(.bottom, S.s6)
-                // On the CONTENT, not inside the lazy stack.
-                //
-                // This was the bug in the first version: the reader was the
-                // stack's first child, so the moment you scrolled past it
-                // LazyVStack unloaded it and the offset stopped being reported
-                // at all. The header therefore never collapsed, because nothing
-                // was telling it the feed had moved.
-                //
-                // As a background it spans the whole content, is not lazy, and
-                // reports for as long as the feed exists.
-                .background(scrollReader)
             }
-            .coordinateSpace(.named(Self.feedSpace))
-            .onPreferenceChange(FeedOffsetKey.self) { onScroll($0) }
+            // SIMULTANEOUS, so the scroll view still gets every touch it would
+            // have got. This gesture only watches; it never consumes, which is
+            // why cards remain tappable and pull to refresh still works.
+            //
+            // A minimum distance rather than zero, so a tap on a card is never
+            // the beginning of a drag as far as this is concerned.
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 12)
+                    .onChanged { onDrag($0.translation.height) }
+                    // The pivot is meaningful only within one drag. Left set,
+                    // the next drag would be measured from where the last one
+                    // ended and the first flick after a pause would do nothing.
+                    .onEnded { _ in pivot = 0 }
+            )
             .refreshable { await app.load() }
-        }
-    }
-
-    private static let feedSpace = "feed"
-
-    /// Reports how far the feed has scrolled.
-    ///
-    /// A GeometryReader behind the whole content, publishing the content's minY
-    /// in the scroll view's coordinate space. iOS 18 has
-    /// onScrollGeometryChange for exactly this and the app targets 17, so this
-    /// is the version that works on the deployment target rather than the tidy
-    /// one. It draws nothing.
-    private var scrollReader: some View {
-        GeometryReader { geo in
-            Color.clear.preference(
-                key: FeedOffsetKey.self,
-                value: geo.frame(in: .named(Self.feedSpace)).minY)
         }
     }
 
@@ -464,17 +420,6 @@ struct DiscoverView: View {
         let noun = n == 1 ? "event" : "events"
         let order = app.sort == .nearest ? "nearest first" : "soonest first"
         return "\(n) \(noun) \(app.originPhrase), \(order)"
-    }
-}
-
-/// Carries the feed's scroll offset up to DiscoverView.
-///
-/// Last one wins rather than summing, because exactly one reader publishes it
-/// and a sum would be meaningless if that ever stopped being true.
-private struct FeedOffsetKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
     }
 }
 
