@@ -73,6 +73,16 @@ const TARGET_PER_REGION = Number(process.env.LOCALSCAN_DISCOVER_TARGET ?? 5);
 // repeatedly walks forward through the country on its own.
 const REGIONS_PER_RUN = Number(process.env.LOCALSCAN_DISCOVER_LIMIT ?? 25);
 
+// How many regions to skip before taking this run's batch.
+//
+// Sequential runs do not need this: each one skips towns that already meet the
+// target, so merging a batch's PR moves the next run forward on its own.
+// Running batches CONCURRENTLY does need it, because every run reads the seed
+// file from the same base commit, sees the same towns as unseeded, and would
+// otherwise all research the same first 25. Give each concurrent run a
+// different offset and they partition the country instead of duplicating it.
+const REGIONS_OFFSET = Number(process.env.LOCALSCAN_DISCOVER_OFFSET ?? 0);
+
 // Rough cost of one region's research call, in US dollars, for the estimate
 // printed before anything is spent. A web_search-backed Responses call is
 // dominated by the search tool rather than the tokens; this is deliberately a
@@ -121,7 +131,8 @@ export function searchRegionIds() {
     ids = CITIES.map((c) => c.id).filter((id) => counts.has(id));
   }
 
-  return ids.filter((id) => (counts.get(id) || 0) < TARGET_PER_REGION).slice(0, REGIONS_PER_RUN);
+  const short = ids.filter((id) => (counts.get(id) || 0) < TARGET_PER_REGION);
+  return short.slice(REGIONS_OFFSET, REGIONS_OFFSET + REGIONS_PER_RUN);
 }
 
 /// What a full sweep at the current settings would involve. Printed before
@@ -137,6 +148,7 @@ export function discoveryPlan() {
   });
   const remaining = inScope.filter((id) => (counts.get(id) || 0) < TARGET_PER_REGION);
   const thisRun = searchRegionIds();
+  const offset = REGIONS_OFFSET;
   return {
     scope,
     target: TARGET_PER_REGION,
@@ -144,6 +156,9 @@ export function discoveryPlan() {
     regionsInScope: inScope.length,
     regionsRemaining: remaining.length,
     regionsThisRun: thisRun.length,
+    offset,
+    firstThisRun: thisRun[0] ?? null,
+    lastThisRun: thisRun[thisRun.length - 1] ?? null,
     runsRemaining: Math.ceil(remaining.length / Math.max(1, REGIONS_PER_RUN)),
     estCostThisRunUsd: +(thisRun.length * EST_COST_PER_REGION_USD).toFixed(2),
     estCostRemainingUsd: +(remaining.length * EST_COST_PER_REGION_USD).toFixed(2),
@@ -537,7 +552,9 @@ export async function runDiscovery() {
   console.log(
     `[localscan-discover] scope=${plan.scope} target=${plan.target}/region\n` +
     `  ${plan.regionsInScope} regions in scope, ${plan.regionsRemaining} still short of target\n` +
-    `  this run: ${plan.regionsThisRun} region(s), about $${plan.estCostThisRunUsd}\n` +
+    `  this run: ${plan.regionsThisRun} region(s) from offset ${plan.offset}` +
+    `${plan.firstThisRun ? `, ${plan.firstThisRun} to ${plan.lastThisRun}` : ""}` +
+    `, about $${plan.estCostThisRunUsd}\n` +
     `  to finish the sweep: ~${plan.runsRemaining} more run(s), about $${plan.estCostRemainingUsd} total`
   );
   if (process.env.LOCALSCAN_DISCOVER_DRY_RUN) {

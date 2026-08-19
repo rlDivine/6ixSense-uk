@@ -32,6 +32,9 @@ on:
       limit:
         description: "Towns per run. Keep the PR reviewable"
         default: "25"
+      offset:
+        description: "Towns to skip first. Only needed to run batches concurrently"
+        default: "0"
       dry_run:
         description: "Print the plan and cost, spend nothing"
         type: boolean
@@ -76,6 +79,7 @@ jobs:
           LOCALSCAN_DISCOVER_SCOPE: ${{ inputs.scope }}
           LOCALSCAN_DISCOVER_TARGET: ${{ inputs.target }}
           LOCALSCAN_DISCOVER_LIMIT: ${{ inputs.limit }}
+          LOCALSCAN_DISCOVER_OFFSET: ${{ inputs.offset }}
           LOCALSCAN_DISCOVER_DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
         run: node discover-seeds.js 2>&1 | tee /tmp/discover.log
 
@@ -85,7 +89,7 @@ jobs:
           {
             echo '## localscan seed discovery'
             echo
-            echo "scope \`${{ inputs.scope }}\`, target ${{ inputs.target }}/town, limit ${{ inputs.limit }}"
+            echo "scope \`${{ inputs.scope }}\`, target ${{ inputs.target }}/town, limit ${{ inputs.limit }}, offset ${{ inputs.offset }}"
             echo "dry run: ${{ inputs.dry_run }}, open PR: ${{ inputs.open_pr }}"
             echo
             echo '```'
