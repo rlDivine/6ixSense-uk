@@ -136,7 +136,7 @@ struct SearchView: View {
                     LazyVStack(spacing: 10) {
                         ForEach(hits) { e in
                             Button { selected = e } label: { EventCard(event: e) }
-                                .buttonStyle(.plain)
+                                .buttonStyle(PressableRow())
                         }
                     }
                     .padding(.horizontal, 16).padding(.bottom, 28)

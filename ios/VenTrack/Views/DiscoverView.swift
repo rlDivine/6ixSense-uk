@@ -25,7 +25,7 @@ struct DiscoverView: View {
     // MARK: Chrome
 
     private var chrome: some View {
-        VStack(alignment: .leading, spacing: 11) {
+        VStack(alignment: .leading, spacing: S.s3) {
             BrandStrip()
             titleBlock
             outOfMarketNotice
@@ -33,7 +33,7 @@ struct DiscoverView: View {
             rangeRow
             categoryRow
         }
-        .padding(.bottom, 11)
+        .padding(.bottom, S.s3)
         .topChrome()
     }
 
@@ -41,27 +41,38 @@ struct DiscoverView: View {
     /// above it only has to say which app you are in, and the date under it
     /// answers "as of when" without spending a line on a sentence.
     private var titleBlock: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(app.placeName)
-                .font(.system(size: 27, weight: .bold))
-                .kerning(-0.8)
-                .foregroundStyle(Tok.text)
+        VStack(alignment: .leading, spacing: S.s1) {
+            Text(todayLine.uppercased())
+                .font(F.caption)
+                .kerning(0.77)
+                .foregroundStyle(Tok.faint)
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
-            Text(todayLine)
-                .font(.system(size: 13.5))
+            HStack(spacing: S.s2) {
+                Text(app.placeName)
+                    .font(F.display)
+                    .kerning(-1.1)
+                    .foregroundStyle(Tok.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Tok.muted)
+                Spacer(minLength: 0)
+            }
+            Text(statusText)
+                .font(F.body)
                 .foregroundStyle(Tok.muted)
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 16)
+        .padding(.horizontal, S.s5)
     }
 
-    /// A bordered inline well that hugs its content, matching the web client,
-    /// which took the control back from 6ix Sense. The live segment is filled
-    /// with `accentFill` under a white label. That pairing is the whole reason
-    /// `accentFill` exists as a separate token: `accent` is the lighter red for
-    /// text and would fail contrast under white on the dark theme.
+    /// Two segments in a full width `panel2` track, the live one filled with
+    /// `activeBg` under `activeFg`. It used to fill with red, which put a third
+    /// competing red on a screen that already had the "today" overline and the
+    /// primary button; selection is monochrome everywhere now, and that is what
+    /// leaves the accent free to mean one thing.
     ///
     /// Both segments are labelled with an SF Symbol. These were the last two
     /// emoji in the app and they are gone: an emoji renders in its own font at
@@ -71,10 +82,10 @@ struct DiscoverView: View {
             sortSegment("location.fill", "Nearest", .nearest)
             sortSegment("clock.fill", "Soonest", .soonest)
         }
-        .padding(3)
-        .background(Tok.panel, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Tok.hairline, lineWidth: 1))
-        .padding(.horizontal, 16)
+        .padding(2)
+        .background(Tok.panel2, in: RoundedRectangle(cornerRadius: 11))
+        .padding(.horizontal, S.s5)
+        .frame(height: 44)
     }
 
     /// The symbol is decorative, so it stays out of the accessibility label:
@@ -89,12 +100,12 @@ struct DiscoverView: View {
         } label: {
             Label(label, systemImage: symbol)
                 .labelStyle(.titleAndIcon)
-                .font(.system(size: 13.5, weight: .semibold))
+                .font(.system(size: 15, weight: .medium))
                 .imageScale(.small)
-                .foregroundStyle(on ? Color.white : Tok.muted)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(on ? Tok.accentFill : Color.clear,
+                .foregroundStyle(on ? Tok.activeFg : Tok.muted)
+                .frame(maxWidth: .infinity)
+                .frame(height: 36)
+                .background(on ? Tok.activeBg : Color.clear,
                             in: RoundedRectangle(cornerRadius: 9))
                 .contentShape(RoundedRectangle(cornerRadius: 9))
         }
@@ -121,7 +132,7 @@ struct DiscoverView: View {
                     }
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, S.s5)
         }
     }
 
@@ -137,7 +148,7 @@ struct DiscoverView: View {
                     }
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, S.s5)
         }
     }
 
@@ -148,20 +159,19 @@ struct DiscoverView: View {
     @ViewBuilder private var outOfMarketNotice: some View {
         if !app.inMarket && app.placeOverride == nil {
             HStack(alignment: .top, spacing: 9) {
-                Image(systemName: "info.circle.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Tok.link)
+                Image(systemName: "info.circle")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Tok.muted)
                 Text("VenTrack covers the UK only. You appear to be outside it, so we are showing \(app.placeName).")
-                    .font(.system(size: 12.5))
+                    .font(F.footnote)
                     .foregroundStyle(Tok.text)
                     .fixedSize(horizontal: false, vertical: true)
                     .multilineTextAlignment(.leading)
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 11)
-            .background(Tok.panel2, in: RoundedRectangle(cornerRadius: 12))
-            .padding(.horizontal, 16)
+            .padding(S.s3)
+            .background(Tok.panel2, in: RoundedRectangle(cornerRadius: R.well))
+            .padding(.horizontal, S.s5)
             .accessibilityElement(children: .combine)
         }
     }
@@ -184,21 +194,73 @@ struct DiscoverView: View {
             }
         } else {
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 10) {
-                    Text(statusText)
-                        .font(.system(size: 12.5))
-                        .foregroundStyle(Tok.faint)
-                        .padding(.top, 10)
-                        .padding(.bottom, 2)
-                    ForEach(app.visibleEvents) { e in
-                        Button { selected = e } label: { EventCard(event: e) }
-                            .buttonStyle(.plain)
+                // No horizontal padding and no inter-row spacing: each card
+                // owns its own gutter and draws its own hairline, which is what
+                // lets a row separator run the full width the way the design
+                // shows while the content still sits on a 20pt gutter.
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    sectionHeader
+                    ForEach(Array(app.visibleEvents.enumerated()), id: \.element.id) { i, e in
+                        Button { selected = e } label: {
+                            // Exactly one feature per screen, at the top, where
+                            // the photograph gets to carry the feed. Used more
+                            // than once it undoes the calm and the feed reads
+                            // as a carousel of posters.
+                            EventCard(event: e, style: i == 0 ? .feature : .row)
+                        }
+                        .buttonStyle(PressableRow())
                     }
+                    freeWindowGate
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 26)
+                .padding(.bottom, S.s6)
             }
             .refreshable { await app.load() }
+        }
+    }
+
+    /// Names what the run of cards below actually is, rather than repeating
+    /// the count already in the header.
+    private var sectionHeader: some View {
+        Text(app.range == .today ? "TONIGHT" : "TONIGHT AND THIS WEEK")
+            .font(F.caption)
+            .kerning(0.77)
+            .foregroundStyle(Tok.faint)
+            .padding(.horizontal, S.s5)
+            .padding(.top, S.s5)
+            .padding(.bottom, S.s3)
+    }
+
+    /// The end of the free week is a STATED gate, never a blur or a fade.
+    ///
+    /// A fade is a gradient, and it is also dishonest: it implies there is
+    /// something just out of reach rather than saying what the boundary is. So
+    /// this names how many more events exist, explains the boundary in one
+    /// sentence, and offers one button. The shape of the paid tier is legible
+    /// before anyone hits it.
+    @ViewBuilder private var freeWindowGate: some View {
+        if !app.unlocked, app.range != .all, !app.visibleEvents.isEmpty {
+            VStack(alignment: .leading, spacing: S.s2) {
+                Text("That is the free week")
+                    .font(F.title)
+                    .kerning(-0.7)
+                    .foregroundStyle(Tok.text)
+                Text("VenTrack looks seven days ahead on the free tier. Unlocking opens the whole month, every town in the UK, and unlimited saves.")
+                    .font(F.body)
+                    .foregroundStyle(Tok.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button { app.unlockPrompt = .dateRange } label: {
+                    Text("See what unlocking adds")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(Tok.accentFill, in: RoundedRectangle(cornerRadius: R.button))
+                }
+                .buttonStyle(PressableRow())
+                .padding(.top, S.s2)
+            }
+            .padding(.horizontal, S.s5)
+            .padding(.top, S.s7)
         }
     }
 
@@ -225,10 +287,13 @@ struct DiscoverView: View {
     }
 }
 
-/// The date range chip. Selected is the filled red under a white label, which
-/// is `accentFill` and never `accent`: on the dark theme those are different
-/// values and `accent` is too light to carry white. Unselected is a solid
-/// surface with a hairline, so it stays readable sitting on glass.
+/// The date range chip. Selection is MONOCHROME, filling `activeBg`, and this
+/// is deliberate: if selection used the accent then red would appear a dozen
+/// times a screen and stop meaning "this is on today", which is the highest
+/// value single use of colour in the app.
+///
+/// Unselected is `panel2` with no border at all. The old bordered pill was part
+/// of what made every screen read as a grid of boxes.
 struct Pill: View {
     let text: String
     let active: Bool
@@ -242,13 +307,12 @@ struct Pill: View {
             HStack(spacing: 5) {
                 if locked { LockBadge() }
                 Text(text)
-                    .font(.system(size: small ? 12 : 12.5, weight: .semibold))
+                    .font(.system(size: small ? 13 : 14, weight: .medium))
             }
-            .padding(.horizontal, small ? 11 : 13)
-            .padding(.vertical, small ? 6 : 7)
-            .foregroundStyle(active ? Color.white : (locked ? Tok.muted : Tok.text))
-            .background(active ? Tok.accentFill : Tok.panel, in: Capsule())
-            .overlay(Capsule().stroke(active ? Tok.accentFill : Tok.hairline, lineWidth: 1))
+            .padding(.horizontal, small ? 12 : 15)
+            .frame(height: small ? 28 : 34)
+            .foregroundStyle(active ? Tok.activeFg : (locked ? Tok.muted : Tok.text))
+            .background(active ? Tok.activeBg : Tok.panel2, in: Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(active ? .isSelected : [])
@@ -256,15 +320,14 @@ struct Pill: View {
     }
 }
 
-/// A category chip. Unlike the sort control and the range pills, this one keeps
-/// the navy selected state rather than taking the red: it sits directly under a
-/// row of red pills, and two filled reds in a stack read as one control. That
-/// means `activeBg` with `activeFg`, and never `activeBg` with a hardcoded
-/// white, which is invisible on dark where `activeBg` is near white.
+/// A category chip. Selection matches the range pills: `activeBg` with
+/// `activeFg`, never a hardcoded white, which would be invisible on dark where
+/// `activeBg` is itself near white.
 ///
-/// The 6pt dot is the category's own adaptive colour, which is what tells two
-/// chips apart at a glance. When the chip is selected that dot would vanish into
-/// the navy, so it flips to the selected foreground and stays visible.
+/// The mark is a 14x3 rule rather than a dot, matching the card footer, so the
+/// same shape means the same thing in both places. When the chip is selected
+/// the rule would vanish into the fill, so it flips to the selected foreground
+/// and stays visible.
 struct CategoryChip: View {
     let name: String
     let active: Bool
@@ -273,27 +336,29 @@ struct CategoryChip: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                if let dot = dotColour {
-                    Circle().fill(dot).frame(width: 6, height: 6)
+                if let rule = ruleColour {
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(rule).frame(width: 14, height: 3)
                 }
                 Text(name)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(active ? Tok.activeFg : Tok.text)
                     .lineLimit(1)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
+            .padding(.horizontal, 15)
+            .frame(height: 34)
             .background(active ? Tok.activeBg : Tok.panel2, in: Capsule())
-            .overlay(Capsule().stroke(active ? Tok.activeBg : Tok.hairline, lineWidth: 1))
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(active ? .isSelected : [])
     }
 
-    /// "All" and "Free" are not categories, so they carry no dot: a colour
-    /// there would claim a hue that means nothing.
-    private var dotColour: Color? {
+    /// "All" and "Free" are not categories, and neither is anything that folds
+    /// to no family, so they carry no rule: a colour there would claim a hue
+    /// that means nothing.
+    private var ruleColour: Color? {
         guard name != "All", name != "Free" else { return nil }
+        guard Categories.family(name) != nil else { return nil }
         return active ? Tok.activeFg : Categories.style(name).color
     }
 }

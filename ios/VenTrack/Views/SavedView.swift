@@ -61,7 +61,7 @@ struct SavedView: View {
                             .padding(.bottom, 9)
                         ForEach(group.events) { e in
                             Button { selected = e } label: { EventCard(event: e) }
-                                .buttonStyle(.plain)
+                                .buttonStyle(PressableRow())
                             reminderRow(e)
                         }
                     }
