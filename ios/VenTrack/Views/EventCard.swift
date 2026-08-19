@@ -42,6 +42,17 @@ enum EventCardStyle {
 struct EventCard: View {
     let event: Event
     var style: EventCardStyle = .row
+    /// Set when the card sits in a horizontal tray rather than a vertical feed.
+    /// Two things follow from that, and both are the same requirement of fitting
+    /// a row of cards side by side:
+    ///
+    ///   the screen gutter is the TRAY'S, not the card's, or neighbours end up
+    ///   with a fat gap between them;
+    ///   the title reserves both its lines whether or not it needs them, so a
+    ///   one-line title and a two-line title do not leave the row with ragged
+    ///   bottoms. In a vertical feed the same reservation would just be dead
+    ///   space, which is why this is not the default.
+    var tray: Bool = false
 
     @EnvironmentObject var app: AppState
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -79,8 +90,9 @@ struct EventCard: View {
             .overlay(RoundedRectangle(cornerRadius: R.card)
                 .stroke(Tok.hairline, lineWidth: 1))
             // The screen gutter lives here rather than on the feed, so the
-            // section header and the gate keep their own alignment.
-            .padding(.horizontal, S.s5)
+            // section header and the gate keep their own alignment. A card in
+            // a horizontal tray opts out: there the gutter is the tray's.
+            .padding(.horizontal, tray ? 0 : S.s5)
     }
 
     @ViewBuilder private var content: some View {
@@ -235,7 +247,7 @@ struct EventCard: View {
         Text(event.title)
             .font(F.headline)
             .kerning(-0.42)
-            .lineLimit(2)
+            .lineLimit(2, reservesSpace: tray)
             .multilineTextAlignment(.leading)
             .fixedSize(horizontal: false, vertical: true)
             .foregroundStyle(Tok.text)

@@ -25,6 +25,8 @@ struct EventMapView: View {
     /// the map itself. This is what "Search this area" re-centres the feed on.
     @State private var visibleCentre: CLLocationCoordinate2D?
     @State private var searchingArea = false
+    /// Height of the card row. See `carousel` for where the number comes from.
+    @ScaledMetric(relativeTo: .headline) private var trayHeight: CGFloat = 143
 
     // MKMapView clusters natively, so it stays smooth with many pins.
     private static let maxPins = 250
@@ -294,27 +296,45 @@ struct EventMapView: View {
         .allowsHitTesting(false).ignoresSafeArea()
     }
 
-    /// A vertical list of COMPACT cards, not a horizontal carousel of posters.
+    /// Cards side by side, swiped sideways.
     ///
-    /// The carousel showed one and a half events at a time and asked for a
-    /// sideways swipe to see the rest, which is the wrong gesture next to a map
-    /// that already pans. Compact rows drop the thumbnail entirely, and without
-    /// that column the title gets the full width and four events are readable
-    /// at once. A thumbnail column in a tray this short crushes the text it is
-    /// supposed to be illustrating.
+    /// This was briefly a vertical list, on the argument that a sideways swipe
+    /// is the wrong gesture next to a map that already pans. In use it is the
+    /// other way round: a vertical list wants height, and every point of height
+    /// it takes is a point of map it covers, which is the one thing a map screen
+    /// cannot afford to give up. A single row of cards costs about a third as
+    /// much and leaves the pins visible while you read.
+    ///
+    /// Compact cards still, so there is no thumbnail column crushing the text,
+    /// and `tray: true` so they all come out the same height and the row does
+    /// not end in ragged bottoms.
     private var carousel: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            LazyVStack(spacing: S.s2) {
+        ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack(spacing: S.s3) {
                 ForEach(trayEvents) { e in
                     Button { select(e); detail = e } label: {
-                        EventCard(event: e, style: .compact)
+                        EventCard(event: e, style: .compact, tray: true)
+                            // Wide enough for a two line title at body size and
+                            // narrow enough that the next card peeks in, which
+                            // is what says "there are more of these" without a
+                            // page indicator.
+                            .frame(width: 268)
                     }
                     .buttonStyle(PressableRow())
                 }
             }
+            .padding(.horizontal, S.s5)
             .padding(.vertical, S.s3)
         }
-        .frame(maxHeight: 260)
+        // Given a height explicitly, because a horizontal ScrollView will
+        // otherwise take every point of vertical space offered and swallow the
+        // map. Measured rather than guessed: 32 of card padding, a 13pt
+        // overline, two 24pt title lines, an 18pt meta line, two 4pt gaps and
+        // the 24 above and below the row.
+        //
+        // @ScaledMetric so it grows with the text it is sized for, instead of
+        // clipping the third line off at the larger Dynamic Type settings.
+        .frame(height: trayHeight)
     }
 
     // Selecting recenters the map: EventMapKit reads selectedID and animates to it.

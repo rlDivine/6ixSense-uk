@@ -290,7 +290,6 @@ struct DiscoverView: View {
                 // carries its own horizontal gutter so the section header and
                 // the gate can keep their own alignment independently.
                 LazyVStack(alignment: .leading, spacing: S.s3) {
-                    scrollReader
                     sectionHeader
                     ForEach(Array(app.visibleEvents.enumerated()), id: \.element.id) { i, e in
                         Button { selected = e } label: {
@@ -305,8 +304,19 @@ struct DiscoverView: View {
                     freeWindowGate
                 }
                 .padding(.bottom, S.s6)
+                // On the CONTENT, not inside the lazy stack.
+                //
+                // This was the bug in the first version: the reader was the
+                // stack's first child, so the moment you scrolled past it
+                // LazyVStack unloaded it and the offset stopped being reported
+                // at all. The header therefore never collapsed, because nothing
+                // was telling it the feed had moved.
+                //
+                // As a background it spans the whole content, is not lazy, and
+                // reports for as long as the feed exists.
+                .background(scrollReader)
             }
-            .coordinateSpace(name: Self.feedSpace)
+            .coordinateSpace(.named(Self.feedSpace))
             .onPreferenceChange(FeedOffsetKey.self) { onScroll($0) }
             .refreshable { await app.load() }
         }
@@ -316,18 +326,17 @@ struct DiscoverView: View {
 
     /// Reports how far the feed has scrolled.
     ///
-    /// A zero height GeometryReader at the top of the content, publishing its
-    /// own minY in the scroll view's coordinate space. iOS 18 has
+    /// A GeometryReader behind the whole content, publishing the content's minY
+    /// in the scroll view's coordinate space. iOS 18 has
     /// onScrollGeometryChange for exactly this and the app targets 17, so this
     /// is the version that works on the deployment target rather than the tidy
-    /// one. It draws nothing and takes no space.
+    /// one. It draws nothing.
     private var scrollReader: some View {
         GeometryReader { geo in
             Color.clear.preference(
                 key: FeedOffsetKey.self,
                 value: geo.frame(in: .named(Self.feedSpace)).minY)
         }
-        .frame(height: 0)
     }
 
     /// Names what the run of cards below actually is, rather than repeating
