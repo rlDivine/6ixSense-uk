@@ -481,40 +481,95 @@ error for each.
 ## Keeping the free instance awake
 
 A free instance stops after about 15 minutes with no inbound traffic, and the
-next visitor waits 30 to 60 seconds for it to start. `api/keepalive.js` pings
-the service's own public URL every 10 minutes so that window never elapses.
+next visitor waits 30 to 60 seconds for it to start.
 
-**There is nothing to configure.** Render injects `RENDER_EXTERNAL_URL`, the
-ping uses it, and the whole thing is inert anywhere else, so it does nothing on
-your laptop. `GET /healthz` returns a constant and never touches a source or
-the cache, so a ping costs nothing but the request.
+Two things guard against that, and they are not interchangeable. **The external
+monitor is the one that matters.** Set it up; the internal ping is a bonus.
 
-The one thing to understand is what it cannot do:
+### 1. An external uptime monitor. Do this one.
 
-- **It prevents a sleep. It cannot end one.** While the instance is stopped
-  this code is not running either, so nothing pings and nothing wakes. Every
-  deploy restarts the process, and any restart followed by a quiet spell puts
-  the service to sleep with no way back except a real visitor. Only something
-  outside the service fixes that.
-- **Free instance hours are capped at 750 a month across the workspace.**
-  Staying up continuously spends about 744 of them in a 31 day month. That
-  fits, but only just, and only for one service: add a second free service and
-  both get suspended for the rest of the cycle when the pool runs out.
+An outside service that requests `/healthz` on a timer. It keeps running while
+your service is stopped, which is the entire point: it can both prevent a sleep
+and end one.
 
-If you want the service woken as well as kept awake, point a free uptime
-monitor at `https://pulse-uk-api.onrender.com/healthz` on a 5 or 10 minute
-check. UptimeRobot and cron-job.org both do this on a free tier. That is an
-external service so it keeps running while yours is stopped, which is exactly
-the gap the internal ping cannot cover.
+**UptimeRobot**, free tier, five minute checks:
 
-**A GitHub Actions cron is the wrong tool here, despite being the obvious
-one.** This repository is private, so scheduled workflows bill against the
-2,000 free Actions minutes a month, and every run is billed at a one minute
-minimum however fast it is. A ping every 10 minutes is 4,320 runs a month, so
-it costs money before it does anything useful. Every schedule slow enough to
-stay inside the allowance is slower than the 15 minute sleep window, which
-means it would not keep the service awake anyway. GitHub also disables
-scheduled workflows on a repository with 60 days of no activity.
+1. Sign up at `uptimerobot.com`.
+2. **Add New Monitor**.
+3. Monitor Type: **HTTP(s)**.
+4. Friendly Name: `VenTrack API`.
+5. URL: `https://pulse-uk-api.onrender.com/healthz`
+6. Monitoring Interval: **5 minutes**. Comfortably inside the 15 minute window.
+7. Create.
+
+`cron-job.org` is an equally good free alternative and also does five minutes.
+Any monitor works; the only requirements are that it is external, that it runs
+at least every 10 minutes, and that it hits `/healthz` rather than `/`.
+
+Hit `/healthz` and nothing else. It reads two numbers already in memory, so a
+check costs nothing. Pointing a monitor at `/` serves the landing page instead,
+which is more work for no benefit.
+
+### 2. The internal self-ping. Already running.
+
+`api/keepalive.js` pings the service's own public URL every 10 minutes.
+**Nothing to configure**: Render injects `RENDER_EXTERNAL_URL`, the ping uses
+it, and it is inert anywhere else, so it does nothing on your laptop.
+
+What it cannot do, and why item 1 exists:
+
+**It prevents a sleep. It cannot end one.** While the instance is stopped this
+code is not running either, so nothing pings and nothing wakes. Every deploy
+restarts the process, and any restart followed by a quiet spell puts the
+service to sleep with no way back except a real visitor.
+
+Keep both. Once the external monitor is up the internal ping is redundant, but
+it costs nothing (the service is up either way) and it covers the monitor
+having an outage of its own.
+
+### Diagnosing a cold start after the fact
+
+```bash
+curl -s https://pulse-uk-api.onrender.com/healthz
+# {"ok":true,"uptimeSec":41203,"startedAt":"2026-08-19T02:14:07.221Z"}
+```
+
+A small `uptimeSec` right after a slow request means the process had stopped
+and that request woke it: the keep-alive was not running, so something outside
+had to. A large one means the service was up all along and the delay was
+something else. Without this the question is unanswerable once the moment has
+passed.
+
+Also check the Render boot log for:
+
+```
+Keep-alive: pinging https://pulse-uk-api.onrender.com/healthz every 10 min
+```
+
+If that line is missing, `RENDER_EXTERNAL_URL` is not set and the internal ping
+never started.
+
+### The cap that neither of these removes
+
+**Free instance hours are capped at 750 a month across the workspace, and
+staying up continuously spends about 744 in a 31 day month.** This is true
+whether the pings come from inside or outside; keeping the service awake is
+what costs the hours, not how you do it. It fits, but only just, and only for
+one service. Add a second free service and both are suspended for the rest of
+the cycle once the pool runs out.
+
+If the service sleeps despite a monitor being green on its own dashboard,
+spent instance hours is the first thing to check.
+
+### Why not a GitHub Actions cron
+
+It is the obvious tool and it does not work here. This repository is private,
+so scheduled workflows bill against the 2,000 free Actions minutes a month, and
+every run is billed at a one minute minimum however fast it is. A ping every 10
+minutes is 4,320 runs a month, over twice the allowance. Every schedule slow
+enough to fit inside it is slower than the 15 minute sleep window, so it would
+not keep the service awake anyway. GitHub also disables scheduled workflows on
+a repository after 60 days of no activity.
 
 ### Switching it off
 

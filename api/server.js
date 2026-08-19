@@ -188,8 +188,21 @@ async function gatherEvents(region) {
   return refreshEvents(region); // cold: nothing cached for this region yet
 }
 
-// Lightweight health check for the host (Render). Never triggers a scrape.
-app.get("/healthz", (_req, res) => res.json({ ok: true }));
+// Lightweight health check for the host (Render), and the target the uptime
+// monitor hits every five minutes. Never triggers a scrape: it reads two
+// numbers already in memory, so a ping costs nothing but the request.
+//
+// `uptimeSec` is here because "why did that request take fifty seconds" is
+// otherwise unanswerable after the fact. A small value means the process
+// started recently, which means it had stopped, which means the keep-alive was
+// not running and something outside had to wake it. A large one means the
+// service has been up all along and the slowness was something else.
+const startedAt = new Date();
+app.get("/healthz", (_req, res) => res.json({
+  ok: true,
+  uptimeSec: Math.round(process.uptime()),
+  startedAt: startedAt.toISOString(),
+}));
 
 // The curated towns, grouped by country (only ever the UK). The app's settings
 // screen uses this to offer a manual location override, so adding a region
