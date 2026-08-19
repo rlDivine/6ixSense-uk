@@ -39,17 +39,28 @@ extension Color {
 
 enum Tok {
     /// The page. A warm white, and a dark that is cool grey with no navy in it.
-    static let bg       = Color(dark: 0x0C0D0F, light: 0xFBFAF8)
+    ///
+    /// The dark value is deliberately NOT near black. 0x0C0D0F put near white
+    /// text at 17:1, which is more contrast than a phone at night wants: it
+    /// glares, and the whole interface reads as harsher than the content in it.
+    /// This is lifted about two and a half times in luminance and lands text at
+    /// a calmer 15.7:1, which is still comfortably above AA.
+    ///
+    /// It is also the CEILING, not an arbitrary pick. One more step up this
+    /// ramp puts `accent` on this surface at 4.49:1, and the accent's only job
+    /// on `bg` is the 11pt "TONIGHT" overline, which is small text and so needs
+    /// 4.5:1. Going lighter means either losing that or re-picking the red.
+    static let bg       = Color(dark: 0x17191C, light: 0xFBFAF8)
     /// Only where a surface genuinely lifts off the page, which in practice is
     /// the map preview and sheets. Feed rows do NOT sit on this: they sit on
     /// `bg` and are separated by a single hairline. That change is most of what
     /// stops the app reading as a dashboard.
-    static let panel    = Color(dark: 0x16181B, light: 0xFFFFFF)
+    static let panel    = Color(dark: 0x1F2226, light: 0xFFFFFF)
     /// Wells, chips, the search field, skeletons.
-    static let panel2   = Color(dark: 0x1F2226, light: 0xF2F0EC)
+    static let panel2   = Color(dark: 0x282C31, light: 0xF2F0EC)
     /// The one separator. Between feed rows, around the detail fact strip,
     /// between preference rows, and nowhere a boundary is already obvious.
-    static let hairline = Color(dark: 0x2B2F34, light: 0xE4E1DB)
+    static let hairline = Color(dark: 0x363B41, light: 0xE4E1DB)
 
     /// Tint laid over the material on translucent chrome, so glass takes the
     /// app's colour instead of the system's neutral grey.
@@ -59,7 +70,7 @@ enum Tok {
     /// black one. At this alpha `text` clears 4.5:1 in both themes and so does
     /// `muted`; at 0.85 muted drops to 4.29:1 dark and 4.30:1 light and fails.
     /// The web client's --glass is the same colour at the same alpha.
-    static let glass = Color(dark: 0x16181B, light: 0xFFFFFF).opacity(0.88)
+    static let glass = Color(dark: 0x1F2226, light: 0xFFFFFF).opacity(0.88)
 
     /// Three weights of text. Using all three, rather than just text and muted,
     /// is most of what gives a list its hierarchy.
@@ -74,8 +85,10 @@ enum Tok {
     /// rule applies and the handoff's section 10 asks for exactly this
     /// measurement. These are the smallest hue-preserving lifts that clear the
     /// bar against the worst surface each theme puts it on, which is panel2:
-    /// 4.52 dark and 4.54 light. Darkening either one puts real text below AA.
-    static let faint    = Color(dark: 0x84898E, light: 0x6C6D72)
+    /// 4.53 dark and 4.54 light. Darkening either one puts real text below AA.
+    /// The dark value was re-solved when `bg` was lifted, since every surface
+    /// moving up costs this token contrast.
+    static let faint    = Color(dark: 0x8E9397, light: 0x6C6D72)
 
     /// Rationed. "On today", the active tab, the price on the paywall. Nothing
     /// else. See the note above the enum on why the dark value is not a
@@ -98,7 +111,7 @@ enum Tok {
     /// white on dark, with the matching foreground so a filled chip is always
     /// legible. Both directions land at 17:1.
     static let activeBg = Color(dark: 0xF1F2F3, light: 0x1A1A1C)
-    static let activeFg = Color(dark: 0x0C0D0F, light: 0xFFFFFF)
+    static let activeFg = Color(dark: 0x17191C, light: 0xFFFFFF)
 
     /// Kept for the Free label, which uses the accent rather than reaching for
     /// a green that belongs to neither flag colour.

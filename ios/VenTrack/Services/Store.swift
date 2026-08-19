@@ -91,7 +91,33 @@ final class Store: ObservableObject {
     /// interface is a rejection.
     func loadProduct() async {
         guard product == nil else { return }
-        product = try? await Product.products(for: [Self.productID]).first
+        do {
+            product = try await Product.products(for: [Self.productID]).first
+            if product == nil {
+                // An EMPTY result, not an error. StoreKit returns this rather
+                // than throwing when the id is unknown to it, and every cause
+                // is a configuration problem outside this code:
+                //
+                //   the Paid Applications Agreement is not active, which is by
+                //   far the most common and blocks every product on the account
+                //   until banking and tax details are filled in;
+                //   the product does not exist in App Store Connect, or its id
+                //   is not exactly the string above;
+                //   the product exists but has never been submitted;
+                //   running in a simulator or from the command line with no
+                //   StoreKit configuration selected in the scheme.
+                //
+                // Logged rather than shown: the paywall degrades to a button
+                // with no price, which is right for a user, and useless for
+                // anyone trying to work out why.
+                print("[store] no product for \(Self.productID). Check the Paid Applications "
+                      + "Agreement is active, the id matches App Store Connect exactly, and "
+                      + "the product has been submitted. In the simulator, select "
+                      + "VenTrack.storekit under Scheme, Run, Options.")
+            }
+        } catch {
+            print("[store] loading \(Self.productID) failed: \(error.localizedDescription)")
+        }
     }
 
     /// What the button says. Falls back to no price rather than a made up one

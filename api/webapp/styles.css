@@ -15,22 +15,22 @@
    ============================================================ */
 :root,
 [data-theme="dark"] {
-  --bg: #0c0d0f;
-  --surface: #16181b;
-  --surface-2: #1f2226;
-  --hairline: #2b2f34;
+  --bg: #17191c;
+  --surface: #1f2226;
+  --surface-2: #282c31;
+  --hairline: #363b41;
   --ink: #f1f2f3;          /* primary text */
   --ink-2: #9ea3a9;        /* secondary text */
   /* Overlines and tertiary text. surface-2 is the worst case background this
      sits on, not surface, and it is the pair most often forgotten. The revised
      handoff specifies #8a92a4, which lands at 4.47:1 there and so misses the
      4.5:1 text bar. #8d95a7 is the smallest lift that clears it, at 4.64:1. */
-  --ink-3: #84898e;
+  --ink-3: #8e9397;
   --accent: #e2574a;       /* re-picked, not lightened: on the orange side of red so lifting it never reaches salmon */
   --accent-fill: #c2402f;  /* same red darkened, so a white label on it clears 4.5:1 (5.16:1) */
   --link: #7fa7d4;         /* directions, restore, secondary emphasis */
   --active-bg: #f1f2f3;    /* selection is monochrome, never the accent */
-  --active-fg: #0c0d0f;
+  --active-fg: #17191c;
   --shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
   --shadow-sm: none;
   --wash-alpha: 0.16;
@@ -43,7 +43,7 @@
      clear 4.5:1 over any backdrop. --ink-3 does not, so it is never used on a
      glass surface. Re-solved against the softened dark palette: the three
      channels below are --surface, so this must move whenever --surface does. */
-  --glass: rgba(22, 24, 27, 0.88);
+  --glass: rgba(31, 34, 38, 0.88);
   --glass-blur: saturate(160%) blur(18px);
 }
 [data-theme="light"] {
