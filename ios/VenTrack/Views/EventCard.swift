@@ -33,9 +33,12 @@ enum EventCardStyle {
 ///   value single use of colour in the app, and it only works because nothing
 ///   else competes for it.
 ///
-/// Cards do not sit on a filled panel any more. Rows sit directly on `bg`,
-/// separated by one hairline. Whitespace and weight do the work the borders
-/// used to do.
+/// Each card is its own box: `panel` fill, an 18pt radius and a hairline, with
+/// a gap to the next one. The overhaul removed all of that in favour of rows on
+/// a flat ground, and on a real feed it did not hold up: twenty rows with
+/// nothing around them read as one continuous block rather than twenty things
+/// to choose between. The type hierarchy above is what that change was really
+/// buying, and it survives boxing them.
 struct EventCard: View {
     let event: Event
     var style: EventCardStyle = .row
@@ -60,9 +63,24 @@ struct EventCard: View {
         // the distance figure, which is one of the two things the whole app
         // ranks on.
         content
-            .overlay(alignment: .bottom) {
-                Rectangle().fill(Tok.hairline).frame(height: 1)
-            }
+            // Cards sit in their OWN box again.
+            //
+            // The overhaul put feed rows straight onto `bg` separated by a
+            // single hairline, on the argument that whitespace and weight
+            // should do the work borders were doing. On a real feed on a real
+            // phone that argument loses: twenty rows with nothing around them
+            // read as one continuous block of text rather than twenty things
+            // you can choose between, and the eye has nowhere to rest.
+            //
+            // `panel` is only a shade off `bg` in either theme, so the fill
+            // alone is not enough to say "separate object" and the hairline
+            // does the actual work. Both together, and it reads as a card.
+            .background(Tok.panel, in: RoundedRectangle(cornerRadius: R.card))
+            .overlay(RoundedRectangle(cornerRadius: R.card)
+                .stroke(Tok.hairline, lineWidth: 1))
+            // The screen gutter lives here rather than on the feed, so the
+            // section header and the gate keep their own alignment.
+            .padding(.horizontal, S.s5)
     }
 
     @ViewBuilder private var content: some View {
@@ -87,7 +105,7 @@ struct EventCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             rightColumn
         }
-        .padding(.leading, S.s5)
+        .padding(.leading, S.s4)
         .padding(.trailing, S.s2)
         .padding(.vertical, S.s4)
     }
@@ -133,9 +151,9 @@ struct EventCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 distanceColumn
             }
-            .padding(.trailing, S.s5)
+            .padding(.trailing, S.s4)
         }
-        .padding(.leading, S.s5)
+        .padding(.leading, S.s4)
         .padding(.vertical, S.s4)
     }
 
@@ -154,7 +172,9 @@ struct EventCard: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: 172)
-        .clipShape(RoundedRectangle(cornerRadius: R.card))
+        // One step in from the card's own 18, so a rounded rectangle inside a
+        // rounded rectangle looks nested rather than accidentally concentric.
+        .clipShape(RoundedRectangle(cornerRadius: R.well))
         // The family mark, in the corner of the photograph rather than as a
         // wash across it. A wash over a photo is a tint over someone else's
         // picture; a rule is a mark of our own.
@@ -174,7 +194,7 @@ struct EventCard: View {
         // On the feature the bookmark sits on the photograph itself, which is
         // where there is room for it and where the eye already is.
         .overlay(alignment: .topTrailing) { bookmark }
-        .padding(.trailing, S.s5)
+        .padding(.trailing, S.s4)
     }
 
     // MARK: 5c. Compact
@@ -195,7 +215,7 @@ struct EventCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             compactDistance
         }
-        .padding(.horizontal, S.s5)
+        .padding(.horizontal, S.s4)
         .padding(.vertical, S.s4)
     }
 

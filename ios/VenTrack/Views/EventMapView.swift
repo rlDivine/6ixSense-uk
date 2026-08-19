@@ -304,7 +304,7 @@ struct EventMapView: View {
     /// supposed to be illustrating.
     private var carousel: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            LazyVStack(spacing: 0) {
+            LazyVStack(spacing: S.s2) {
                 ForEach(trayEvents) { e in
                     Button { select(e); detail = e } label: {
                         EventCard(event: e, style: .compact)
@@ -312,6 +312,7 @@ struct EventMapView: View {
                     .buttonStyle(PressableRow())
                 }
             }
+            .padding(.vertical, S.s3)
         }
         .frame(maxHeight: 260)
     }

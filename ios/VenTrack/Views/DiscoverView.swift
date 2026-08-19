@@ -286,11 +286,10 @@ struct DiscoverView: View {
             .onAppear { expand() }
         } else {
             ScrollView {
-                // No horizontal padding and no inter-row spacing: each card
-                // owns its own gutter and draws its own hairline, which is what
-                // lets a row separator run the full width the way the design
-                // shows while the content still sits on a 20pt gutter.
-                LazyVStack(alignment: .leading, spacing: 0) {
+                // The gap between cards is the separation now, and each card
+                // carries its own horizontal gutter so the section header and
+                // the gate can keep their own alignment independently.
+                LazyVStack(alignment: .leading, spacing: S.s3) {
                     scrollReader
                     sectionHeader
                     ForEach(Array(app.visibleEvents.enumerated()), id: \.element.id) { i, e in
