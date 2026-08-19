@@ -4,9 +4,12 @@ import SwiftUI
 /// then location with an honest explanation of why it is being asked for, then
 /// interests. Completing it sets `onboarded`, which the app gates on.
 ///
-/// The interest grid is the one place in the app where emoji are allowed. They
-/// are what make a twelve cell grid scannable in a second, and nothing else in
-/// the interface depends on the emoji font.
+/// The interest grid used to carry emoji, on the argument that they made twelve
+/// cells scannable at a glance. They did, and they also made this the one screen
+/// where the interface changed character: an emoji renders in its own font, at
+/// its own weight, in colours from someone else's palette, and it ignores tint
+/// and Dynamic Type. Every cell now uses an SF Symbol instead, which stays
+/// scannable while taking the app's own weight and accent.
 struct OnboardingView: View {
     @EnvironmentObject var app: AppState
     @State private var step = 0
@@ -173,8 +176,10 @@ struct OnboardingView: View {
         let on = app.preferredCategories.contains(p.id)
         return Button { app.togglePreference(p.id) } label: {
             VStack(spacing: 7) {
-                Text(p.emoji)
-                    .font(.system(size: 22))
+                Image(systemName: p.symbol)
+                    .font(.system(size: 20, weight: .regular))
+                    .foregroundStyle(on ? Tok.activeFg : Tok.accent)
+                    .frame(height: 24)
                 Text(p.label)
                     .font(.system(size: 12.5, weight: .semibold))
                     .foregroundStyle(on ? Tok.activeFg : Tok.text)

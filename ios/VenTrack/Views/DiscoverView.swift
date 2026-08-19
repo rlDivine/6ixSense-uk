@@ -63,12 +63,13 @@ struct DiscoverView: View {
     /// `accentFill` exists as a separate token: `accent` is the lighter red for
     /// text and would fail contrast under white on the dark theme.
     ///
-    /// The two emoji are a deliberate, user-requested exception to this app's
-    /// otherwise no-emoji rule. Nothing else in the app gets one.
+    /// Both segments are labelled with an SF Symbol. These were the last two
+    /// emoji in the app and they are gone: an emoji renders in its own font at
+    /// its own weight and colour, so it never matched the label beside it.
     private var sortControl: some View {
         HStack(spacing: 0) {
-            sortSegment("📍", "Nearest", .nearest)
-            sortSegment("⏱️", "Soonest", .soonest)
+            sortSegment("location.fill", "Nearest", .nearest)
+            sortSegment("clock.fill", "Soonest", .soonest)
         }
         .padding(3)
         .background(Tok.panel, in: RoundedRectangle(cornerRadius: 12))
@@ -76,9 +77,9 @@ struct DiscoverView: View {
         .padding(.horizontal, 16)
     }
 
-    /// The emoji is kept out of the accessibility label, so VoiceOver says
-    /// "sort by nearest" rather than reading the pin out loud.
-    private func sortSegment(_ emoji: String, _ label: String,
+    /// The symbol is decorative, so it stays out of the accessibility label:
+    /// VoiceOver says "sort by nearest" rather than reading the pin out loud.
+    private func sortSegment(_ symbol: String, _ label: String,
                              _ value: EventService.Sort) -> some View {
         let on = app.sort == value
         return Button {
@@ -86,8 +87,10 @@ struct DiscoverView: View {
             app.sort = value
             Task { await app.load() }
         } label: {
-            Text("\(emoji) \(label)")
+            Label(label, systemImage: symbol)
+                .labelStyle(.titleAndIcon)
                 .font(.system(size: 13.5, weight: .semibold))
+                .imageScale(.small)
                 .foregroundStyle(on ? Color.white : Tok.muted)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)

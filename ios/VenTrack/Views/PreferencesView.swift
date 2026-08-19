@@ -273,7 +273,10 @@ struct PreferencesView: View {
         let on = app.preferredCategories.contains(p.id)
         return Button { app.togglePreference(p.id) } label: {
             HStack(spacing: 8) {
-                Text(p.emoji).font(.system(size: 18))
+                Image(systemName: p.symbol)
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundStyle(on ? Tok.activeFg : Tok.accent)
+                    .frame(width: 20)
                 Text(p.label).font(.system(size: 13.5, weight: .semibold))
                     .foregroundStyle(on ? Tok.activeFg : Tok.text).lineLimit(1).minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
