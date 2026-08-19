@@ -111,6 +111,33 @@ month. Two things make that true rather than the sixty it would otherwise be:
 Worst case, a page that genuinely changes every day, is 30 calls a month, which
 is still half of what a 12 hour TTL cost.
 
+### Per-seed scan intervals, considered and rejected
+
+The obvious next idea is to tag each seed with how often it changes and scan
+council and museum pages twice a week while scanning busier sites daily. It was
+modelled over ninety simulated days and it does not pay, because the
+unchanged-page check above already took that saving:
+
+| Page changes | 24 hour TTL | Twice weekly | Saving |
+| --- | --- | --- | --- |
+| Never, or weekly | $0.15/mo | $0.15/mo | none |
+| Monthly | $0.18/mo | $0.16/mo | about 2p |
+| Daily | $1.03/mo | $0.29/mo | 72% |
+
+A slow-changing page already costs almost nothing to fetch, because fetching is
+free and it is never sent to the model. Its whole bill is the weekly forced
+re-read, which `LOCALSCAN_PAGE_MAX_AGE_MS` governs and the TTL does not touch.
+Scanning it less often reduces fetches, not spend.
+
+Note the tiering that would pay is the opposite of the intuitive one: the
+expensive pages are the ones that change *often*, since every change buys a
+real extraction. If this is ever worth revisiting, the version to build is
+adaptive rather than hand-labelled: measure how often each page actually
+changes and back off the ones that churn without yielding new events. That
+needs a few weeks of real running first, and `/api/diag` is where that data
+shows up. Hand-labelling 350 seeds is work that goes stale and returns nothing
+for the page types this source mostly watches.
+
 The second row is the one that describes a quiet app, and it is the floor:
 `WARM_REGIONS` refresh on a timer whether or not anybody asks, and nothing else
 is billed until somebody opens that town. The lower rows are what success would
