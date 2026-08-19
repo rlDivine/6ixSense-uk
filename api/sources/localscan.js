@@ -581,6 +581,54 @@ async function pool(items, limit, fn, deadline = Infinity) {
 // synthetic list per test. Passing an array here filters it by region.id
 // directly instead of going through that precomputed lookup. server.js never
 // passes it, so production always uses the real, validated seed list.
+/// Per-seed reporting, for the audit tool. Same pipeline the request path
+/// uses, but says what each page contributed instead of merging everything
+/// into one list.
+///
+/// This exists because `/api/diag` reports per SOURCE, so it can say localscan
+/// returned twelve events for a town and cannot say which of that town's
+/// twenty two pages produced them. Without that, pruning the seed list is
+/// guesswork, and a page that yields nothing costs a fetch every TTL window
+/// for ever.
+///
+/// Geocoding is skipped: an audit only cares whether a page yields events, and
+/// Nominatim's one request per second would dominate the run.
+export async function auditLocalScan(region, seeds = null) {
+  const list = seeds
+    ? seeds.filter((x) => x.regionId === region.id)
+    : (SEEDS_BY_REGION.get(region.id) || []).slice(0, maxSeedsPerRegion());
+
+  const rows = [];
+  await pool(list, 3, async (seed) => {
+    const t0 = Date.now();
+    let events = [], error = null, thin = false;
+    try {
+      const page = await extractForPage(seed, region);
+      thin = !!page.thin;
+      // Deadline 0 is in the past, which makes scanPage skip geocoding
+      // entirely and fall back to the region centre. An audit only cares
+      // whether a page yields events, and Nominatim's one request per second
+      // would otherwise dominate a 941 page run.
+      events = thin ? [] : await scanPage(seed, region, 0);
+    } catch (e) {
+      error = e?.message || String(e);
+    }
+    rows.push({
+      regionId: region.id,
+      url: seed.url,
+      label: seed.label || "",
+      kind: seed.kind || "web",
+      thin,
+      error,
+      events: events.length,
+      sample: events[0]?.title || null,
+      ms: Date.now() - t0,
+    });
+    return [];
+  });
+  return rows;
+}
+
 export async function fetchLocalScan(region, seedsOverride = null) {
   if (!process.env.OPENAI_API_KEY) return []; // no key: no fetch, no cost, same as PredictHQ
   const all = seedsOverride

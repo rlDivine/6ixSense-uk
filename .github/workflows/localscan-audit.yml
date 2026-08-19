@@ -1,0 +1,65 @@
+name: localscan seed audit
+
+# Reads every watched page and reports what each one actually yields, so the
+# seed list can be pruned on evidence.
+#
+# Run by hand from the Actions tab. It reads pages and calls the model, so it
+# costs money: one extraction per distinct page, under a dollar for the whole
+# list at current size. It writes nothing to the repository.
+#
+# GET /api/diag cannot answer this. Diag reports per source, so it says how
+# many events localscan found for a town and never which of that town's pages
+# found them.
+
+on:
+  workflow_dispatch:
+    inputs:
+      towns:
+        description: "Space-separated region ids, or blank for every seeded town"
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    # A full pass over several hundred pages at a concurrency of three, each
+    # one a fetch plus an LLM call. Generous, because being cut off half way
+    # would report most of the list as dead when it simply was not reached.
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Audit the seed list
+        working-directory: api
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AUDIT_REPORT_PATH: /tmp/audit.txt
+        run: node audit-seeds.js ${{ inputs.towns }}
+
+      - name: Put the report in the job summary
+        if: always()
+        run: |
+          {
+            echo '## localscan seed audit'
+            echo
+            echo '```'
+            cat /tmp/audit.txt 2>/dev/null || echo "(no report; the run did not get that far)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # The JSON is the useful artefact: one row per page, with its event count,
+      # for deciding what to prune.
+      - name: Upload the per-page results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seed-audit
+          path: /tmp/audit.*
+          if-no-files-found: warn
