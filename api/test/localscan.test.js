@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { fetchLocalScan, auditLocalScan } from "../sources/localscan.js";
+import { fetchLocalScan, auditLocalScan, localScanPageStats } from "../sources/localscan.js";
 import { jsonResponse, htmlResponse, withEnv, withForbiddenFetch, withStubbedFetch } from "./helpers.js";
 
 // Every test builds its own throwaway region and its own throwaway page URL.
@@ -629,4 +629,71 @@ test("the audit separates a url that cannot be fetched from one that is merely t
   // Both are thin as far as the scan path is concerned, which is the whole
   // reason the audit needs its own signal.
   assert.ok(byUrl.get(dead.url).thin && byUrl.get(bare.url).thin);
+});
+
+test("page stats record what each page did, and a cache hit is not a new attempt", async () => {
+  // The counters behind /api/diag/pages. They exist because measuring this
+  // from a CI runner answers the wrong question: runners are refused by CDNs
+  // that serve this process perfectly well, so only this process can say what
+  // it can read.
+  const region = fakeRegion();
+  const good = seedFor(region, { url: `https://yields-${n}.test/whats-on` });
+  const gone = seedFor(region, { url: `https://gone-${n}.test/whats-on` });
+
+  await withEnv({ OPENAI_API_KEY: "k", ...NO_DELAY }, async () => {
+    globalThis.fetch = async (url) => {
+      const u = String(url);
+      if (u.includes("gone-")) {
+        const e = new Error("fetch failed");
+        e.cause = { code: "ENOTFOUND" };
+        throw e;
+      }
+      if (u.includes("api.openai.com")) {
+        return openaiResponse([
+          { title: "Quiz night", startISO: "2026-09-03T19:00:00Z", category: "Nightlife" },
+          { title: "Farmers market", startISO: "2026-09-04T09:00:00Z", category: "Things to do" },
+        ]);
+      }
+      if (u.includes("nominatim")) return nominatimResponse([]);
+      return htmlResponse(pageHtml());
+    };
+    await fetchLocalScan(region, [good, gone]);
+    // Straight back in, well inside the TTL: served from cache, so nothing
+    // here should look like a second attempt.
+    await fetchLocalScan(region, [good, gone]);
+  });
+
+  const byUrl = new Map(localScanPageStats().map((p) => [p.url, p]));
+
+  const g = byUrl.get(good.url);
+  assert.equal(g.attempts, 1, "the second call was a cache hit, not an attempt");
+  assert.equal(g.ok, 1);
+  assert.equal(g.bestEvents, 2);
+  assert.equal(g.lastStatus, "ok");
+  assert.ok(g.lastEventAt, "a page that produced events records when");
+  assert.deepEqual(g.regions, [region.id]);
+
+  const bad = byUrl.get(gone.url);
+  assert.equal(bad.failed, 1);
+  assert.equal(bad.bestEvents, 0);
+  // The cause code, not the sentence around it. "ENOTFOUND" and "403" call for
+  // opposite decisions and the message alone does not distinguish them.
+  assert.equal(bad.lastStatus, "ENOTFOUND");
+});
+
+test("a page refused with a status records that status, not a generic failure", async () => {
+  // The distinction the whole exercise turned on: a 403 is a statement about
+  // the client, and deleting pages for it would have thrown away
+  // manchester.gov.uk and the Tower of London.
+  const region = fakeRegion();
+  const seed = seedFor(region, { url: `https://refuses-${n}.test/whats-on` });
+
+  await withEnv({ OPENAI_API_KEY: "k", ...NO_DELAY }, async () => {
+    globalThis.fetch = async () => ({ ok: false, status: 403, text: async () => "" });
+    await fetchLocalScan(region, [seed]);
+  });
+
+  const page = localScanPageStats().find((p) => p.url === seed.url);
+  assert.equal(page.lastStatus, "HTTP 403");
+  assert.equal(page.failed, 1);
 });

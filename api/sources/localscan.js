@@ -200,6 +200,59 @@ function textHash(text) {
 // url -> { at, thin, extracted, image, townLabel }
 const pageCache = new Map();
 
+// ---- per page outcomes, for /api/diag/pages ---------------------------------
+//
+// What each watched page actually contributes, recorded where the work already
+// happens so it costs nothing beyond the counters themselves.
+//
+// This exists because the alternative was measuring it from a GitHub Actions
+// runner, and that answers the wrong question. Runners sit in a cloud IP range
+// a great many CDNs refuse outright: the audit of 19 August came back with
+// 403s for manchester.gov.uk, the Science Museum and the Tower of London,
+// while norwich.gov.uk served one path and refused another in the same pass.
+// None of that describes what this process can read. Only this process can.
+//
+// Reset by a restart, which on Render's free tier is often. These are numbers
+// for deciding which pages to keep, not an audit trail, and the ones that
+// matter (a page that has never once produced an event) show up again within a
+// scan or two of coming back up.
+//
+// url -> { attempts, ok, thin, failed, lastStatus, lastAt, events, bestEvents,
+//          lastEventAt, regions:Set }
+const pageStats = new Map();
+
+function statsFor(url) {
+  let s = pageStats.get(url);
+  if (!s) {
+    s = { attempts: 0, ok: 0, thin: 0, failed: 0, lastStatus: null, lastAt: 0,
+          events: 0, bestEvents: 0, lastEventAt: 0, regions: new Set() };
+    pageStats.set(url, s);
+  }
+  return s;
+}
+
+/// One row per watched page: what it did, not what its source did. This is the
+/// gap /api/diag cannot close on its own, since it reports per source and so
+/// says a town found twelve events without saying which of its twenty two
+/// pages found them.
+export function localScanPageStats() {
+  return [...pageStats.entries()]
+    .map(([url, s]) => ({
+      url,
+      regions: [...s.regions].sort(),
+      attempts: s.attempts,
+      ok: s.ok,
+      thin: s.thin,
+      failed: s.failed,
+      lastStatus: s.lastStatus,
+      lastAt: s.lastAt ? new Date(s.lastAt).toISOString() : null,
+      events: s.events,
+      bestEvents: s.bestEvents,
+      lastEventAt: s.lastEventAt ? new Date(s.lastEventAt).toISOString() : null,
+    }))
+    .sort((a, b) => b.bestEvents - a.bestEvents || a.url.localeCompare(b.url));
+}
+
 function isFresh(entry) {
   if (!entry) return false;
   const ttl = entry.thin ? THIN_RETRY_MS : pageTtlMs();
@@ -414,8 +467,18 @@ async function geocode(query) {
 /// and an extraction that failed, all of which should behave the same way to
 /// the caller.
 async function extractForPage(seed, region) {
+  const stats = statsFor(seed.url);
+  stats.regions.add(region.id);
+
   const cached = pageCache.get(seed.url);
+  // A cache hit is not an attempt. Counting it as one would report a page that
+  // was read once and served from memory for twelve hours as a page that
+  // succeeded dozens of times, which is the opposite of what these counters
+  // are for.
   if (isFresh(cached)) return cached;
+
+  stats.attempts += 1;
+  stats.lastAt = Date.now();
 
   // `why` matters only to the audit, which otherwise cannot tell a domain that
   // does not resolve from a real page that renders its listings in JavaScript.
@@ -443,10 +506,19 @@ async function extractForPage(seed, region) {
     // puts it on the cause rather than the message: without it every network
     // level failure reads as the same useless "fetch failed".
     const code = e?.cause?.code;
+    stats.failed += 1;
+    // The status or the cause code, not the sentence around it. This is the
+    // field that decides whether a page is worth keeping, and "403" and
+    // "ENOTFOUND" mean entirely different things.
+    stats.lastStatus = code || e?.message?.replace(/^localscan fetch /, "HTTP ") || "failed";
     return thinEntry("fetch", code ? `${e.message} (${code})` : (e?.message || String(e)));
   }
 
-  if (isThin(page.text)) return thinEntry("thin", `${page.text.length} chars`);
+  if (isThin(page.text)) {
+    stats.thin += 1;
+    stats.lastStatus = "thin";
+    return thinEntry("thin", `${page.text.length} chars`);
+  }
 
   // The page came back unchanged since the last read, so the extraction we
   // already have is still the right answer and there is no reason to buy it
@@ -458,6 +530,8 @@ async function extractForPage(seed, region) {
   const hash = textHash(page.text);
   if (cached && !cached.thin && cached.hash === hash
       && Date.now() - cached.at < pageMaxAgeMs()) {
+    stats.ok += 1;
+    stats.lastStatus = "ok (unchanged)";
     const entry = { ...cached, at: Date.now() };
     pageCache.set(seed.url, entry);
     return entry;
@@ -473,9 +547,13 @@ async function extractForPage(seed, region) {
     extracted = await extractEvents(page.text, { townLabel: region.label, todayISO });
   } catch (e) {
     console.warn(`[localscan/${region.id}] extraction failed for ${seed.url}: ${e.message}`);
+    stats.failed += 1;
+    stats.lastStatus = "extraction failed";
     return thinEntry("extract", e?.message || String(e));
   }
 
+  stats.ok += 1;
+  stats.lastStatus = "ok";
   const entry = { at: Date.now(), thin: false, hash, extracted, image: page.image, townLabel: region.label };
   pageCache.set(seed.url, entry);
   return entry;
@@ -483,7 +561,11 @@ async function extractForPage(seed, region) {
 
 async function scanPage(seed, region, deadline = Infinity) {
   const page = await extractForPage(seed, region);
-  if (page.thin) return [];
+  const stats = statsFor(seed.url);
+  if (page.thin) {
+    stats.events = 0;
+    return [];
+  }
   const extracted = page.extracted;
 
   const events = [];
@@ -521,6 +603,15 @@ async function scanPage(seed, region, deadline = Infinity) {
       })
     );
   });
+
+  // Counted before geocoding, deliberately. Whether a page yields events is a
+  // property of the page; whether Nominatim answered in time is not, and a
+  // scan that runs out of geocoding budget still returns every event.
+  stats.events = events.length;
+  if (events.length) {
+    stats.bestEvents = Math.max(stats.bestEvents, events.length);
+    stats.lastEventAt = Date.now();
+  }
 
   // Resolve coordinates after building the events, so a slow or failed
   // geocode cannot stop an event from being returned: it just keeps null

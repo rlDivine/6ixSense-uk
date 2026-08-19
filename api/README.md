@@ -36,6 +36,7 @@ there instead. Host-provided environment variables win over it. See
 | `GET /api/regions` | The town catalogue, grouped by nation and county. This is what the app's location picker renders. |
 | `GET /api/status` | Which optional keys are configured, the id of every curated town, and the cache state of the regions currently held. |
 | `GET /api/diag?lat=&lng=` | Runs every source independently, bypassing cache. Count, timing and error per source. |
+| `GET /api/diag/pages` | One row per watched local page: attempts, last status, events produced. `?filter=dead`, `?filter=broken`, `?region=`. |
 
 `/api/events` returns:
 

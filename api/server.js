@@ -9,7 +9,7 @@ import { fetchSportsFixtures } from "./sources/sportsfixtures.js";
 import { fetchCurated } from "./sources/curated.js";
 import { fetchEventbrite } from "./sources/eventbrite.js";
 import { fetchPredictHQ } from "./sources/predicthq.js";
-import { fetchLocalScan } from "./sources/localscan.js";
+import { fetchLocalScan, localScanPageStats } from "./sources/localscan.js";
 import { landingPage } from "./landing.js";
 import { startKeepAlive } from "./keepalive.js";
 import {
@@ -242,6 +242,53 @@ app.get("/api/diag", async (req, res) => {
     keys: keyStatus(),
     total: results.reduce((n, r) => n + r.count, 0),
     sources: results,
+  });
+});
+
+/// Which watched pages are earning their keep, one row per page.
+///
+/// /api/diag above reports per SOURCE, so it says localscan found twelve
+/// events for a town and never which of that town's twenty two pages found
+/// them. That is the gap: a page yielding nothing is not visibly broken, it
+/// just costs a fetch every TTL window for ever.
+///
+/// Measured here rather than from a CI runner on purpose. Runners sit in a
+/// cloud IP range that many CDNs refuse outright, so an audit run there
+/// reports 403 for pages this process reads perfectly well. These numbers come
+/// from the machine that actually serves the app, which is the only one whose
+/// answer counts.
+///
+/// ?filter=dead   pages that have never produced an event
+/// ?filter=broken pages whose last attempt failed
+/// ?region=<id>   only pages watched for that region
+app.get("/api/diag/pages", (req, res) => {
+  let pages = localScanPageStats();
+
+  const region = typeof req.query.region === "string" ? req.query.region : "";
+  if (region) pages = pages.filter((p) => p.regions.includes(region));
+
+  // Only counts pages that have actually been tried. A page that has never
+  // been scanned since the last restart is unproven, not dead, and putting it
+  // in the same bucket would argue for deleting pages nothing has read yet.
+  const attempted = pages.filter((p) => p.attempts > 0);
+  const summary = {
+    pages: pages.length,
+    attempted: attempted.length,
+    producing: attempted.filter((p) => p.bestEvents > 0).length,
+    neverProduced: attempted.filter((p) => p.bestEvents === 0).length,
+    lastAttemptFailed: attempted.filter((p) => p.failed > 0 && p.ok === 0).length,
+    events: pages.reduce((n, p) => n + p.events, 0),
+  };
+
+  const filter = req.query.filter;
+  if (filter === "dead") pages = attempted.filter((p) => p.bestEvents === 0);
+  else if (filter === "broken") pages = attempted.filter((p) => p.failed > 0 && p.ok === 0);
+
+  res.json({
+    note: "Counters reset on restart. A page with attempts: 0 has not been " +
+          "scanned yet and is unproven, not dead.",
+    summary,
+    pages,
   });
 });
 

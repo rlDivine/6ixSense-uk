@@ -247,7 +247,34 @@ fetch every TTL window for ever.
 it says localscan returned twelve events for a town and never says which of
 that town's twenty two pages produced them.
 
-`api/audit-seeds.js` answers it per page. Run it from **Actions, localscan seed
+#### The measurement to trust: `GET /api/diag/pages`
+
+One row per watched page, recorded by the running backend as it scans. It costs
+nothing beyond the counters, it builds up continuously, and it reports what
+*this* process can read, which is the only question that matters.
+
+```
+/api/diag/pages                  every page, best first
+/api/diag/pages?filter=dead      attempted, never produced an event
+/api/diag/pages?filter=broken    attempted, every attempt failed
+/api/diag/pages?region=ramsgate  one town
+```
+
+Each row carries `attempts`, `ok`, `thin`, `failed`, `lastStatus` (`ok`,
+`thin`, `HTTP 403`, `ENOTFOUND` and so on), `events`, `bestEvents` and
+`lastEventAt`, plus the regions watching it. The summary block counts only
+pages actually attempted: a page with `attempts: 0` has not been scanned since
+the last restart and is unproven, not dead.
+
+Counters reset on restart, which on Render's free tier is often. That is fine
+for the decision they support. A page that has never once produced an event
+shows up again within a scan or two of coming back up.
+
+#### The Actions audit, and its one large caveat
+
+`api/audit-seeds.js` answers the same question in a single pass, which is
+faster than waiting for real traffic, but it runs somewhere else. Read the
+caveat below before deleting anything on its say-so. Run it from **Actions, localscan seed
 audit, Run workflow** (blank for every seeded town, or a space separated list
 of region ids). It reads every page and writes both a job summary and an
 `audit.json` artifact with one row per page. It writes nothing to the
