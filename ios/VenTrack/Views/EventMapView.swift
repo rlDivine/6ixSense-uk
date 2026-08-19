@@ -294,16 +294,26 @@ struct EventMapView: View {
         .allowsHitTesting(false).ignoresSafeArea()
     }
 
+    /// A vertical list of COMPACT cards, not a horizontal carousel of posters.
+    ///
+    /// The carousel showed one and a half events at a time and asked for a
+    /// sideways swipe to see the rest, which is the wrong gesture next to a map
+    /// that already pans. Compact rows drop the thumbnail entirely, and without
+    /// that column the title gets the full width and four events are readable
+    /// at once. A thumbnail column in a tray this short crushes the text it is
+    /// supposed to be illustrating.
     private var carousel: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
+        ScrollView(.vertical, showsIndicators: false) {
+            LazyVStack(spacing: 0) {
                 ForEach(trayEvents) { e in
-                    CarouselCard(event: e) { select(e); detail = e }
-                        .frame(width: 250)
+                    Button { select(e); detail = e } label: {
+                        EventCard(event: e, style: .compact)
+                    }
+                    .buttonStyle(PressableRow())
                 }
             }
-            .padding(.horizontal, 16).padding(.vertical, 12)
         }
+        .frame(maxHeight: 260)
     }
 
     // Selecting recenters the map: EventMapKit reads selectedID and animates to it.
@@ -766,63 +776,3 @@ struct PiPCard: View {
     }
 }
 
-/// One card in the tray. The wash and the glyph sit under the photo, so a URL
-/// that fails leaves the category showing rather than an empty box.
-struct CarouselCard: View {
-    let event: Event
-    let onOpen: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ZStack {
-                Categories.wash(event.category)
-                CategoryGlyph(category: event.category, size: 26)
-                if let url = event.imageURL {
-                    AsyncImage(url: url) { phase in
-                        if let image = phase.image { image.resizable().scaledToFill() }
-                        else { Color.clear }
-                    }
-                }
-            }
-            .frame(height: 88)
-            .clipped()
-            .clipShape(RoundedRectangle(cornerRadius: 11))
-
-            VStack(alignment: .leading, spacing: 3) {
-                overline
-                Text(event.title)
-                    .font(.system(size: 14.5, weight: .semibold))
-                    .foregroundStyle(Tok.text)
-                    .lineLimit(1)
-                Text(footerText)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Tok.muted)
-                    .lineLimit(1)
-            }
-            .padding(.top, 10)
-        }
-        .padding(10)
-        .cardGlass(cornerRadius: 16)
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Tok.hairline, lineWidth: 1))
-        .contentShape(RoundedRectangle(cornerRadius: 16))
-        .onTapGesture(perform: onOpen)
-    }
-
-    private var overline: some View {
-        let w = Fmt.when(event.startDate)
-        return Text(w.text.uppercased())
-            .font(.system(size: 10.5, weight: .bold))
-            .kerning(0.8)
-            .foregroundStyle(w.soon ? Tok.accent : Tok.muted)
-            .lineLimit(1)
-    }
-
-    private var footerText: String {
-        var parts: [String] = []
-        if event.distanceKm != nil { parts.append(Fmt.distance(event.distanceKm)) }
-        if event.isFree { parts.append("Free") }
-        else if let p = event.price, !p.isEmpty { parts.append(p) }
-        if parts.isEmpty { parts.append(event.venue ?? "Venue to be announced") }
-        return parts.joined(separator: " · ")
-    }
-}

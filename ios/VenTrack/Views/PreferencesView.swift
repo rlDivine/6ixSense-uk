@@ -275,7 +275,8 @@ struct PreferencesView: View {
             HStack(spacing: 8) {
                 Image(systemName: p.symbol)
                     .font(.system(size: 15, weight: .regular))
-                    .foregroundStyle(on ? Tok.activeFg : Tok.accent)
+                    .foregroundStyle(on ? Tok.activeFg
+                                        : (p.family?.style.color ?? Tok.muted))
                     .frame(width: 20)
                 Text(p.label).font(.system(size: 13.5, weight: .semibold))
                     .foregroundStyle(on ? Tok.activeFg : Tok.text).lineLimit(1).minimumScaleFactor(0.8)

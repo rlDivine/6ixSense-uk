@@ -12,6 +12,7 @@ import SwiftUI
 /// scannable while taking the app's own weight and accent.
 struct OnboardingView: View {
     @EnvironmentObject var app: AppState
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var step = 0
 
     private let lastStep = 2
@@ -77,13 +78,13 @@ struct OnboardingView: View {
             }
         } label: {
             Text(step == lastStep ? "Finish" : "Continue")
-                .font(.system(size: 16, weight: .bold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
-                .padding(15)
-                .background(Tok.accentFill, in: RoundedRectangle(cornerRadius: 14))
+                .frame(height: 52)
+                .background(Tok.accentFill, in: RoundedRectangle(cornerRadius: R.button))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableRow())
         .padding(.horizontal, 24).padding(.bottom, 22)
     }
 
@@ -156,7 +157,7 @@ struct OnboardingView: View {
                 .padding(.top, 8)
 
             ScrollView {
-                LazyVGrid(columns: interestColumns, spacing: 10) {
+                LazyVGrid(columns: interestColumns, spacing: S.s3) {
                     ForEach(Preferences.all) { p in interestChip(p) }
                 }
                 .padding(.horizontal, 18).padding(.top, 16).padding(.bottom, 8)
@@ -166,10 +167,17 @@ struct OnboardingView: View {
 
     // MARK: Bits
 
+    /// Three across normally, two at the accessibility sizes.
+    ///
+    /// This grid is the screen most at risk from Dynamic Type: twelve cells
+    /// three across, each holding a symbol over a label, is already tight at
+    /// the default size. At the accessibility sizes a third column forces the
+    /// labels to either truncate or shrink past legibility, and shrinking text
+    /// to fit is precisely what Dynamic Type exists to stop. Dropping a column
+    /// gives each label half again the width instead.
     private var interestColumns: [GridItem] {
-        [GridItem(.flexible(), spacing: 10),
-         GridItem(.flexible(), spacing: 10),
-         GridItem(.flexible(), spacing: 10)]
+        let count = typeSize.isAccessibilitySize ? 2 : 3
+        return Array(repeating: GridItem(.flexible(), spacing: S.s3), count: count)
     }
 
     private func interestChip(_ p: Preference) -> some View {
@@ -178,21 +186,27 @@ struct OnboardingView: View {
             VStack(spacing: 7) {
                 Image(systemName: p.symbol)
                     .font(.system(size: 20, weight: .regular))
-                    .foregroundStyle(on ? Tok.activeFg : Tok.accent)
+                    // The interest's own family colour, so the grid previews
+                    // the palette the feed will use rather than being a wall of
+                    // one accent.
+                    .foregroundStyle(on ? Tok.activeFg
+                                        : (p.family?.style.color ?? Tok.muted))
                     .frame(height: 24)
                 Text(p.label)
-                    .font(.system(size: 12.5, weight: .semibold))
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(on ? Tok.activeFg : Tok.text)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14).padding(.horizontal, 6)
-            .background(on ? Tok.activeBg : Tok.panel, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14)
-                .stroke(on ? Tok.activeBg : Tok.hairline, lineWidth: 1))
+            .padding(.vertical, S.s4).padding(.horizontal, S.s2)
+            // panel2 unselected, no border. The bordered cell was part of what
+            // made every screen read as a grid of boxes.
+            .background(on ? Tok.activeBg : Tok.panel2,
+                        in: RoundedRectangle(cornerRadius: R.button))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableRow())
         .accessibilityLabel(p.label)
         .accessibilityAddTraits(on ? .isSelected : [])
     }
