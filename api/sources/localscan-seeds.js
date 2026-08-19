@@ -572,7 +572,19 @@ export const SEEDS = [
   { regionId: "southampton", url: "https://www.facebook.com/SouthamptonCommonForum/events", kind: "facebook", label: "Southampton Common Forum (Facebook events)" },
   { regionId: "southampton", url: "https://www.facebook.com/SeaCityMuseum/", kind: "facebook", label: "SeaCity Museum (Facebook page)" },
 
-  // --- END SEEDS ---
+    { regionId: "stirling", url: "https://www.stirling.gov.uk/whats-on/", kind: "web", label: "Stirling Council What's On" }, // Official council page listing upcoming events in Stirling.
+  { regionId: "stirling", url: "https://www.stirlingfestivaltheatre.com/whats-on", kind: "web", label: "Stirling Festival Theatre Events" }, // Listings of performances and events at the Stirling Festival Theatre.
+  { regionId: "stirling", url: "https://www.smithmuseum.scot/events/", kind: "web", label: "Stirling Smith Art Gallery & Museum Events" }, // Event calendar for exhibitions and activities at the Stirling Smith Art Gallery & Museum.
+  { regionId: "stirling", url: "https://www.historicenvironment.scot/visit/all/stirling-castle/whats-on/", kind: "web", label: "Stirling Castle Events" }, // Upcoming events and exhibitions at Stirling Castle.
+  { regionId: "stirling", url: "https://www.whatsonstirling.co.uk/", kind: "web", label: "What's On Stirling" }, // Comprehensive guide to events and activities in Stirling.
+  { regionId: "stirling", url: "https://www.macrobartscentre.org.uk/whats-on", kind: "web", label: "Macrobert Arts Centre What's On" }, // Listings of performances, workshops, and exhibitions at the Macrobert Arts Centre.
+  { regionId: "stirling", url: "https://www.facebook.com/StirlingCouncil/", kind: "facebook", label: "Stirling Council Facebook Page" }, // Official Facebook page of Stirling Council, featuring event updates.
+  { regionId: "stirling", url: "https://www.facebook.com/StirlingSmithMuseum/", kind: "facebook", label: "Stirling Smith Art Gallery & Museum Facebook Page" }, // Official Facebook page of the Stirling Smith Art Gallery & Museum, sharing event information.
+  { regionId: "belfast", url: "https://www.belfastcity.gov.uk/events", kind: "web", label: "Belfast City Council Events" }, // Official council page listing a variety of events across Belfast, including festivals, workshops, and community activities, with events scheduled throughout the year.
+  { regionId: "belfast", url: "https://visitbelfast.com/whats-on/seasonal/", kind: "web", label: "Visit Belfast Seasonal Events" }, // Tourism board's page highlighting seasonal events in Belfast, featuring festivals, markets, and cultural celebrations, with events planned for different times of the year.
+  { regionId: "belfast", url: "https://www.belfastcity.gov.uk/Events?category=97&fromDate=&toDate=", kind: "web", label: "Belfast City Council Business Events" }, // Council's page dedicated to business-related events, including workshops and networking opportunities, with events listed for the coming months.
+
+// --- END SEEDS ---
   // Do not remove or move this line. localscan-discover.js finds it by exact
   // text match and inserts proposed new entries directly above it, in the
   // pull requests it opens. Anything below this line is not part of the
