@@ -41,6 +41,22 @@ target.build_configurations.each do |config|
   # as its own App Store listing with its own installs and reviews.
   s['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.voice2jobs.ventrackuk'
   s['PRODUCT_NAME'] = '$(TARGET_NAME)'
+  # Both of these, not just SDKROOT.
+  #
+  # `new_target(..., :ios, ...)` sets SDKROOT to iphoneos and stops there, which
+  # is enough for Xcode to open the project and not enough for it to work out
+  # what the scheme can run on. xcodebuild fails the destination lookup with
+  # "Supported platforms for the buildables in the current scheme is empty" and
+  # never reaches the compiler, so it reads like a broken project rather than a
+  # missing build setting.
+  #
+  # Simulator is listed first because that is what a build here is normally for.
+  s['SDKROOT'] = 'iphoneos'
+  s['SUPPORTED_PLATFORMS'] = 'iphonesimulator iphoneos'
+  # An iPhone-only app has no business offering either of these, and leaving
+  # them unset lets Xcode infer a Mac destination that then fails to build.
+  s['SUPPORTS_MACCATALYST'] = 'NO'
+  s['SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD'] = 'NO'
   s['INFOPLIST_FILE'] = 'VenTrack/Info.plist'
   s['GENERATE_INFOPLIST_FILE'] = 'NO'
   s['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
