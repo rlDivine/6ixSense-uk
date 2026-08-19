@@ -36,23 +36,67 @@ struct DiscoverView: View {
 
     // MARK: Chrome
 
+    /// NOTE ON WHERE THE ANIMATION LIVES. Not here. It used to be a
+    /// `.animation(_:value: collapsed)` on this view, and that is why the
+    /// header vanished instead of moving: the modifier animates what is inside
+    /// its own subtree, and the thing that actually has to move is outside it.
+    /// Collapsing changes this view's height, which changes the top safe area
+    /// inset of the ZStack that owns it, which is what slides the whole feed
+    /// up. That is the parent's layout, and no modifier down here has any say
+    /// over it. So the rows crossfaded politely while everything around them
+    /// jumped, which reads as disappearing.
+    ///
+    /// The animation is started at the point the state changes instead, in
+    /// `onDrag`, so the entire transaction is animated: this view's contents,
+    /// this view's height, the inset, and the feed's position, together.
     private var chrome: some View {
-        VStack(alignment: .leading, spacing: S.s3) {
+        // A ZStack rather than a VStack, and it matters during the transition
+        // rather than at rest, where only one of the two is ever present. A
+        // view being removed is still laid out while it leaves, so in a VStack
+        // the outgoing rows and the incoming bar would be stacked one above the
+        // other for the length of the animation and the header would grow
+        // taller than either state before shrinking. Overlaid, the height is
+        // just the taller of the two and only ever travels one way.
+        ZStack(alignment: .topLeading) {
             if collapsed {
                 compactBar
             } else {
-                BrandStrip()
-                titleBlock
-                outOfMarketNotice
-                sortControl
-                rangeRow
-                categoryRow
+                expandedRows
             }
         }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
         .padding(.bottom, S.s3)
+        // Clipped so the block on its way out wipes off at the header's own top
+        // edge. Without it the rows slide up across the status bar on their way
+        // out, which looks like a rendering fault rather than a transition.
+        // Before `topChrome`, so it clips the rows and not the background that
+        // has to keep painting up behind the status bar.
+        .clipped()
         .topChrome()
-        .animation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.9),
-                   value: collapsed)
+    }
+
+    /// The full header, as one view so it can carry one transition.
+    ///
+    /// Moving up and out rather than fading in place is the whole point. A
+    /// crossfade says the header was replaced; sliding says it got out of the
+    /// way and is still up there, which is also what tells a person that going
+    /// back up will bring it down again.
+    private var expandedRows: some View {
+        VStack(alignment: .leading, spacing: S.s3) {
+            BrandStrip()
+            titleBlock
+            outOfMarketNotice
+            sortControl
+            rangeRow
+            categoryRow
+        }
+        // Asymmetric on purpose. Leaving, it travels up and fades. Arriving, it
+        // only fades: sliding it back down from above would race the header's
+        // own height opening underneath it, and the two arrive at the same
+        // place from different directions, which reads as a bounce.
+        .transition(.asymmetric(
+            insertion: .opacity,
+            removal: .move(edge: .top).combined(with: .opacity)))
     }
 
     /// What survives the collapse: the town, and nothing else.
@@ -124,15 +168,35 @@ struct DiscoverView: View {
         if collapsed {
             pivot = min(pivot, translation)
             if translation > pivot + Self.flip {
-                collapsed = false
+                setCollapsed(false)
                 pivot = translation
             }
         } else {
             pivot = max(pivot, translation)
             if translation < pivot - Self.flip {
-                collapsed = true
+                setCollapsed(true)
                 pivot = translation
             }
+        }
+    }
+
+    /// The single place the header changes state, and the reason it is a
+    /// function rather than an assignment.
+    ///
+    /// The animation has to be started HERE, wrapping the mutation, rather than
+    /// declared on the header with `.animation(_:value:)`. What has to move is
+    /// not just the header's own contents: it is the header's height, the top
+    /// safe area inset that height produces, and the whole feed sliding up into
+    /// the space. Those belong to the parent, which is outside anything the
+    /// header itself can animate. `withAnimation` covers the entire transaction
+    /// wherever its effects land, which is the only thing that does.
+    ///
+    /// Called only on an actual flip, never on every frame of the drag, so this
+    /// starts one animation per collapse rather than one per touch event.
+    private func setCollapsed(_ value: Bool) {
+        guard value != collapsed else { return }
+        withAnimation(reduceMotion ? nil : Animation.spring(response: 0.34, dampingFraction: 0.88)) {
+            collapsed = value
         }
     }
 
