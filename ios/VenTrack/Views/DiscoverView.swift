@@ -4,241 +4,88 @@ import SwiftUI
 /// town as a page title with today's date under it, the sort control, the date
 /// ranges, the categories, the status line, then the cards.
 ///
-/// The header collapses as you read down the feed and returns the moment you
-/// head back up, so twenty events are not read through a letterbox. The town
-/// name survives the collapse; everything else goes. See `onDrag`.
+/// HOW THE HEADER GETS OUT OF THE WAY, AND WHY IT IS DONE THIS WAY.
+///
+/// Everything above the cards except one thin bar lives INSIDE the scroll view,
+/// as the first rows of the feed. It goes away because it is scrolled away, and
+/// it comes back because it is scrolled back. There is no collapse state, no
+/// gesture reading, no measurement of where the feed is, and no animation: the
+/// header tracks the finger exactly, because it is being dragged, not animated
+/// in response to being dragged.
+///
+/// Three earlier versions did it the other way, with the whole header pinned as
+/// a top safe area inset that swapped to a compact bar. Every one of them was
+/// beaten by the same thing, and it is worth stating plainly because the idea
+/// is so tempting: changing the height of a top inset SHOVES the scroll view.
+/// Collapsing yanks the feed up by three hundred points and expanding drops it
+/// back, neither of which the person asked for, and the feed does not end up
+/// where it was. That is not a timing bug and no easing curve repairs it. It is
+/// what a changing inset does.
+///
+/// What stays pinned is a single strip of constant height, and constant is the
+/// operative word. It names the app at the top of the feed and the town once
+/// the large title has scrolled past, which is one line of text swapping for
+/// another next to the same button. Nothing below it moves, ever.
 struct DiscoverView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var selected: Event?
 
-    /// Collapsed chrome state, and the two values needed to decide it.
-    ///
-    /// The header is six stacked rows: wordmark, date and town, the out of
-    /// market notice, the sort control, the date ranges and the categories.
-    /// That is most of a phone screen, and pinned it meant a feed of twenty
-    /// events was read through a letterbox. It now behaves the way a large
-    /// title does everywhere else on iOS: it goes away when you are reading and
-    /// comes back the moment you head upward.
-    @State private var collapsed = false
-    /// Where the finger last turned around, within the current drag. See
-    /// `onDrag`.
-    @State private var pivot: CGFloat = 0
-    /// Whether the top of the feed is currently loaded, which is the closest
-    /// thing to "you are at the top" that this screen can observe. Set by the
-    /// section header appearing and disappearing. See `sectionHeader`.
-    @State private var atTop = true
+    /// Whether the feed's own large title is still on screen. Drives nothing
+    /// but which of two words the pinned strip shows. See `headerRows`.
+    @State private var titleVisible = true
 
     var body: some View {
         ZStack {
             Tok.bg.ignoresSafeArea()
             content
         }
-        .safeAreaInset(edge: .top, spacing: 0) { chrome }
+        .safeAreaInset(edge: .top, spacing: 0) { pinnedStrip }
         .sheet(item: $selected) { EventDetailView(event: $0) }
     }
 
     // MARK: Chrome
 
-    /// NOTE ON WHERE THE ANIMATION LIVES. Not here. It used to be a
-    /// `.animation(_:value: collapsed)` on this view, and that is why the
-    /// header vanished instead of moving: the modifier animates what is inside
-    /// its own subtree, and the thing that actually has to move is outside it.
-    /// Collapsing changes this view's height, which changes the top safe area
-    /// inset of the ZStack that owns it, which is what slides the whole feed
-    /// up. That is the parent's layout, and no modifier down here has any say
-    /// over it. So the rows crossfaded politely while everything around them
-    /// jumped, which reads as disappearing.
+    /// The one pinned thing, and the only thing that survives scrolling.
     ///
-    /// The animation is started at the point the state changes instead, in
-    /// `onDrag`, so the entire transaction is animated: this view's contents,
-    /// this view's height, the inset, and the feed's position, together.
-    private var chrome: some View {
-        // A ZStack rather than a VStack, and it matters during the transition
-        // rather than at rest, where only one of the two is ever present. A
-        // view being removed is still laid out while it leaves, so in a VStack
-        // the outgoing rows and the incoming bar would be stacked one above the
-        // other for the length of the animation and the header would grow
-        // taller than either state before shrinking. Overlaid, the height is
-        // just the taller of the two and only ever travels one way.
-        ZStack(alignment: .topLeading) {
-            if collapsed {
-                compactBar
-            } else {
-                expandedRows
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .padding(.bottom, S.s3)
-        // Clipped so the block on its way out wipes off at the header's own top
-        // edge. Without it the rows slide up across the status bar on their way
-        // out, which looks like a rendering fault rather than a transition.
-        // Before `topChrome`, so it clips the rows and not the background that
-        // has to keep painting up behind the status bar.
-        .clipped()
-        .topChrome()
+    /// Its height never changes, which is the whole reason this screen is calm
+    /// now. The strip contains one line of 15pt text and a 34pt button in both
+    /// of its states, so the swap costs no layout at all and the feed beneath it
+    /// is never moved by anything the header does.
+    private var pinnedStrip: some View {
+        BrandStrip(place: pinnedPlace)
+            .animation(reduceMotion ? nil : Animation.easeInOut(duration: 0.22),
+                       value: pinnedPlace)
+            .topChrome()
     }
 
-    /// The full header, as one view so it can carry one transition.
+    /// The town, but only once its large title has actually scrolled away, and
+    /// only on the feed.
     ///
-    /// Moving up and out rather than fading in place is the whole point. A
-    /// crossfade says the header was replaced; sliding says it got out of the
-    /// way and is still up there, which is also what tells a person that going
-    /// back up will bring it down again.
-    private var expandedRows: some View {
+    /// The second half is derived from which screen is showing rather than left
+    /// to `titleVisible`, because leaving the feed fires that flag's
+    /// `onDisappear` and the order of it against the next screen's `onAppear`
+    /// is not defined. Deriving it means a loading screen cannot inherit a
+    /// stale town from the feed it replaced, whichever way that race lands.
+    private var pinnedPlace: String? {
+        guard case .feed = screen, !titleVisible else { return nil }
+        return app.placeName
+    }
+
+    /// Everything that used to be pinned, now the first rows of the feed.
+    ///
+    /// Shared between the feed and the three empty states rather than living
+    /// only in the scroll view, because the sort control and the filters have to
+    /// stay usable while the feed is loading or empty. An empty state whose only
+    /// remedy is a control the empty state removed is a dead end.
+    private var headerRows: some View {
         VStack(alignment: .leading, spacing: S.s3) {
-            BrandStrip()
             titleBlock
             outOfMarketNotice
             sortControl
             rangeRow
             categoryRow
         }
-        // Asymmetric on purpose. Leaving, it travels up and fades. Arriving, it
-        // only fades: sliding it back down from above would race the header's
-        // own height opening underneath it, and the two arrive at the same
-        // place from different directions, which reads as a bounce.
-        .transition(.asymmetric(
-            insertion: .opacity,
-            removal: .move(edge: .top).combined(with: .opacity)))
-    }
-
-    /// What survives the collapse: the town, and nothing else.
-    ///
-    /// Something has to, or a feed scrolled halfway down says nothing about
-    /// where it is for, and that is the one fact every row on screen depends
-    /// on. The chevron matches the expanded title so it still reads as the
-    /// same control, and it opens the same picker.
-    private var compactBar: some View {
-        HStack(spacing: S.s2) {
-            Text(app.placeName)
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(Tok.text)
-                .lineLimit(1)
-            Image(systemName: "chevron.down")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(Tok.muted)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, S.s5)
-        .frame(height: 30)
-        .transition(.opacity)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Showing events for \(app.placeName)")
-    }
-
-    /// Collapse on the way down, restore on the way up. Driven by the FINGER,
-    /// not by the scroll position.
-    ///
-    /// This is the third mechanism, and the reason it is not the second one is
-    /// worth writing down so nobody reaches for that one again.
-    ///
-    /// Reading the scroll position on iOS 17 means a GeometryReader publishing
-    /// a preference out of the scroll content, because onScrollGeometryChange
-    /// is iOS 18. Two versions of that were built and neither ever moved the
-    /// header on a device. The first had a real bug: the reader was the lazy
-    /// stack's first child, so it was unloaded as soon as it scrolled out of
-    /// view and stopped reporting. The second fixed that and also stopped
-    /// treating the raw reading as a position, which it is not, since the
-    /// scroll view is inset from above by this very header and the reading at
-    /// rest is therefore the header's whole height rather than zero. It still
-    /// did nothing, which says the preference was not arriving at all rather
-    /// than arriving wrong, and no amount of arithmetic downstream fixes a
-    /// signal that is not there.
-    ///
-    /// A drag gesture has none of that plumbing in the way. UIKit delivers the
-    /// translation continuously for as long as a finger is down, there is no
-    /// preference to propagate, no coordinate space to resolve and no lazy
-    /// container to unload it.
-    ///
-    /// WHAT IT GIVES UP. Momentum. Flick hard and let go, and the feed keeps
-    /// travelling while this sees nothing, so the header holds whatever state
-    /// the finger left it in until the next touch. That is a fair trade and
-    /// arguably the better behaviour: chrome that changes state on its own
-    /// after the hand has left the screen is the fidgety version of this.
-    ///
-    /// WHY A PIVOT RATHER THAN A THRESHOLD ON THE TRANSLATION. The translation
-    /// is cumulative from the start of the drag, so a plain threshold would
-    /// fire once per drag and then be stuck: drag up 300 points and it collapses
-    /// correctly, but reversing 40 points inside that same drag leaves the
-    /// translation still deeply negative and the header still collapsed, when
-    /// the hand has clearly changed its mind. Measuring from the point the
-    /// finger last turned around makes every reversal count, however far into
-    /// the drag it happens.
-    ///
-    /// GOING DOWN IS A GESTURE, COMING BACK IS A PLACE. Collapsing needs
-    /// nothing but the direction of travel. Restoring is gated on actually
-    /// being at the top of the feed, which is what `atTop` is for. An upward
-    /// swipe from the middle of the list is somebody travelling toward the top,
-    /// not somebody arriving, and giving them the filters back three screens
-    /// early puts a third of the screen back under a feed they are still moving
-    /// through. The header comes back when they get there.
-    private func onDrag(_ translation: CGFloat) {
-        // Negative is the finger travelling up the screen, which is the feed
-        // travelling down.
-        if collapsed {
-            pivot = min(pivot, translation)
-            // Only meaningful within the top region. Everywhere else the top
-            // sentinel is what restores the header, once it comes back into
-            // view. This branch exists for the short scroll that collapsed the
-            // header without ever pushing the sentinel out of the feed, where
-            // there is no reappearance to wait for.
-            if atTop, translation > pivot + Self.flip {
-                setCollapsed(false)
-                pivot = translation
-            }
-        } else {
-            pivot = max(pivot, translation)
-            if translation < pivot - Self.flip {
-                setCollapsed(true)
-                pivot = translation
-            }
-        }
-    }
-
-    /// The single place the header changes state, and the reason it is a
-    /// function rather than an assignment.
-    ///
-    /// The animation has to be started HERE, wrapping the mutation, rather than
-    /// declared on the header with `.animation(_:value:)`. What has to move is
-    /// not just the header's own contents: it is the header's height, the top
-    /// safe area inset that height produces, and the whole feed sliding up into
-    /// the space. Those belong to the parent, which is outside anything the
-    /// header itself can animate. `withAnimation` covers the entire transaction
-    /// wherever its effects land, which is the only thing that does.
-    ///
-    /// Called only on an actual flip, never on every frame of the drag, so this
-    /// starts one animation per collapse rather than one per touch event.
-    ///
-    /// Eased rather than sprung. A spring was the first choice and it was
-    /// wrong: a spring overshoots and settles, and a third of the screen
-    /// arriving and then wobbling back reads as bouncy on something this large.
-    /// Springs suit small objects that a finger is still holding. This is a
-    /// panel that leaves once, so it wants a plain curve with a definite end.
-    private func setCollapsed(_ value: Bool) {
-        guard value != collapsed else { return }
-        withAnimation(reduceMotion ? nil : Animation.easeInOut(duration: 0.28)) {
-            collapsed = value
-        }
-    }
-
-    /// How much travel in one direction it takes to flip the header. Enough
-    /// that a thumb resettling on the glass does not trigger it, short enough
-    /// that it feels like a response rather than a decision.
-    private static let flip: CGFloat = 44
-
-    /// Restores the full header and forgets the current gesture.
-    ///
-    /// Clearing the pivot matters as much as the flag: a stale turning point
-    /// from the previous list would make the first movement of the next one
-    /// look like a large reversal and flip the header before the user has
-    /// touched anything.
-    private func expand() {
-        collapsed = false
-        pivot = 0
-        // A list that is not there cannot report its own top, and a stale false
-        // here would leave the next feed unable to restore its header.
-        atTop = true
     }
 
     /// The town is the thing worth reading, so it gets the size. The wordmark
@@ -382,86 +229,115 @@ struct DiscoverView: View {
 
     // MARK: Content
 
+    /// Which of the four screens the feed tab is currently showing. Worked out
+    /// in one place because two things need the answer: `content`, to draw it,
+    /// and `pinnedPlace`, to decide whether the strip may name a town.
+    private enum Screen {
+        case loading
+        case failed(String)
+        case empty
+        case feed
+    }
+
+    private var screen: Screen {
+        if app.loading && app.events.isEmpty { return .loading }
+        if let err = app.errorMessage, app.events.isEmpty { return .failed(err) }
+        if app.visibleEvents.isEmpty { return .empty }
+        return .feed
+    }
+
     @ViewBuilder private var content: some View {
-        if app.loading && app.events.isEmpty {
-            LoadingState(place: app.placeName).onAppear { expand() }
-        } else if let err = app.errorMessage, app.events.isEmpty {
-            ErrorState(message: err) { Task { await app.load() } }
-                .onAppear { expand() }
-        } else if app.visibleEvents.isEmpty {
+        switch screen {
+        case .loading:
+            stateScreen { LoadingState(place: app.placeName) }
+        case .failed(let err):
+            stateScreen { ErrorState(message: err) { Task { await app.load() } } }
+        case .empty:
             // `widen` is left at its default, which is exactly "try this week".
             // Widening stops at the free window when locked, so the button
             // always does what it says rather than opening a purchase sheet.
-            EmptyState(place: app.placeName) {
-                app.category = "All"
-                app.range = app.unlocked ? .all : .week
-                Task { await app.load() }
-            }
-            // Without this the header can strand itself. Filter down to
-            // something with no results while scrolled deep into the feed and
-            // the chrome is collapsed, the list it was collapsed over is gone,
-            // and there is nothing left to scroll upward to bring the filters
-            // back: the only controls that can undo the filter are the ones
-            // that just disappeared.
-            .onAppear { expand() }
-        } else {
-            ScrollView {
-                // The gap between cards is the separation now, and each card
-                // carries its own horizontal gutter so the section header and
-                // the gate can keep their own alignment independently.
-                LazyVStack(alignment: .leading, spacing: S.s3) {
-                    sectionHeader
-                    ForEach(Array(app.visibleEvents.enumerated()), id: \.element.id) { i, e in
-                        Button { selected = e } label: {
-                            // Exactly one feature per screen, at the top, where
-                            // the photograph gets to carry the feed. Used more
-                            // than once it undoes the calm and the feed reads
-                            // as a carousel of posters.
-                            EventCard(event: e, style: i == 0 ? .feature : .row)
-                        }
-                        .buttonStyle(PressableRow())
-                    }
-                    freeWindowGate
+            stateScreen {
+                EmptyState(place: app.placeName) {
+                    app.category = "All"
+                    app.range = app.unlocked ? .all : .week
+                    Task { await app.load() }
                 }
-                .padding(.bottom, S.s6)
             }
-            // SIMULTANEOUS, so the scroll view still gets every touch it would
-            // have got. This gesture only watches; it never consumes, which is
-            // why cards remain tappable and pull to refresh still works.
-            //
-            // A minimum distance rather than zero, so a tap on a card is never
-            // the beginning of a drag as far as this is concerned.
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 12)
-                    .onChanged { onDrag($0.translation.height) }
-                    // The pivot is meaningful only within one drag. Left set,
-                    // the next drag would be measured from where the last one
-                    // ended and the first flick after a pause would do nothing.
-                    .onEnded { _ in pivot = 0 }
-            )
-            .refreshable { await app.load() }
+        case .feed:
+            feed
         }
+    }
+
+    /// The feed, header rows and all.
+    ///
+    /// The header is the first thing IN the scroll view rather than pinned
+    /// above it, which is what makes it get out of the way at exactly the speed
+    /// of the finger and come back exactly when the feed reaches the top. See
+    /// the note on the type for the three pinned versions this replaced and why
+    /// none of them could be made smooth.
+    private var feed: some View {
+        ScrollView {
+            // The gap between cards is the separation now, and each card
+            // carries its own horizontal gutter so the section header and
+            // the gate can keep their own alignment independently.
+            LazyVStack(alignment: .leading, spacing: S.s3) {
+                headerRows
+                    // The large title being on screen is what the pinned strip
+                    // above needs to know, and being the lazy stack's first
+                    // child is what makes these two events say it. It reports a
+                    // region rather than a line, since the stack keeps a little
+                    // either side of what is visible, and that is the right way
+                    // round: the strip has finished changing over before the
+                    // feed stops moving. Nothing about the layout depends on
+                    // it, so being early or late costs a crossfade and nothing
+                    // else.
+                    .onAppear { titleVisible = true }
+                    .onDisappear { titleVisible = false }
+                sectionHeader
+                ForEach(Array(app.visibleEvents.enumerated()), id: \.element.id) { i, e in
+                    Button { selected = e } label: {
+                        // Exactly one feature per screen, at the top, where
+                        // the photograph gets to carry the feed. Used more
+                        // than once it undoes the calm and the feed reads
+                        // as a carousel of posters.
+                        EventCard(event: e, style: i == 0 ? .feature : .row)
+                    }
+                    .buttonStyle(PressableRow())
+                }
+                freeWindowGate
+            }
+            .padding(.top, S.s3)
+            .padding(.bottom, S.s6)
+        }
+        .refreshable { await app.load() }
+    }
+
+    /// One of the three non-feed screens, with the header rows kept above it.
+    ///
+    /// The filters have to stay usable while the feed is loading or empty. An
+    /// empty state whose only remedy is a control the empty state itself
+    /// removed is a dead end, and a loading screen that will not let you change
+    /// your mind until it finishes is just a slower one.
+    ///
+    /// These do not scroll, so the large title is always on screen and the
+    /// pinned strip stays on the wordmark.
+    ///
+    /// The type parameter is called `Content` because the two obvious names are
+    /// both taken. `S` is the spacing scale and `Screen` is the enum above, and
+    /// a generic of either name shadows the real one for the whole function
+    /// body without any warning that it has.
+    @ViewBuilder private func stateScreen<Content: View>(
+        @ViewBuilder _ body: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: S.s3) {
+            headerRows
+            body()
+        }
+        .padding(.top, S.s3)
     }
 
     /// Names what the run of cards below actually is, rather than repeating
     /// the count already in the header.
-    ///
-    /// It is also the feed's top marker, which is worth explaining because it
-    /// looks like two jobs bolted onto one view and is in fact the same job.
-    /// This is the first thing in the lazy stack, so it is loaded exactly when
-    /// the top of the feed is near enough to matter and unloaded once the feed
-    /// has genuinely moved on. That is the property the first attempt at the
-    /// collapsing header tripped over, when a scroll reader was put here and
-    /// silently stopped reporting the moment it was unloaded. Used deliberately
-    /// rather than accidentally it is the signal that screen needs, and it
-    /// costs nothing: no geometry, no preferences, no measurement, just the two
-    /// events SwiftUI already sends.
-    ///
-    /// It is a region rather than a line. The lazy stack keeps a little either
-    /// side of what is on screen, so this reports the top of the feed being
-    /// close, not exactly reached. That is the right way round for this: the
-    /// header returns a moment before the very top rather than a moment after,
-    /// so it is already whole when the feed stops.
     private var sectionHeader: some View {
         Text(app.range == .today ? "TONIGHT" : "TONIGHT AND THIS WEEK")
             .font(F.caption)
@@ -470,14 +346,6 @@ struct DiscoverView: View {
             .padding(.horizontal, S.s5)
             .padding(.top, S.s5)
             .padding(.bottom, S.s3)
-            .onAppear {
-                atTop = true
-                // Arriving back at the top is the restore. This is what catches
-                // the case a drag cannot: a hard flick that carries the feed
-                // home long after the finger has left the screen.
-                setCollapsed(false)
-            }
-            .onDisappear { atTop = false }
     }
 
     /// The end of the free week is a STATED gate, never a blur or a fade.

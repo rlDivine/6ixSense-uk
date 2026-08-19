@@ -204,15 +204,35 @@ extension View {
 /// the gear carries a dot when interests are narrowing the feed, because a
 /// filter you cannot see is the one that makes the app look broken.
 struct BrandStrip: View {
+    /// When set, the strip names this place instead of the app.
+    ///
+    /// The feed uses it once its own large title has scrolled out of sight, so
+    /// there is always something on screen saying which town the listings are
+    /// for. Deliberately the SAME row rather than a second bar that appears:
+    /// the logo and the town name are both one line of 15pt text next to a 34pt
+    /// button, so swapping them changes nothing about the strip's height and
+    /// nothing below it moves. That is the entire point. A bar that changes
+    /// size pushes the feed around underneath it, and no amount of easing makes
+    /// being shoved feel deliberate.
+    var place: String?
+
     @EnvironmentObject var app: AppState
     @State private var showSettings = false
 
     var body: some View {
         HStack(spacing: 8) {
-            VenTrackLogoView(size: 18)
-            Text("VenTrack")
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(Tok.text)
+            if let place {
+                Text(place)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Tok.text)
+                    .lineLimit(1)
+                    .accessibilityLabel("Showing events for \(place)")
+            } else {
+                VenTrackLogoView(size: 18)
+                Text("VenTrack")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Tok.text)
+            }
             Spacer(minLength: 8)
             settingsButton
         }
