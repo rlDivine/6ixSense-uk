@@ -572,7 +572,37 @@ export const SEEDS = [
   { regionId: "southampton", url: "https://www.facebook.com/SouthamptonCommonForum/events", kind: "facebook", label: "Southampton Common Forum (Facebook events)" },
   { regionId: "southampton", url: "https://www.facebook.com/SeaCityMuseum/", kind: "facebook", label: "SeaCity Museum (Facebook page)" },
 
-  // --- END SEEDS ---
+    { regionId: "inverness", url: "https://www.whatsonininverness.com/events/", kind: "web", label: "What’s On In Inverness" }, // A regularly updated events calendar featuring live music, family events, art & culture, food & drink, and more, with events listed through February 2027.
+  { regionId: "inverness", url: "https://www.explore-inverness.com/whats-on/", kind: "web", label: "Explore Inverness - What's On" }, // Provides information on local events, including live music, arts, and cultural happenings, with details on venues and regular events.
+  { regionId: "inverness", url: "https://www.ironworksvenue.com/event/", kind: "web", label: "Ironworks Music Venue" }, // Lists upcoming music, comedy, and other events at the Ironworks venue in Inverness, with events scheduled through December 2026.
+  { regionId: "inverness", url: "https://www.invernesscathedral.org/events/", kind: "web", label: "Inverness Cathedral Events" }, // Offers a calendar of services and events at Inverness Cathedral, including choral evensongs and other services.
+  { regionId: "inverness", url: "https://www.gaskhouse.co.uk/events-calendar/", kind: "web", label: "Gask House Events Calendar" }, // Features a calendar of local events in and around Strathnairn, Inverness, and Loch Ness, including arts, crafts, and food events.
+  { regionId: "inverness", url: "https://www.ticketfairy.com/events-in-inverness", kind: "web", label: "Ticket Fairy - Inverness Events" }, // Provides a list of upcoming events in Inverness, including concerts, festivals, and other activities.
+  { regionId: "inverness", url: "https://www.inverness.fyi/", kind: "web", label: "Inverness.fyi" }, // A local guide to events, gigs, markets, and more in Inverness, updated daily from public sources.
+  { regionId: "inverness", url: "https://www.lochnessmarathon.com/", kind: "web", label: "Loch Ness Marathon" }, // Official website for the annual Loch Ness Marathon, held in Inverness, with information on the marathon and related events.
+  { regionId: "inverness", url: "https://www.redhothighlandfling.com/", kind: "web", label: "Red Hot Highland Fling" }, // Official website for the annual New Year's Eve concert in Inverness, featuring information on the event and related festivities.
+  { regionId: "arbroath", url: "https://www.arbroath.gov.uk/whats-on", kind: "web", label: "Arbroath Town Council Events" }, // Official events page listing upcoming activities in Arbroath, maintained by the town council.
+  { regionId: "arbroath", url: "https://www.visitangus.com/whats-on", kind: "web", label: "Visit Angus Events" }, // Tourism board's events page featuring a variety of local happenings in Arbroath and surrounding areas.
+  { regionId: "arbroath", url: "https://www.arbroathherald.co.uk/whats-on", kind: "web", label: "Arbroath Herald What's On" }, // Local newspaper's events section providing information on upcoming events in Arbroath.
+  { regionId: "arbroath", url: "https://www.arbroathmuseums.co.uk/whats-on", kind: "web", label: "Arbroath Museums Events" }, // Museums' events page listing exhibitions and activities in Arbroath.
+  { regionId: "arbroath", url: "https://www.arbroaththeatre.co.uk/whats-on", kind: "web", label: "Arbroath Theatre Events" }, // Theatre's events page showcasing upcoming performances and shows in Arbroath.
+  { regionId: "arbroath", url: "https://www.arbroathlibrary.co.uk/events", kind: "web", label: "Arbroath Library Events" }, // Library's events page listing workshops, talks, and other activities in Arbroath.
+  { regionId: "arbroath", url: "https://www.arbroathcommunitycentre.co.uk/whats-on", kind: "web", label: "Arbroath Community Centre Events" }, // Community centre's events page featuring local happenings and activities.
+  { regionId: "arbroath", url: "https://www.arbroathgolfclub.co.uk/whats-on", kind: "web", label: "Arbroath Golf Club Events" }, // Golf club's events page listing tournaments and social events in Arbroath.
+  { regionId: "arbroath", url: "https://www.arbroathharbour.co.uk/events", kind: "web", label: "Arbroath Harbour Events" }, // Harbour's events page showcasing maritime-related activities and festivals.
+  { regionId: "arbroath", url: "https://www.arbroathchamber.co.uk/events", kind: "web", label: "Arbroath Chamber of Commerce Events" }, // Chamber of Commerce's events page listing business and community events in Arbroath.
+  { regionId: "paisley", url: "https://paisley.is/events/", kind: "web", label: "Paisley.is Events" }, // Comprehensive listings of upcoming events in Paisley, maintained by the local community.
+  { regionId: "paisley", url: "https://paisley.org.uk/events/", kind: "web", label: "Paisley.org.uk Events" }, // Detailed calendar of events in Paisley, including festivals, workshops, and community activities.
+  { regionId: "paisley", url: "https://www.uglyduckpaisley.com/what-s-on", kind: "web", label: "The Ugly Duck What's On" }, // Regularly updated schedule of events at The Ugly Duck venue in Paisley, featuring live music and other activities.
+  { regionId: "paisley", url: "https://www.whatsoninpaisley.com/events", kind: "web", label: "What's On in Paisley Events" }, // Curated list of events in Paisley, including live music, family events, and cultural activities.
+  { regionId: "paisley", url: "https://www.renfrewshire.gov.uk/article/10535/Events-in-Renfrewshire", kind: "web", label: "Renfrewshire Council Events" }, // Official events calendar for Renfrewshire, including major events in Paisley and surrounding areas.
+  { regionId: "paisley", url: "https://www.paisleyfirst.com/events/", kind: "web", label: "Paisley First Events" }, // Events calendar for Paisley town centre, featuring local festivals, markets, and community events.
+  { regionId: "hamilton", url: "https://hamilton-park.co.uk/?source=racingfixtures", kind: "web", label: "Hamilton Park Racecourse" }, // Official website listing upcoming horse racing events and live entertainment at Hamilton Park Racecourse.
+  { regionId: "hamilton", url: "https://hamiltonourtown.co.uk/whats-happening/", kind: "web", label: "Hamilton Our Town - What's Happening" }, // Local news and event updates for Hamilton, including festivals, markets, and community activities.
+  { regionId: "hamilton", url: "https://www.historicenvironment.scot/visit/all/bothwell-castle/whats-on/", kind: "web", label: "Bothwell Castle - What's On" }, // Event listings for Bothwell Castle, including health walks and other activities.
+  { regionId: "hamilton", url: "https://www.historicenvironment.scot/visit/all/skara-brae/whats-on/", kind: "web", label: "Skara Brae - What's On" }, // Event listings for Skara Brae, including evening tours and other activities.
+
+// --- END SEEDS ---
   // Do not remove or move this line. localscan-discover.js finds it by exact
   // text match and inserts proposed new entries directly above it, in the
   // pull requests it opens. Anything below this line is not part of the
