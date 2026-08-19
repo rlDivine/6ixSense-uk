@@ -42,17 +42,26 @@ struct EventDetailView: View {
 
     // MARK: Hero
 
+    /// A full width square, and CARRYING NO SCRIM.
+    ///
+    /// The hero used to lay a dark wash over the photograph so a title could
+    /// sit on top of it. That wash was a gradient, and there are none left in
+    /// the app, so the title moved below the image instead. The photograph is
+    /// now shown as the photograph, which is also the point of the redesign:
+    /// the interface recedes and the pictures carry the colour.
+    ///
+    /// Size is driven by the wash frame. The glyph and the photo are both
+    /// clipped overlays, so a wide photo can never inflate the hero's width and
+    /// shove the page off screen, and the glyph sits under the photo so a
+    /// failed image still leaves the family showing.
     private var hero: some View {
-        // Size is driven by the wash, which is a fixed frame. The glyph and the
-        // photo are both clipped overlays, so a wide photo can never inflate the
-        // hero's width and shove the rest of the page off screen. The glyph sits
-        // under the photo, so a failed image still leaves the category showing.
         Categories.wash(event.category)
+            .aspectRatio(1, contentMode: .fit)
             .frame(maxWidth: .infinity)
-            .frame(height: 260)
-            .overlay { CategoryGlyph(category: event.category, size: 64) }
+            .overlay { CategoryGlyph(category: event.category, size: 72) }
             .overlay { heroImage }
             .clipped()
+            .accessibilityHidden(true)
             .overlay(alignment: .top) { heroControls }
     }
 
@@ -77,18 +86,20 @@ struct EventDetailView: View {
                 if !app.toggleSave(event) { paywall = .saving }
             }
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, S.s4)
         .padding(.top, 54)
     }
 
     private func circleBtn(_ sys: String, _ label: String, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: sys)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(Tok.text)
-                .frame(width: 38, height: 38)
-                .background(Tok.panel, in: Circle())
-                .overlay(Circle().stroke(Tok.hairline, lineWidth: 1))
+                // Material rather than a filled panel with a border: these sit
+                // over a photograph whose colour is unknown, and a material is
+                // the one thing that stays legible on any of them.
+                .frame(width: 40, height: 40)
+                .background(.ultraThinMaterial, in: Circle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
@@ -97,16 +108,16 @@ struct EventDetailView: View {
     // MARK: Body
 
     private var details: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: S.s5) {
             categoryLabel
             Text(event.title)
-                .font(.system(size: 27, weight: .bold))
-                .kerning(-0.8)
+                .font(F.display)
+                .kerning(-1.1)
                 .foregroundStyle(Tok.text)
                 .fixedSize(horizontal: false, vertical: true)
             Text(summary)
-                .font(.system(size: 14.5))
-                .lineSpacing(6)
+                .font(F.body)
+                .lineSpacing(5)
                 .foregroundStyle(Tok.muted)
                 .fixedSize(horizontal: false, vertical: true)
             facts
@@ -114,19 +125,23 @@ struct EventDetailView: View {
             secondaryActions
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
+        .padding(S.s5)
         .padding(.bottom, 120)
     }
 
+    /// The same 14x3 rule and family name as the card footer and the filter
+    /// chips, so one shape means one thing everywhere in the app.
     private var categoryLabel: some View {
-        HStack(spacing: 7) {
-            Circle()
-                .fill(Categories.style(event.category).color)
-                .frame(width: 7, height: 7)
-            Text(event.category.uppercased())
-                .font(.system(size: 10.5, weight: .bold))
-                .kerning(0.84)
-                .foregroundStyle(Categories.style(event.category).color)
+        HStack(spacing: S.s2) {
+            if Categories.family(event.category) != nil {
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(Categories.style(event.category).color)
+                    .frame(width: 14, height: 3)
+            }
+            Text(Categories.label(event.category).uppercased())
+                .font(F.caption)
+                .kerning(0.77)
+                .foregroundStyle(Tok.faint)
         }
         .accessibilityElement(children: .combine)
     }
@@ -159,47 +174,47 @@ struct EventDetailView: View {
 
     // MARK: Facts
     //
-    // One bordered container split by hairlines, not three separate cards.
-    // Three cards read as three things to decide between; this reads as one
-    // block of facts about a single event, which is what it is.
+    // Three columns between two hairlines, with no boxes and no dividers.
+    //
+    // This is exactly where three filled panels used to be, and it is the
+    // clearest single example of the change the brief asked for: the panels
+    // were doing work that type and whitespace should do. Alignment and a rule
+    // above and below are enough to say "these three things belong together".
 
     private var facts: some View {
-        HStack(spacing: 0) {
-            factCell("When", whenValue, whenSub)
-            factDivider
-            factCell("Distance", Fmt.distance(event.distanceKm), distanceSub)
-            factDivider
-            factCell("Price", priceValue, priceSub)
+        VStack(spacing: 0) {
+            Rectangle().fill(Tok.hairline).frame(height: 1)
+            HStack(alignment: .top, spacing: S.s3) {
+                factCell("When", whenValue, whenSub)
+                factCell("Distance", Fmt.distance(event.distanceKm), distanceSub)
+                factCell("Price", priceValue, priceSub)
+            }
+            .padding(.vertical, S.s4)
+            Rectangle().fill(Tok.hairline).frame(height: 1)
         }
-        .frame(maxWidth: .infinity)
-        .background(Tok.panel, in: RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Tok.hairline, lineWidth: 1))
-    }
-
-    private var factDivider: some View {
-        Rectangle().fill(Tok.hairline).frame(width: 1)
     }
 
     private func factCell(_ label: String, _ value: String, _ sub: String) -> some View {
-        VStack(spacing: 4) {
+        VStack(alignment: .leading, spacing: S.s1) {
             Text(label.uppercased())
-                .font(.system(size: 10.5, weight: .bold))
-                .kerning(0.84)
+                .font(F.caption)
+                .kerning(0.77)
                 .foregroundStyle(Tok.faint)
             Text(value)
-                .font(.system(size: 15, weight: .bold))
+                .font(F.headline)
                 .foregroundStyle(Tok.text)
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(0.6)
             Text(sub)
-                .font(.system(size: 11.5))
+                .font(F.footnote)
                 .foregroundStyle(Tok.faint)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .multilineTextAlignment(.center)
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 13)
-        .padding(.horizontal, 8)
+        // Left aligned, not centred. Three centred columns read as three
+        // buttons; three left aligned ones read as a table, which is what this
+        // is, and it also lets the values line up with the title above them.
+        .multilineTextAlignment(.leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
 
@@ -369,17 +384,19 @@ struct EventDetailView: View {
                 Rectangle().fill(Tok.hairline).frame(height: 1)
                 Link(destination: url) {
                     Text(ctaTitle)
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(Color.white)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Tok.accentFill, in: RoundedRectangle(cornerRadius: 14))
+                        .frame(height: 52)
+                        .background(Tok.accentFill, in: RoundedRectangle(cornerRadius: R.button))
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 14)
+                .padding(.horizontal, S.s5)
+                .padding(.top, S.s3)
+                .padding(.bottom, S.s4)
             }
-            .background(Tok.bg)
+            // Material, not an opaque fill, so the page reads as continuing
+            // underneath rather than stopping at a bar.
+            .background(.ultraThinMaterial)
         }
     }
 
