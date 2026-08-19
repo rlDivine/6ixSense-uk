@@ -572,7 +572,23 @@ export const SEEDS = [
   { regionId: "southampton", url: "https://www.facebook.com/SouthamptonCommonForum/events", kind: "facebook", label: "Southampton Common Forum (Facebook events)" },
   { regionId: "southampton", url: "https://www.facebook.com/SeaCityMuseum/", kind: "facebook", label: "SeaCity Museum (Facebook page)" },
 
-  // --- END SEEDS ---
+    { regionId: "dereham", url: "https://www.breckland.gov.uk/article/25796/Statement-following-meeting-on-25-February-2026", kind: "web", label: "Breckland Council Statement" }, // Official statement from Breckland Council regarding the Dereham Taskforce meeting on 25 February 2026.
+  { regionId: "dereham", url: "https://www.breckland.gov.uk/article/25972/Statement-following-meeting-on-26-March-2026", kind: "web", label: "Breckland Council Statement" }, // Official statement from Breckland Council regarding the Dereham Taskforce meeting on 26 March 2026.
+  { regionId: "scarborough", url: "https://www.scarborough.gov.uk/whats-on", kind: "web", label: "Scarborough Borough Council What's On" }, // Official council page listing upcoming events in Scarborough.
+  { regionId: "scarborough", url: "https://www.scarboroughspa.co.uk/whats-on", kind: "web", label: "Scarborough Spa What's On" }, // Venue hosting a variety of events throughout the year.
+  { regionId: "scarborough", url: "https://www.scarborougharts.com/programs-calendar", kind: "web", label: "Scarborough Arts Programs Calendar" }, // Arts organization listing community events and programs.
+  { regionId: "scarborough", url: "https://www.scarboroughfair.uk/", kind: "web", label: "The Scarborough Fair" }, // Year-round program of arts, heritage, and sporting events.
+  { regionId: "scarborough", url: "https://www.scarboroughschools.org/events", kind: "web", label: "Scarborough Public Schools Events" }, // School district calendar highlighting key happenings.
+  { regionId: "scarborough", url: "https://www.scarboroughmaine.org/stay-connected/calendar", kind: "web", label: "Town of Scarborough Calendar" }, // Official town calendar with council and committee meetings.
+  { regionId: "scarborough", url: "https://www.scarboroughmaine.org/stay-connected/calendar/monthly-calendar", kind: "web", label: "Scarborough Monthly Calendar" }, // Monthly calendar of town events and meetings.
+  { regionId: "rushden", url: "https://www.rushdentowncouncil.gov.uk/events1", kind: "web", label: "Rushden Town Council Events" }, // Official events calendar listing various community events throughout the year.
+  { regionId: "rushden", url: "https://www.rushdentowncouncil.gov.uk/local-events", kind: "web", label: "Rushden Town Council What's On" }, // Comprehensive listing of upcoming events in Rushden, including community activities and entertainment.
+  { regionId: "rushden", url: "https://www.rushdenspiritualistchurch.co.uk/calendar.php", kind: "web", label: "Rushden Independent Spiritualist Church Calendar" }, // Regularly updated calendar of services and events at the church, including mediumship demonstrations and spiritual workshops.
+  { regionId: "rushden", url: "https://www.rushdenlakes.com/events", kind: "web", label: "Rushden Lakes Events" }, // Ongoing events at Rushden Lakes, including SEN & Autism Friendly Sessions and Home Education Hangouts.
+  { regionId: "rushden", url: "https://www.northantslife.co.uk/venue/rushden-athletic-club/", kind: "web", label: "Rushden Athletic Club Events" }, // Listings of events at Rushden Athletic Club, including Thursday Night Quiz and other activities.
+  { regionId: "rushden", url: "https://www.perto.com/gb/rushden-40918/the-general-three-hills-brewing-taproom-1003806/", kind: "web", label: "The General, Three Hills Brewing Taproom Events" }, // Upcoming events at The General, including Soundbitez 2.0 on 1 August 2026.
+
+// --- END SEEDS ---
   // Do not remove or move this line. localscan-discover.js finds it by exact
   // text match and inserts proposed new entries directly above it, in the
   // pull requests it opens. Anything below this line is not part of the
