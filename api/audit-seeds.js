@@ -106,21 +106,45 @@ const lines = [
   "",
 ];
 
-// A town where every single url fails to resolve is the signature of a
-// discovery run that invented plausible looking domains rather than finding
-// real ones. Worth calling out separately: those towns need re-researching,
-// not pruning.
+// WHY a fetch failed decides what to do about it, and the answers are not
+// close. A 403 or a 429 is a live site refusing this particular client, which
+// is a statement about where the audit runs from, not about the page: a
+// GitHub Actions runner sits in a cloud IP range that a great many CDNs
+// block outright, and Render's addresses are not the same ones. A 404 is a
+// page that has genuinely gone. ENOTFOUND is a domain that does not exist,
+// which is the signature of a discovery run that invented a plausible name.
+//
+// Only the last two are safe to prune from an Actions run.
+const byReason = new Map();
+for (const r of errored) {
+  const reason = (r.error || "unknown").replace(/^localscan fetch /, "HTTP ");
+  byReason.set(reason, (byReason.get(reason) || 0) + 1);
+}
+if (byReason.size) {
+  lines.push(`--- why fetches failed (${errored.length}) ---`);
+  for (const [reason, n] of [...byReason.entries()].sort((a, b) => b[1] - a[1])) {
+    lines.push(`  ${String(n).padStart(4)}  ${reason}`);
+  }
+  lines.push("");
+}
+
+// A town where every url fails needs looking at whatever the reason, but only
+// re-researching if the domains do not exist. Capped, because an earlier run
+// printed several hundred single-failure hosts and pushed the counts above off
+// the top of the job log, which is the one part nobody can do without.
 const hostFails = new Map();
 for (const r of errored) {
   let host = "";
   try { host = new URL(r.url).host; } catch { host = r.url; }
   hostFails.set(host, (hostFails.get(host) || 0) + 1);
 }
-if (hostFails.size) {
-  lines.push(`--- unreachable hosts (${hostFails.size}) ---`);
-  for (const [host, n] of [...hostFails.entries()].sort((a, b) => b[1] - a[1])) {
+const repeatOffenders = [...hostFails.entries()].filter(([, n]) => n > 1).sort((a, b) => b[1] - a[1]);
+if (repeatOffenders.length) {
+  lines.push(`--- hosts failing more than once (${repeatOffenders.length} of ${hostFails.size}) ---`);
+  for (const [host, n] of repeatOffenders.slice(0, 40)) {
     lines.push(`  ${String(n).padStart(3)}  ${host}`);
   }
+  if (repeatOffenders.length > 40) lines.push(`  ... and ${repeatOffenders.length - 40} more`);
   lines.push("");
 }
 
@@ -139,18 +163,35 @@ for (const r of [...live].sort((a, b) => b.events - a.events).slice(0, 25)) {
   lines.push(`  ${String(r.events).padStart(3)}  ${r.regionId.padEnd(18)} ${r.url}`);
 }
 
-// Ordered by how confidently each can go. Unreachable first: nothing is lost
-// by deleting a url that does not answer. Then the empty ones, which are the
-// only bucket that actually costs money per scan. Thin pages come last and are
-// the weakest case for pruning, since they are free and several of them are
-// real venues that simply need rendering.
+// Ordered by how much is known about each. The unreachable ones come first
+// because their error line says what happened, not because they are all safe
+// to delete: a 403 from here may well be a 200 from Render. Then the empty
+// ones, which are the only bucket that costs money on every scan. Thin pages
+// come last and are the weakest case for pruning, since they are free and
+// several of them are real venues that simply need rendering.
 lines.push("", "--- dead weight, candidates to prune ---");
 for (const r of [...errored, ...empty, ...thin].slice(0, 60)) {
   const why = r.error ? `unreachable: ${r.error}` : r.thin ? "too thin" : "empty";
-  lines.push(`  ${r.regionId.padEnd(18)} ${why.slice(0, 28).padEnd(28)} ${r.url}`);
+  // Not truncated. The first version cut this to 28 characters, which turned
+  // "localscan fetch 403" into "localscan fetch" and hid the status code, the
+  // one field that says whether a page is blocking this client or genuinely
+  // gone. A 403 is worth keeping and a 404 is not, and the report was
+  // discarding exactly the character that told them apart.
+  lines.push(`  ${r.regionId.padEnd(18)} ${why.padEnd(34)} ${r.url}`);
 }
 const rest = thin.length + errored.length + empty.length - 60;
 if (rest > 0) lines.push(`  ... and ${rest} more`);
+
+// Repeated at the foot on purpose. GitHub serves only the tail of a job log,
+// and the lists above are long enough to push the counts off the top of it,
+// which happened on the run of 19 August and left the headline numbers
+// unreadable without downloading the artifact.
+lines.push(
+  "",
+  "================ totals, repeated ================",
+  `${rows.length} pages, ${totalEvents} events`,
+  `producing ${live.length} | empty ${empty.length} | thin ${thin.length} | unreachable ${errored.length}`,
+);
 
 const report = lines.join("\n");
 console.log(report);

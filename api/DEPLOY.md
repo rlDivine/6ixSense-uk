@@ -268,6 +268,20 @@ never reach the model, so they are close to free, and many are real venues
 worth keeping for whenever a rendering fetch exists. The empty ones pay for an
 extraction on every single scan and return nothing.
 
+**"Failed to fetch" from Actions is not evidence a page is bad.** A GitHub
+runner sits in a cloud IP range that a great many CDNs block on sight, and
+Render's addresses are different ones. The 19 August run returned `403` for
+`manchester.gov.uk`, `sciencemuseum.org.uk` and the Tower of London, none of
+which are broken. Read the reason, not the bucket:
+
+| Reason | Verdict |
+| --- | --- |
+| `404`, `410`, `ENOTFOUND` | genuinely gone, or a domain that never existed. Safe to delete |
+| `403`, `429`, `5xx`, timeouts | refused **where the audit ran**. Keep |
+
+`prune-seeds.js` applies exactly that split, and keeps anything it cannot
+prove is gone.
+
 Then prune on the JSON rather than by hand:
 
 ```bash

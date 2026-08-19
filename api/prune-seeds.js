@@ -8,10 +8,17 @@
 //
 // WHAT IT REMOVES, and why those and not the others.
 //
-//   unreachable  the url did not answer at all. Nothing is lost by deleting
-//                it. Where every url in a town is unreachable, the town was
-//                seeded with invented domains and needs re-researching, which
-//                this reports but cannot do.
+//   gone         404, 410, or a domain that does not resolve. Nothing is lost
+//                by deleting these. Where every url in a town does not
+//                resolve, the town was seeded with invented domains and needs
+//                re-researching, which this reports but cannot do.
+//
+//                NOT every failed fetch. A 403, a 429, a 5xx or a timeout is
+//                kept, because those describe the machine the audit ran on as
+//                much as the page. Run from GitHub Actions, whose addresses a
+//                great many CDNs block outright, and manchester.gov.uk, the
+//                Science Museum and the Tower of London all come back 403
+//                while being perfectly readable from anywhere else.
 //
 //   empty        the page was fetched, was substantial enough to send to the
 //                model, and the model found no events in it. This is the only
@@ -73,15 +80,34 @@ for (const r of rows) {
   if (!prev || r.events > prev.events) best.set(r.url, r);
 }
 
-const verdicts = new Map();
-for (const [url, r] of best) {
-  if (r.events > 0) verdicts.set(url, "keep");
-  else if (r.why === "fetch" || r.why === "extract") verdicts.set(url, "unreachable");
-  else if (r.why === "thin") verdicts.set(url, includeThin ? "thin" : "keep-thin");
-  else verdicts.set(url, "empty");
+// "Did not answer" is not one thing, and the difference decides whether a url
+// is worthless or merely unreachable FROM WHERE THE AUDIT RAN. A GitHub
+// Actions runner sits in a cloud IP range that a great many CDNs block on
+// sight, so a 403 there says nothing about whether Render can read the page.
+// The 19 August run returned 403s for manchester.gov.uk, sciencemuseum.org.uk
+// and the Tower of London, none of which are broken in any sense.
+//
+// Only a page that is genuinely gone, or a domain that never existed, is safe
+// to delete on this evidence.
+const GONE = /\b(HTTP )?40[48]\b|\b410\b|ENOTFOUND|EAI_AGAIN|ERR_INVALID_URL/;
+function classify(r) {
+  if (r.events > 0) return "keep";
+  if (r.why === "fetch" || r.why === "extract") {
+    const msg = String(r.error || "");
+    // localscan throws `localscan fetch <status>`, so a bare status number in
+    // the message is the HTTP code.
+    if (GONE.test(msg) || /localscan fetch 40[48]|localscan fetch 410/.test(msg)) return "gone";
+    return "keep-blocked";
+  }
+  if (r.why === "thin") return includeThin ? "thin" : "keep-thin";
+  return "empty";
 }
 
-const doomed = new Set([...verdicts].filter(([, v]) => v !== "keep" && v !== "keep-thin").map(([u]) => u));
+const verdicts = new Map();
+for (const [url, r] of best) verdicts.set(url, classify(r));
+
+const KEEP = new Set(["keep", "keep-thin", "keep-blocked"]);
+const doomed = new Set([...verdicts].filter(([, v]) => !KEEP.has(v)).map(([u]) => u));
 
 // ---- rewrite the file --------------------------------------------------------
 // Line based on purpose. The file is one seed per line by convention, and the
@@ -131,6 +157,11 @@ for (const [why, n] of [...byWhy].sort((a, b) => b[1] - a[1])) {
 if (!includeThin) {
   const thin = [...verdicts.values()].filter((v) => v === "keep-thin").length;
   console.log(`[prune]   ${String(thin).padStart(4)} thin pages KEPT (--include-thin to remove)`);
+}
+const blocked = [...verdicts.values()].filter((v) => v === "keep-blocked").length;
+if (blocked) {
+  console.log(`[prune]   ${String(blocked).padStart(4)} KEPT: refused or timed out where the audit ran ` +
+              `(403, 429, 5xx, timeouts). Says nothing about production.`);
 }
 
 // Towns left watching nothing need researching again, not pruning. Worth

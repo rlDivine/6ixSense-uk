@@ -438,7 +438,12 @@ async function extractForPage(seed, region) {
     page = await fetchPage(seed.url);
   } catch (e) {
     console.warn(`[localscan/${region.id}] ${seed.url}: ${e.message}`);
-    return thinEntry("fetch", e?.message || String(e));
+    // The cause code is what separates a domain that does not exist
+    // (ENOTFOUND) from a real site refusing this particular client, and undici
+    // puts it on the cause rather than the message: without it every network
+    // level failure reads as the same useless "fetch failed".
+    const code = e?.cause?.code;
+    return thinEntry("fetch", code ? `${e.message} (${code})` : (e?.message || String(e)));
   }
 
   if (isThin(page.text)) return thinEntry("thin", `${page.text.length} chars`);

@@ -48,7 +48,7 @@ function run(entries, rows, extraArgs = []) {
 const row = (regionId, url, over = {}) =>
   ({ regionId, url, thin: false, why: null, error: null, events: 0, ...over });
 
-test("unreachable and empty pages go; pages that produced events stay", async () => {
+test("gone and empty pages go; pages that produced events stay", async () => {
   const entries = [
     { regionId: "ramsgate", url: "https://good.test/a" },
     { regionId: "ramsgate", url: "https://empty.test/b" },
@@ -57,12 +57,38 @@ test("unreachable and empty pages go; pages that produced events stay", async ()
   const { text } = run(entries, [
     row("ramsgate", "https://good.test/a", { events: 7 }),
     row("ramsgate", "https://empty.test/b"),
-    row("ramsgate", "https://dead.test/c", { thin: true, why: "fetch", error: "fetch failed" }),
+    row("ramsgate", "https://dead.test/c", { thin: true, why: "fetch", error: "fetch failed (ENOTFOUND)" }),
   ], ["--write"]);
 
   assert.match(text, /good\.test/);
   assert.doesNotMatch(text, /empty\.test/);
   assert.doesNotMatch(text, /dead\.test/);
+});
+
+test("a page refused or timing out where the audit ran is kept, not pruned", async () => {
+  // The distinction that matters most, and the one that nearly cost a pile of
+  // good pages. The 19 August audit ran on a GitHub Actions runner, whose
+  // address range a great many CDNs block outright, and returned 403 for
+  // manchester.gov.uk, the Science Museum and the Tower of London. A 403 there
+  // is a fact about the runner, not about the page.
+  const entries = [
+    { regionId: "manchester", url: "https://blocked.test/events" },
+    { regionId: "manchester", url: "https://slow.test/events" },
+    { regionId: "manchester", url: "https://throttled.test/events" },
+    { regionId: "manchester", url: "https://missing.test/events" },
+  ];
+  const { text, stdout } = run(entries, [
+    row("manchester", "https://blocked.test/events", { thin: true, why: "fetch", error: "localscan fetch 403" }),
+    row("manchester", "https://slow.test/events", { thin: true, why: "fetch", error: "This operation was aborted" }),
+    row("manchester", "https://throttled.test/events", { thin: true, why: "fetch", error: "localscan fetch 429" }),
+    row("manchester", "https://missing.test/events", { thin: true, why: "fetch", error: "localscan fetch 404" }),
+  ], ["--write"]);
+
+  assert.match(text, /blocked\.test/, "403 is about the runner, not the page");
+  assert.match(text, /slow\.test/, "a timeout is not evidence a page is dead");
+  assert.match(text, /throttled\.test/, "429 means we asked too fast");
+  assert.doesNotMatch(text, /missing\.test/, "404 is genuinely gone");
+  assert.match(stdout, /KEPT: refused or timed out/);
 });
 
 test("a thin page is kept by default and removed only when asked for", async () => {
@@ -99,8 +125,8 @@ test("emptying a town removes its header, and the town is named as needing resea
     { regionId: "margate", url: "https://real.test/z" },
   ];
   const { text, stdout } = run(entries, [
-    row("arbroath", "https://invented-one.test/x", { thin: true, why: "fetch", error: "fetch failed" }),
-    row("arbroath", "https://invented-two.test/y", { thin: true, why: "fetch", error: "fetch failed" }),
+    row("arbroath", "https://invented-one.test/x", { thin: true, why: "fetch", error: "fetch failed (ENOTFOUND)" }),
+    row("arbroath", "https://invented-two.test/y", { thin: true, why: "fetch", error: "fetch failed (ENOTFOUND)" }),
     row("margate", "https://real.test/z", { events: 3 }),
   ], ["--write"]);
 
