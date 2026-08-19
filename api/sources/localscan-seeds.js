@@ -572,7 +572,12 @@ export const SEEDS = [
   { regionId: "southampton", url: "https://www.facebook.com/SouthamptonCommonForum/events", kind: "facebook", label: "Southampton Common Forum (Facebook events)" },
   { regionId: "southampton", url: "https://www.facebook.com/SeaCityMuseum/", kind: "facebook", label: "SeaCity Museum (Facebook page)" },
 
-  // --- END SEEDS ---
+    { regionId: "glasgow", url: "https://www.visitglasgow.com/whats-on", kind: "web", label: "Visit Glasgow" }, // Official tourism website listing a variety of upcoming events across the city, including arts, music, and festivals.
+  { regionId: "glasgow", url: "https://www.cca-glasgow.com/programme", kind: "web", label: "CCA Glasgow" }, // Centre for Contemporary Arts providing a comprehensive programme of events, exhibitions, and performances.
+  { regionId: "glasgow", url: "https://www.mctcc.scot/category/meetings/", kind: "web", label: "Merchant City and Trongate Community Council" }, // Community council's meetings and events, including minutes and upcoming gatherings.
+  { regionId: "glasgow", url: "https://www.glasgow.gov.uk/whats-on", kind: "web", label: "Glasgow City Council" }, // City council's official 'What's On' page featuring a range of events and activities.
+
+// --- END SEEDS ---
   // Do not remove or move this line. localscan-discover.js finds it by exact
   // text match and inserts proposed new entries directly above it, in the
   // pull requests it opens. Anything below this line is not part of the
