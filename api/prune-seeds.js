@@ -57,16 +57,73 @@ if (!jsonPath) {
   process.exit(1);
 }
 
-const rows = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
+const raw = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
+
+// Two shapes, because there are two ways to measure this and the better one
+// came second.
+//
+//   audit.json          an array, from audit-seeds.js on a CI runner
+//   /api/diag/pages     { summary, pages: [...] }, from the running backend
+//
+// Prefer the second wherever you have it. The audit measures what a GitHub
+// runner can reach, and runners are refused by CDNs that serve production
+// perfectly well; the endpoint measures the machine that actually serves the
+// app. Accepting both means `curl .../api/diag/pages > pages.json` feeds
+// straight in with nothing to convert.
+//
+// Only pages with attempts > 0 are carried across. A page nothing has scanned
+// since the last restart has bestEvents: 0 for want of ever being tried, which
+// would classify as "read but empty" and be deleted on no evidence at all.
+const fromEndpoint = !Array.isArray(raw) && Array.isArray(raw?.pages);
+const rows = fromEndpoint
+  ? raw.pages.filter((p) => p.attempts > 0).map(fromDiagRow)
+  : raw;
+
+/// Translate one /api/diag/pages row into the audit's row shape. The endpoint
+/// counts many scans over time where the audit records a single pass, so
+/// `bestEvents` is the honest answer to "has this page ever produced
+/// anything": a listings page that is empty in January and full in June is a
+/// good page, not a dead one.
+function fromDiagRow(p) {
+  const status = String(p.lastStatus || "");
+  const failed = p.ok === 0 && p.failed > 0;
+  return {
+    regionId: p.regions?.[0] || "",
+    url: p.url,
+    events: p.bestEvents ?? 0,
+    thin: failed || status === "thin",
+    why: failed ? "fetch" : status === "thin" ? "thin" : null,
+    // lastStatus is already the status or the cause code, which is exactly
+    // what classify() reads.
+    error: failed ? status : null,
+  };
+}
+
+// Checked before the generic empty-rows guard below, which would otherwise
+// catch this case and report it as an empty file. A page nothing has scanned
+// is unproven, not dead, and the endpoint's counters reset on every restart,
+// so a dump taken from a cold backend describes the uptime and not the pages.
+// Pruning off one would wipe the list wholesale.
+if (fromEndpoint) {
+  const skipped = raw.pages.length - rows.length;
+  if (!rows.length) {
+    console.error("[prune] every page in this dump has attempts: 0, so nothing has " +
+                  "been scanned since the last restart. There is no evidence here yet.");
+    process.exit(1);
+  }
+  console.log(`[prune] reading /api/diag/pages: ${rows.length} page(s) with evidence` +
+              (skipped ? `, ${skipped} not yet scanned and left alone` : ""));
+}
+
 if (!Array.isArray(rows) || !rows.length) {
-  console.error(`[prune] ${jsonPath} holds no audit rows`);
+  console.error(`[prune] ${jsonPath} holds no rows`);
   process.exit(1);
 }
 
 // An older audit.json predates the `why` field, so every failed fetch in it is
 // indistinguishable from a thin page. Pruning off one of those would delete
 // real pages, which is the exact mistake this field was added to prevent.
-if (!rows.some((r) => "why" in r)) {
+if (!fromEndpoint && !rows.some((r) => "why" in r)) {
   console.error("[prune] this audit.json has no `why` field, so unreachable urls " +
                 "cannot be told apart from pages that are merely thin. Re-run the " +
                 "audit on current main before pruning.");

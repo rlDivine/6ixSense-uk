@@ -309,13 +309,22 @@ which are broken. Read the reason, not the bucket:
 `prune-seeds.js` applies exactly that split, and keeps anything it cannot
 prove is gone.
 
-Then prune on the JSON rather than by hand:
+Then prune on the numbers rather than by hand. It takes either source:
 
 ```bash
 cd api
-node prune-seeds.js /path/to/audit.json            # show what would go
-node prune-seeds.js /path/to/audit.json --write    # remove it
+# From the backend, which is the measurement to trust.
+curl -s https://pulse-uk-api.onrender.com/api/diag/pages > pages.json
+node prune-seeds.js pages.json                     # show what would go
+node prune-seeds.js pages.json --write             # remove it
+
+# Or from an Actions audit artifact.
+node prune-seeds.js /path/to/audit.json
 ```
+
+Pages the backend has not scanned yet (`attempts: 0`) are skipped, not
+deleted, and a dump where nothing has been scanned at all is refused outright:
+counters reset on restart, so that describes the uptime rather than the pages.
 
 It deletes unreachable urls and read-but-empty pages, keeps thin ones unless
 you pass `--include-thin`, recounts the town headers, and names any town left

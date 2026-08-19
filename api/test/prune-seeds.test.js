@@ -177,3 +177,53 @@ test("without --write nothing is changed", async () => {
   assert.match(text, /gone\.test/);
   assert.match(stdout, /dry run/);
 });
+
+test("a /api/diag/pages dump is accepted as-is, and unscanned pages are left alone", async () => {
+  // The endpoint measures the machine that serves the app; the audit measures a
+  // CI runner that CDNs refuse. Feeding the better source in should need no
+  // conversion step, because a conversion step is somewhere to get this wrong.
+  const entries = [
+    { regionId: "margate", url: "https://works.test/whats-on" },
+    { regionId: "margate", url: "https://empty.test/whats-on" },
+    { regionId: "margate", url: "https://gone.test/whats-on" },
+    { regionId: "margate", url: "https://unscanned.test/whats-on" },
+  ];
+  const dump = { summary: {}, pages: [
+    { url: "https://works.test/whats-on", regions: ["margate"], attempts: 4, ok: 4, thin: 0, failed: 0, lastStatus: "ok", events: 6, bestEvents: 9 },
+    { url: "https://empty.test/whats-on", regions: ["margate"], attempts: 4, ok: 4, thin: 0, failed: 0, lastStatus: "ok", events: 0, bestEvents: 0 },
+    { url: "https://gone.test/whats-on", regions: ["margate"], attempts: 3, ok: 0, thin: 0, failed: 3, lastStatus: "HTTP 404", events: 0, bestEvents: 0 },
+    // Never scanned since the last restart. Unproven, not dead: deleting this
+    // would be acting on the absence of evidence.
+    { url: "https://unscanned.test/whats-on", regions: ["margate"], attempts: 0, ok: 0, thin: 0, failed: 0, lastStatus: null, events: 0, bestEvents: 0 },
+  ] };
+
+  const { text, stdout } = run(entries, dump, ["--write"]);
+
+  assert.match(text, /works\.test/, "a page that has produced events stays");
+  assert.match(text, /unscanned\.test/, "no evidence is not evidence of no");
+  assert.doesNotMatch(text, /empty\.test/, "scanned repeatedly, never yielded");
+  assert.doesNotMatch(text, /gone\.test/, "404 is gone");
+  assert.match(stdout, /1 not yet scanned and left alone/);
+});
+
+test("a /api/diag/pages dump from a cold backend is refused", async () => {
+  // Counters reset on restart. Pruning off a dump taken before the first scan
+  // would delete the entire list on the strength of nothing having run yet.
+  const entries = [{ regionId: "margate", url: "https://x.test/1" }];
+  const cold = { summary: {}, pages: [
+    { url: "https://x.test/1", regions: ["margate"], attempts: 0, ok: 0, thin: 0, failed: 0, lastStatus: null, events: 0, bestEvents: 0 },
+  ] };
+  const { failed, stdout, text } = run(entries, cold, ["--write"]);
+
+  assert.ok(failed, "it must exit non-zero");
+  assert.match(stdout, /nothing has been scanned/);
+  assert.match(text, /x\.test/, "and must not have touched the file");
+});
+
+test("a page blocked in production is kept, same as from the audit", async () => {
+  const entries = [{ regionId: "manchester", url: "https://blocked.test/events" }];
+  const dump = { summary: {}, pages: [
+    { url: "https://blocked.test/events", regions: ["manchester"], attempts: 5, ok: 0, thin: 0, failed: 5, lastStatus: "HTTP 403", events: 0, bestEvents: 0 },
+  ] };
+  assert.match(run(entries, dump, ["--write"]).text, /blocked\.test/);
+});
