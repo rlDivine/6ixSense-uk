@@ -7,139 +7,147 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		024EA8FDACB48F0C4A640D4F /* VenTrackApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620535508147E314F5AD390F /* VenTrackApp.swift */; };
-		08486A4F073A3F11E1639C46 /* EventService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D34DE478357B967803628604 /* EventService.swift */; };
-		09F8687BAB3E810EAE5FB174 /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D75AACF88E47AA23ECC8FE /* Event.swift */; };
-		271E6708B085DE0305ED51C2 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 388A88C7512DF1737C134069 /* PreferencesView.swift */; };
-		56A8A3F48D1452B05B399321 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FE246CFBAC8BE16A732BE36 /* AppState.swift */; };
-		570853F734AAA2383C85F85C /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9AC3F238C746E982FC2DFBC /* OnboardingView.swift */; };
-		5D5DBCA52915F08C191A6D02 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F87F1E5247271AD3062DAD4 /* Theme.swift */; };
-		60D7B609BF89174AC2732204 /* SavedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 294C1AC5EA7EA5BEB30391F0 /* SavedView.swift */; };
-		62996ED26B16B053253CAC94 /* EventDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEB0CAD27A1C8121AC261DA /* EventDetailView.swift */; };
-		89C463DFFC10A841D04C43D1 /* PlaceOverride.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78A7BBA3E1389A5D38995848 /* PlaceOverride.swift */; };
-		8DE994807463C7DAA11DD7FA /* DateQueryParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45E29FD3597D151E773145BD /* DateQueryParser.swift */; };
-		99B28A58680A1A1ECE1277F2 /* DiscoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DABC4D90273530C7A7070C0D /* DiscoverView.swift */; };
-		9ADBF702121378197DFF3BA7 /* CategoryArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60C305E07D160E19EE871775 /* CategoryArtwork.swift */; };
-		9D78FE5D138BD5B033B933E7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2B7F7DDA74692FC477F7B96C /* Assets.xcassets */; };
-		B88B989DF85E00F9C7EA64A7 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D7CF4C11229B2791E240A311 /* Foundation.framework */; };
-		B8D68CA2D4F54D971E9C75B1 /* States.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D87975F1C181312AFAC824B /* States.swift */; };
-		BF8FE379AF0BB62ECF66D945 /* RegionBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 782297F4E20BBBC9D9983D08 /* RegionBrowserView.swift */; };
-		C9B03831315AB6D286282A47 /* EventMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00485DCED2BFE58A85C227F8 /* EventMapView.swift */; };
-		CB1253404A029B3A1542B308 /* EventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8016B9389DD64915D720D99 /* EventCard.swift */; };
-		DC2D3DC6C5FC35B0D3874069 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 207EE9E0FD67C70AF8877F56 /* SearchView.swift */; };
-		F79CBA6FFA9F2091891C0AB5 /* Preference.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2D338476A0770CD63E1B0C4 /* Preference.swift */; };
+		011ED44E53BF97DC4C5CE2AF /* VenTrackApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33969387352792DBA35D7053 /* VenTrackApp.swift */; };
+		1497EA0608E641C57DC70CF9 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8CFE4D6C2ADDA7B40D2B14 /* SearchView.swift */; };
+		17FF9E9B16873BAD8CC261D1 /* PlaceOverride.swift in Sources */ = {isa = PBXBuildFile; fileRef = E017AC710D76B21B9DB28EDD /* PlaceOverride.swift */; };
+		342C945CC798D37DF1CED95B /* Preference.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F1193074C3A5B7B2F5887EC /* Preference.swift */; };
+		3FA885F443A9FC1B984AA974 /* RegionBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5554514CEA4EC90543344F2 /* RegionBrowserView.swift */; };
+		50F0EA2482FD358A15204E9B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 817CCB86BDD4BB741DE06391 /* Assets.xcassets */; };
+		5626A6976D537FF13E63AF41 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A0028347325B512FFAB5A5C4 /* Foundation.framework */; };
+		5F71E722ACCF7FAB90539DCD /* EventMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6743DD984A49A5C5720E3CE6 /* EventMapView.swift */; };
+		6DB1AA0E5B7EC1D06890E2F6 /* EventDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F9DF1EDD639889D2626B82F /* EventDetailView.swift */; };
+		77AE311D71189E7C9D5F4748 /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4B0DFD4C75CCC068FBC2ABD /* Event.swift */; };
+		7FF4BF2436D92E9AB47D9A9D /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4952B957166F71E404D81BB1 /* PaywallView.swift */; };
+		937647CABA4D6348C128697D /* EventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 006EC7EA3D23D1D36B2B2EB9 /* EventCard.swift */; };
+		A83B59D2E41EB49A94C3E5B9 /* DiscoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A111259BDEB07C7A1E0FEF57 /* DiscoverView.swift */; };
+		AEE4077EDF99E15F891BB798 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF66FE645C5E59B5898C2C8F /* AppState.swift */; };
+		AF110B792222C692AA006BB6 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 808429BE0AB48FC8309C40A5 /* OnboardingView.swift */; };
+		B45E017634796B152E772509 /* CategoryArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC1AF5733486CDEC91AFFF8 /* CategoryArtwork.swift */; };
+		B4E1CDFE4E3C02C3EEF53E3E /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6211B29977B35053164D97 /* Theme.swift */; };
+		B8E1797514CEAED99A8DEE46 /* EventService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 342A5444724AB960FDE0D076 /* EventService.swift */; };
+		C71D4691554D26FDBAA1A790 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B01570C2F183E13B8B262A27 /* PreferencesView.swift */; };
+		D6267FAA679C4A64276B8756 /* SavedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B0268F3AAF56ACE6A80A8B6 /* SavedView.swift */; };
+		E75A3FA461CB43D0B4FFE7B9 /* States.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D2EEC3FBF02106B11CE273 /* States.swift */; };
+		E910C2A0338745DC49104551 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C0ACB63FCA4BF75624F0BD /* Store.swift */; };
+		F2DA1E6B45D9B68294FDCA7D /* DateQueryParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4C486DAD9A09510017536D /* DateQueryParser.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		00485DCED2BFE58A85C227F8 /* EventMapView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventMapView.swift; path = Views/EventMapView.swift; sourceTree = "<group>"; };
-		1F87F1E5247271AD3062DAD4 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Theme.swift; path = Design/Theme.swift; sourceTree = "<group>"; };
-		1FE246CFBAC8BE16A732BE36 /* AppState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppState.swift; path = State/AppState.swift; sourceTree = "<group>"; };
-		207EE9E0FD67C70AF8877F56 /* SearchView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SearchView.swift; path = Views/SearchView.swift; sourceTree = "<group>"; };
-		294C1AC5EA7EA5BEB30391F0 /* SavedView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SavedView.swift; path = Views/SavedView.swift; sourceTree = "<group>"; };
-		2B7F7DDA74692FC477F7B96C /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		2D87975F1C181312AFAC824B /* States.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = States.swift; path = Views/States.swift; sourceTree = "<group>"; };
-		33A19F7D59ED054C110698A6 /* VenTrack.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VenTrack.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		388A88C7512DF1737C134069 /* PreferencesView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PreferencesView.swift; path = Views/PreferencesView.swift; sourceTree = "<group>"; };
-		45E29FD3597D151E773145BD /* DateQueryParser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DateQueryParser.swift; path = Models/DateQueryParser.swift; sourceTree = "<group>"; };
-		60C305E07D160E19EE871775 /* CategoryArtwork.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CategoryArtwork.swift; path = Design/CategoryArtwork.swift; sourceTree = "<group>"; };
-		620535508147E314F5AD390F /* VenTrackApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = VenTrackApp.swift; path = Views/VenTrackApp.swift; sourceTree = "<group>"; };
-		6A4870414B7DF1AFEE82D8D2 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		782297F4E20BBBC9D9983D08 /* RegionBrowserView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RegionBrowserView.swift; path = Views/RegionBrowserView.swift; sourceTree = "<group>"; };
-		78A7BBA3E1389A5D38995848 /* PlaceOverride.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PlaceOverride.swift; path = Models/PlaceOverride.swift; sourceTree = "<group>"; };
-		B2D338476A0770CD63E1B0C4 /* Preference.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Preference.swift; path = Models/Preference.swift; sourceTree = "<group>"; };
-		CBEB0CAD27A1C8121AC261DA /* EventDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventDetailView.swift; path = Views/EventDetailView.swift; sourceTree = "<group>"; };
-		D2D75AACF88E47AA23ECC8FE /* Event.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Event.swift; path = Models/Event.swift; sourceTree = "<group>"; };
-		D34DE478357B967803628604 /* EventService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventService.swift; path = Services/EventService.swift; sourceTree = "<group>"; };
-		D7CF4C11229B2791E240A311 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		DABC4D90273530C7A7070C0D /* DiscoverView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DiscoverView.swift; path = Views/DiscoverView.swift; sourceTree = "<group>"; };
-		E8016B9389DD64915D720D99 /* EventCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventCard.swift; path = Views/EventCard.swift; sourceTree = "<group>"; };
-		F9AC3F238C746E982FC2DFBC /* OnboardingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OnboardingView.swift; path = Views/OnboardingView.swift; sourceTree = "<group>"; };
+		006EC7EA3D23D1D36B2B2EB9 /* EventCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventCard.swift; path = Views/EventCard.swift; sourceTree = "<group>"; };
+		1208E624F2BEB3ECB38665FD /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2B0268F3AAF56ACE6A80A8B6 /* SavedView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SavedView.swift; path = Views/SavedView.swift; sourceTree = "<group>"; };
+		2F4C486DAD9A09510017536D /* DateQueryParser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DateQueryParser.swift; path = Models/DateQueryParser.swift; sourceTree = "<group>"; };
+		33969387352792DBA35D7053 /* VenTrackApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = VenTrackApp.swift; path = Views/VenTrackApp.swift; sourceTree = "<group>"; };
+		342A5444724AB960FDE0D076 /* EventService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventService.swift; path = Services/EventService.swift; sourceTree = "<group>"; };
+		4952B957166F71E404D81BB1 /* PaywallView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PaywallView.swift; path = Views/PaywallView.swift; sourceTree = "<group>"; };
+		5CC1AF5733486CDEC91AFFF8 /* CategoryArtwork.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CategoryArtwork.swift; path = Design/CategoryArtwork.swift; sourceTree = "<group>"; };
+		6743DD984A49A5C5720E3CE6 /* EventMapView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventMapView.swift; path = Views/EventMapView.swift; sourceTree = "<group>"; };
+		67C0ACB63FCA4BF75624F0BD /* Store.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Store.swift; path = Services/Store.swift; sourceTree = "<group>"; };
+		7D1583E4C45DFA2DCC43362C /* VenTrack.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VenTrack.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7F1193074C3A5B7B2F5887EC /* Preference.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Preference.swift; path = Models/Preference.swift; sourceTree = "<group>"; };
+		808429BE0AB48FC8309C40A5 /* OnboardingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OnboardingView.swift; path = Views/OnboardingView.swift; sourceTree = "<group>"; };
+		817CCB86BDD4BB741DE06391 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8F9DF1EDD639889D2626B82F /* EventDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EventDetailView.swift; path = Views/EventDetailView.swift; sourceTree = "<group>"; };
+		A0028347325B512FFAB5A5C4 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		A111259BDEB07C7A1E0FEF57 /* DiscoverView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DiscoverView.swift; path = Views/DiscoverView.swift; sourceTree = "<group>"; };
+		B01570C2F183E13B8B262A27 /* PreferencesView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PreferencesView.swift; path = Views/PreferencesView.swift; sourceTree = "<group>"; };
+		BF66FE645C5E59B5898C2C8F /* AppState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppState.swift; path = State/AppState.swift; sourceTree = "<group>"; };
+		C5D2EEC3FBF02106B11CE273 /* States.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = States.swift; path = Views/States.swift; sourceTree = "<group>"; };
+		CD8CFE4D6C2ADDA7B40D2B14 /* SearchView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SearchView.swift; path = Views/SearchView.swift; sourceTree = "<group>"; };
+		D4B0DFD4C75CCC068FBC2ABD /* Event.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Event.swift; path = Models/Event.swift; sourceTree = "<group>"; };
+		DD6211B29977B35053164D97 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Theme.swift; path = Design/Theme.swift; sourceTree = "<group>"; };
+		E017AC710D76B21B9DB28EDD /* PlaceOverride.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PlaceOverride.swift; path = Models/PlaceOverride.swift; sourceTree = "<group>"; };
+		F5554514CEA4EC90543344F2 /* RegionBrowserView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RegionBrowserView.swift; path = Views/RegionBrowserView.swift; sourceTree = "<group>"; };
+		FC5A7299E8D52E49848B89BC /* VenTrack.storekit */ = {isa = PBXFileReference; includeInIndex = 1; name = VenTrack.storekit; path = ../VenTrack.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		6C1B5728CE92E6F80A757461 /* Frameworks */ = {
+		2AB3B209444D37E2B215D486 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B88B989DF85E00F9C7EA64A7 /* Foundation.framework in Frameworks */,
+				5626A6976D537FF13E63AF41 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		1D2732A470F02CAC4EB061F8 = {
+		07C22E10AC50DC9C7771EA9B /* VenTrack */ = {
 			isa = PBXGroup;
 			children = (
-				995606196D6557845D3A699B /* Products */,
-				CFF4687592956CAF071EC379 /* Frameworks */,
-				86C44944CBA0F5090420FC02 /* VenTrack */,
-			);
-			sourceTree = "<group>";
-		};
-		86C44944CBA0F5090420FC02 /* VenTrack */ = {
-			isa = PBXGroup;
-			children = (
-				60C305E07D160E19EE871775 /* CategoryArtwork.swift */,
-				1F87F1E5247271AD3062DAD4 /* Theme.swift */,
-				45E29FD3597D151E773145BD /* DateQueryParser.swift */,
-				D2D75AACF88E47AA23ECC8FE /* Event.swift */,
-				78A7BBA3E1389A5D38995848 /* PlaceOverride.swift */,
-				B2D338476A0770CD63E1B0C4 /* Preference.swift */,
-				D34DE478357B967803628604 /* EventService.swift */,
-				1FE246CFBAC8BE16A732BE36 /* AppState.swift */,
-				DABC4D90273530C7A7070C0D /* DiscoverView.swift */,
-				E8016B9389DD64915D720D99 /* EventCard.swift */,
-				CBEB0CAD27A1C8121AC261DA /* EventDetailView.swift */,
-				00485DCED2BFE58A85C227F8 /* EventMapView.swift */,
-				F9AC3F238C746E982FC2DFBC /* OnboardingView.swift */,
-				388A88C7512DF1737C134069 /* PreferencesView.swift */,
-				782297F4E20BBBC9D9983D08 /* RegionBrowserView.swift */,
-				294C1AC5EA7EA5BEB30391F0 /* SavedView.swift */,
-				207EE9E0FD67C70AF8877F56 /* SearchView.swift */,
-				2D87975F1C181312AFAC824B /* States.swift */,
-				620535508147E314F5AD390F /* VenTrackApp.swift */,
-				6A4870414B7DF1AFEE82D8D2 /* Info.plist */,
-				2B7F7DDA74692FC477F7B96C /* Assets.xcassets */,
+				5CC1AF5733486CDEC91AFFF8 /* CategoryArtwork.swift */,
+				DD6211B29977B35053164D97 /* Theme.swift */,
+				2F4C486DAD9A09510017536D /* DateQueryParser.swift */,
+				D4B0DFD4C75CCC068FBC2ABD /* Event.swift */,
+				E017AC710D76B21B9DB28EDD /* PlaceOverride.swift */,
+				7F1193074C3A5B7B2F5887EC /* Preference.swift */,
+				342A5444724AB960FDE0D076 /* EventService.swift */,
+				67C0ACB63FCA4BF75624F0BD /* Store.swift */,
+				BF66FE645C5E59B5898C2C8F /* AppState.swift */,
+				A111259BDEB07C7A1E0FEF57 /* DiscoverView.swift */,
+				006EC7EA3D23D1D36B2B2EB9 /* EventCard.swift */,
+				8F9DF1EDD639889D2626B82F /* EventDetailView.swift */,
+				6743DD984A49A5C5720E3CE6 /* EventMapView.swift */,
+				808429BE0AB48FC8309C40A5 /* OnboardingView.swift */,
+				4952B957166F71E404D81BB1 /* PaywallView.swift */,
+				B01570C2F183E13B8B262A27 /* PreferencesView.swift */,
+				F5554514CEA4EC90543344F2 /* RegionBrowserView.swift */,
+				2B0268F3AAF56ACE6A80A8B6 /* SavedView.swift */,
+				CD8CFE4D6C2ADDA7B40D2B14 /* SearchView.swift */,
+				C5D2EEC3FBF02106B11CE273 /* States.swift */,
+				33969387352792DBA35D7053 /* VenTrackApp.swift */,
+				1208E624F2BEB3ECB38665FD /* Info.plist */,
+				FC5A7299E8D52E49848B89BC /* VenTrack.storekit */,
+				817CCB86BDD4BB741DE06391 /* Assets.xcassets */,
 			);
 			name = VenTrack;
 			path = VenTrack;
 			sourceTree = "<group>";
 		};
-		995606196D6557845D3A699B /* Products */ = {
+		4437881103512D857769B476 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				33A19F7D59ED054C110698A6 /* VenTrack.app */,
+				B01157E6A0323CC8CD401B73 /* iOS */,
 			);
-			name = Products;
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		9B0DD907BBD11A65E2062759 /* iOS */ = {
+		B01157E6A0323CC8CD401B73 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
-				D7CF4C11229B2791E240A311 /* Foundation.framework */,
+				A0028347325B512FFAB5A5C4 /* Foundation.framework */,
 			);
 			name = iOS;
 			sourceTree = "<group>";
 		};
-		CFF4687592956CAF071EC379 /* Frameworks */ = {
+		B427E0D98DD6A38B8B0AA201 = {
 			isa = PBXGroup;
 			children = (
-				9B0DD907BBD11A65E2062759 /* iOS */,
+				D397CD8B601B7B990AB2316A /* Products */,
+				4437881103512D857769B476 /* Frameworks */,
+				07C22E10AC50DC9C7771EA9B /* VenTrack */,
 			);
-			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		D397CD8B601B7B990AB2316A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7D1583E4C45DFA2DCC43362C /* VenTrack.app */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		BC59FDEA4F1F6B5CCF72EA9F /* VenTrack */ = {
+		C3DCC0AEDFBAE7156E7ECFE7 /* VenTrack */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FFD6D228AEE9991A96CA127B /* Build configuration list for PBXNativeTarget "VenTrack" */;
+			buildConfigurationList = 84F4B3424F4AFD27A2FE8BF4 /* Build configuration list for PBXNativeTarget "VenTrack" */;
 			buildPhases = (
-				5F9BCE051384D279AA434F26 /* Sources */,
-				6C1B5728CE92E6F80A757461 /* Frameworks */,
-				4F52D9EE845A50E97FB37F71 /* Resources */,
+				18E566B125B17BA1D9BDC41D /* Sources */,
+				2AB3B209444D37E2B215D486 /* Frameworks */,
+				D9BAD2730FBD3754D0FB11AD /* Resources */,
 			);
 			buildRules = (
 			);
@@ -147,19 +155,19 @@
 			);
 			name = VenTrack;
 			productName = VenTrack;
-			productReference = 33A19F7D59ED054C110698A6 /* VenTrack.app */;
+			productReference = 7D1583E4C45DFA2DCC43362C /* VenTrack.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		526AAC8CD89BCADC5E642B0F /* Project object */ = {
+		82354BB0ED01371B692B37D1 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 1600;
 			};
-			buildConfigurationList = 3FE4E9042FC9E771271D3634 /* Build configuration list for PBXProject "VenTrack" */;
+			buildConfigurationList = E87FED1B77118066F6B041DC /* Build configuration list for PBXProject "VenTrack" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -167,60 +175,85 @@
 				en,
 				Base,
 			);
-			mainGroup = 1D2732A470F02CAC4EB061F8;
+			mainGroup = B427E0D98DD6A38B8B0AA201;
 			minimizedProjectReferenceProxies = 0;
 			preferredProjectObjectVersion = 100;
-			productRefGroup = 995606196D6557845D3A699B /* Products */;
+			productRefGroup = D397CD8B601B7B990AB2316A /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				BC59FDEA4F1F6B5CCF72EA9F /* VenTrack */,
+				C3DCC0AEDFBAE7156E7ECFE7 /* VenTrack */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		4F52D9EE845A50E97FB37F71 /* Resources */ = {
+		D9BAD2730FBD3754D0FB11AD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9D78FE5D138BD5B033B933E7 /* Assets.xcassets in Resources */,
+				50F0EA2482FD358A15204E9B /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		5F9BCE051384D279AA434F26 /* Sources */ = {
+		18E566B125B17BA1D9BDC41D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9ADBF702121378197DFF3BA7 /* CategoryArtwork.swift in Sources */,
-				5D5DBCA52915F08C191A6D02 /* Theme.swift in Sources */,
-				8DE994807463C7DAA11DD7FA /* DateQueryParser.swift in Sources */,
-				09F8687BAB3E810EAE5FB174 /* Event.swift in Sources */,
-				89C463DFFC10A841D04C43D1 /* PlaceOverride.swift in Sources */,
-				F79CBA6FFA9F2091891C0AB5 /* Preference.swift in Sources */,
-				08486A4F073A3F11E1639C46 /* EventService.swift in Sources */,
-				56A8A3F48D1452B05B399321 /* AppState.swift in Sources */,
-				99B28A58680A1A1ECE1277F2 /* DiscoverView.swift in Sources */,
-				CB1253404A029B3A1542B308 /* EventCard.swift in Sources */,
-				62996ED26B16B053253CAC94 /* EventDetailView.swift in Sources */,
-				C9B03831315AB6D286282A47 /* EventMapView.swift in Sources */,
-				570853F734AAA2383C85F85C /* OnboardingView.swift in Sources */,
-				271E6708B085DE0305ED51C2 /* PreferencesView.swift in Sources */,
-				BF8FE379AF0BB62ECF66D945 /* RegionBrowserView.swift in Sources */,
-				60D7B609BF89174AC2732204 /* SavedView.swift in Sources */,
-				DC2D3DC6C5FC35B0D3874069 /* SearchView.swift in Sources */,
-				B8D68CA2D4F54D971E9C75B1 /* States.swift in Sources */,
-				024EA8FDACB48F0C4A640D4F /* VenTrackApp.swift in Sources */,
+				B45E017634796B152E772509 /* CategoryArtwork.swift in Sources */,
+				B4E1CDFE4E3C02C3EEF53E3E /* Theme.swift in Sources */,
+				F2DA1E6B45D9B68294FDCA7D /* DateQueryParser.swift in Sources */,
+				77AE311D71189E7C9D5F4748 /* Event.swift in Sources */,
+				17FF9E9B16873BAD8CC261D1 /* PlaceOverride.swift in Sources */,
+				342C945CC798D37DF1CED95B /* Preference.swift in Sources */,
+				B8E1797514CEAED99A8DEE46 /* EventService.swift in Sources */,
+				E910C2A0338745DC49104551 /* Store.swift in Sources */,
+				AEE4077EDF99E15F891BB798 /* AppState.swift in Sources */,
+				A83B59D2E41EB49A94C3E5B9 /* DiscoverView.swift in Sources */,
+				937647CABA4D6348C128697D /* EventCard.swift in Sources */,
+				6DB1AA0E5B7EC1D06890E2F6 /* EventDetailView.swift in Sources */,
+				5F71E722ACCF7FAB90539DCD /* EventMapView.swift in Sources */,
+				AF110B792222C692AA006BB6 /* OnboardingView.swift in Sources */,
+				7FF4BF2436D92E9AB47D9A9D /* PaywallView.swift in Sources */,
+				C71D4691554D26FDBAA1A790 /* PreferencesView.swift in Sources */,
+				3FA885F443A9FC1B984AA974 /* RegionBrowserView.swift in Sources */,
+				D6267FAA679C4A64276B8756 /* SavedView.swift in Sources */,
+				1497EA0608E641C57DC70CF9 /* SearchView.swift in Sources */,
+				E75A3FA461CB43D0B4FFE7B9 /* States.swift in Sources */,
+				011ED44E53BF97DC4C5CE2AF /* VenTrackApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		4A7EB69AD6114B9E229B8108 /* Release */ = {
+		182AAAB95E39703B908D1817 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_LANGUAGE = "en-GB";
+				DEVELOPMENT_TEAM = CRLGA87MAF;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = VenTrack/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.voice2jobs.ventrackuk;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		3E3F9468AAF1BC5E2F31C356 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -274,30 +307,7 @@
 			};
 			name = Release;
 		};
-		8BB411E6C4A7E141D6664D47 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
-				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_LANGUAGE = "en-GB";
-				DEVELOPMENT_TEAM = CRLGA87MAF;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = VenTrack/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.voice2jobs.ventrackuk;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		B1F47ABE2FFA50EE63D92CA4 /* Debug */ = {
+		63257F587AB4375488FDEEBF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -319,7 +329,7 @@
 			};
 			name = Debug;
 		};
-		BD98204E1B436336EF45DED9 /* Debug */ = {
+		65CD5598BAE647B36C13DE64 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -383,25 +393,25 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		3FE4E9042FC9E771271D3634 /* Build configuration list for PBXProject "VenTrack" */ = {
+		84F4B3424F4AFD27A2FE8BF4 /* Build configuration list for PBXNativeTarget "VenTrack" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BD98204E1B436336EF45DED9 /* Debug */,
-				4A7EB69AD6114B9E229B8108 /* Release */,
+				182AAAB95E39703B908D1817 /* Release */,
+				63257F587AB4375488FDEEBF /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FFD6D228AEE9991A96CA127B /* Build configuration list for PBXNativeTarget "VenTrack" */ = {
+		E87FED1B77118066F6B041DC /* Build configuration list for PBXProject "VenTrack" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				8BB411E6C4A7E141D6664D47 /* Release */,
-				B1F47ABE2FFA50EE63D92CA4 /* Debug */,
+				65CD5598BAE647B36C13DE64 /* Debug */,
+				3E3F9468AAF1BC5E2F31C356 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 526AAC8CD89BCADC5E642B0F /* Project object */;
+	rootObject = 82354BB0ED01371B692B37D1 /* Project object */;
 }
