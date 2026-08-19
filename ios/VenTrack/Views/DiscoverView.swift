@@ -21,7 +21,18 @@ struct DiscoverView: View {
     /// title does everywhere else on iOS: it goes away when you are reading and
     /// comes back the moment you head upward.
     @State private var collapsed = false
-    @State private var lastOffset: CGFloat = 0
+    /// The previous raw reading, or nil before the first one has arrived.
+    /// Optional rather than zero on purpose: zero is a perfectly possible
+    /// reading, so using it as "nothing yet" makes the first real delta a
+    /// fiction the size of the whole header.
+    @State private var lastOffset: CGFloat?
+    /// How far down the feed we believe we are, accumulated from the deltas
+    /// rather than read off any single measurement. See `onScroll` for why it
+    /// cannot be read directly.
+    @State private var depth: CGFloat = 0
+    /// The turning point the current direction started from, in `depth`. What
+    /// makes the collapse need a deliberate scroll rather than a twitch.
+    @State private var pivot: CGFloat = 0
 
     var body: some View {
         ZStack {
@@ -79,35 +90,81 @@ struct DiscoverView: View {
 
     /// Collapse on the way down, restore on the way up.
     ///
-    /// Direction rather than a fixed threshold, because a threshold alone means
-    /// a reader deep in the feed has to scroll all the way back to the top to
-    /// reach the filters. Restoring on any upward movement is what Safari and
-    /// Mail do and it is what "swipe back up and it comes back" means.
+    /// WHY THE RAW READING IS NEVER USED AS A POSITION. What the reader reports
+    /// is the top of the feed measured against the top of the scroll view, and
+    /// the scroll view is inset from above by this very header. At rest that
+    /// reading is not zero, it is the header's whole height, which on this
+    /// screen is over three hundred points. The first version treated it as a
+    /// position and guarded "near the top" with `y > -12`, so for the first
+    /// three hundred points of a scroll it concluded the feed had not moved,
+    /// and past that the collapse shrank the header, which lifted the reading
+    /// straight back over the guard, which expanded it again. It could not
+    /// settle in either state, so it looked like nothing happened at all.
     ///
-    /// The 6 point deadzone is not decoration: without it, the sub-pixel jitter
-    /// a finger produces while holding still flips this on every frame.
+    /// Only the DELTAS are trustworthy, so only the deltas are used, and the
+    /// position is accumulated from them. That makes the header's own height
+    /// cancel out rather than confound: collapsing removes some inset and the
+    /// content jumps up, which arrives here as a delta, which pushes `depth`
+    /// further in the direction it was already going and takes `pivot` with it.
+    /// Expanding does the mirror image. Neither can produce a reading that
+    /// argues for the opposite state, which is what the old version was
+    /// fighting.
     ///
-    /// Collapsing changes the header's height, which changes the safe area
-    /// inset, which moves the content and produces another reading. That
-    /// feedback is SELF STABILISING rather than oscillating, and it is worth
-    /// knowing why before anyone tries to damp it: a shorter header shifts the
-    /// content up, which reads as further scrolling down, which is the state it
-    /// is already in. Expanding pushes content down and reads as scrolling up.
-    /// Each change reinforces itself instead of fighting.
+    /// WHY A PIVOT AND NOT A DEADZONE. Direction alone is what makes the
+    /// filters reachable from deep in the feed without scrolling all the way
+    /// back to the top, and it is what "swipe back up and it comes back"
+    /// means. But a per-delta deadzone cannot tell a slow deliberate scroll
+    /// from jitter, because a slow scroll arrives as a long run of tiny
+    /// deltas and gets discarded frame by frame. Measuring from the point the
+    /// direction last turned catches both: 44 points of travel one way flips
+    /// it, however many frames that took.
+    ///
+    /// A KNOWN AND DELIBERATE INACCURACY. Because the header's own height is
+    /// folded into `depth` along with the real scrolling, `depth` drifts away
+    /// from the true position every time the header changes state. The drift is
+    /// always in the same direction, toward believing the feed is nearer the
+    /// top than it is, so the only thing it can cause is the header staying
+    /// whole slightly longer than it strictly had to. Correcting it would mean
+    /// telling a header-driven delta from a finger-driven one, which is exactly
+    /// the distinction that cannot be made from this signal, and getting it
+    /// wrong reintroduces the oscillation above.
     private func onScroll(_ y: CGFloat) {
-        let dy = y - lastOffset
+        // The first reading only establishes a baseline. There is no previous
+        // value to subtract from it, and inventing one means starting with a
+        // delta the size of the header.
+        guard let previous = lastOffset else { lastOffset = y; return }
         lastOffset = y
 
-        // Near the top the header is always whole, whatever the last gesture
-        // was. Rubber banding at the very top would otherwise read as a scroll
-        // downward and collapse it just as the user arrives.
-        if y > -12 {
+        let dy = y - previous
+        guard dy != 0 else { return }
+        // Content moving up is a scroll downward, hence the sign. Clamped at
+        // zero because rubber banding past the top is not negative depth.
+        depth = max(0, depth - dy)
+
+        // The top of the feed always shows the whole header, whatever the last
+        // gesture was. This is a real position now rather than a raw reading,
+        // so it means what it says.
+        if depth < 60 {
             if collapsed { collapsed = false }
+            pivot = depth
             return
         }
-        guard abs(dy) > 6 else { return }
-        let wantsCollapsed = dy < 0
-        if wantsCollapsed != collapsed { collapsed = wantsCollapsed }
+
+        if collapsed {
+            // Deepest point reached while collapsed. Coming back up from it by
+            // a deliberate amount is what restores the header.
+            pivot = max(pivot, depth)
+            if depth < pivot - 44 {
+                collapsed = false
+                pivot = depth
+            }
+        } else {
+            pivot = min(pivot, depth)
+            if depth > pivot + 44 {
+                collapsed = true
+                pivot = depth
+            }
+        }
     }
 
     /// Restores the full header and forgets where the feed was.
@@ -118,7 +175,9 @@ struct DiscoverView: View {
     /// user has touched anything.
     private func expand() {
         collapsed = false
-        lastOffset = 0
+        lastOffset = nil
+        depth = 0
+        pivot = 0
     }
 
     /// The town is the thing worth reading, so it gets the size. The wordmark
@@ -264,7 +323,7 @@ struct DiscoverView: View {
 
     @ViewBuilder private var content: some View {
         if app.loading && app.events.isEmpty {
-            LoadingState().onAppear { expand() }
+            LoadingState(place: app.placeName).onAppear { expand() }
         } else if let err = app.errorMessage, app.events.isEmpty {
             ErrorState(message: err) { Task { await app.load() } }
                 .onAppear { expand() }
