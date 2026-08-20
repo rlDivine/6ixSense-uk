@@ -245,20 +245,45 @@ Setting it up, once:
 3. Settings, Pages, Custom domain: `uk.6ixsense.fyi`, then Enforce HTTPS once
    the certificate has issued.
 
-**This repository is private, and Pages on a private repository needs a paid
-GitHub plan.** On the free plan the deploy fails no matter what the workflow
-does, and there is no way around it from inside the repository. The three ways
-out, in the order worth considering them:
+**As of now GitHub Pages does not work for this repository, and the workflow is
+switched to manual so it stops failing on every push.** Three runs failed:
+first with "Get Pages site failed, Not Found", which is Pages not being
+enabled, and then, once the workflow was told to enable it itself, with "Create
+Pages site failed. Resource not accessible by integration", which is the
+Actions token being refused permission to create the site. This repository is
+private, and on a private repository that is what a plan without Pages looks
+like from inside a workflow.
+
+Check Settings, Pages. If it offers a Source dropdown, pick GitHub Actions, run
+the workflow by hand, and put the push trigger back. If it asks you to upgrade
+or make the repository public, use one of the hosts below instead. The three
+ways out, in the order worth considering them:
 
 - **Cloudflare Pages, Netlify or Vercel.** All three build private repositories
   on their free tiers, all are static and always up, all take a custom domain.
   Point the build at `api/public` with the same one-line render step from
   `.github/workflows/pages.yml`. This is the least disruptive answer.
-- **A Render static site.** Render is already connected to this repository.
-  Static sites are a different product from web services: they are served from
-  a CDN, they do not sleep, and they do not consume the free instance hours the
-  API is already nearly using up. Publish directory `api/public`, build command
-  `node api/build-site.js api/public/index.html`.
+- **A Render static site.** Probably the shortest path, since Render is already
+  connected to this repository. Static sites are a different product from web
+  services: they are served from a CDN, they do not sleep, and they do not
+  consume the free instance hours the API is already nearly using up.
+
+  Create it in the dashboard, New then Static Site, NOT by adding a block to
+  `render.yaml`. The blueprint currently deploys a working backend, and the
+  fields for a static site in that file have never been confirmed against a
+  live sync; a rejected blueprint would take the API down with it for the sake
+  of a marketing page. The settings are:
+
+  | Field | Value |
+  | --- | --- |
+  | Build command | `node api/build-site.js api/public/index.html` |
+  | Publish directory | `api/public` |
+  | Branch | `main` |
+
+  The build command renders the `{{CTA}}` placeholder in place, which is safe
+  because Render builds a throwaway checkout rather than your working tree.
+  Then add `uk.6ixsense.fyi` under the service's Custom Domains and point the
+  DNS `CNAME` where Render tells you to.
 - **Make the repository public.** Free, immediate, and it publishes the source
   along with the site. Nothing here is secret, since every API key lives in the
   Render dashboard rather than the repository, but it is a decision rather than

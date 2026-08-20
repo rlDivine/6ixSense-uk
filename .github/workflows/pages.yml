@@ -15,12 +15,23 @@
 # privacy policies, and the one nobody edits is the one Apple reads.
 name: Marketing site
 
+# MANUAL ONLY, and not by preference.
+#
+# Three runs failed here before this was switched off the push trigger. Pages
+# is not enabled for this repository, and the workflow cannot enable it either:
+# `enablement: true` returns "Create Pages site failed. Resource not accessible
+# by integration", which is the Actions token being refused permission to
+# create the site. On a private repository that is what a plan without Pages
+# looks like from in here.
+#
+# Left on push it would fail on every commit that touches api/public and mail
+# somebody about it each time, which trains people to ignore a red workflow.
+# So it waits to be asked. Put the push trigger back the day a run of this
+# actually goes green.
+#
+# If Pages is not available on this account, this file is the wrong answer
+# entirely and ios/APPSTORE.md lists the hosts that are the right one.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'api/public/**'
-      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 # Required by the Pages deployment actions. contents: read is the default and
