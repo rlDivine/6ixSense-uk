@@ -93,7 +93,26 @@ final class Store: ObservableObject {
         guard product == nil else { return }
         do {
             product = try await Product.products(for: [Self.productID]).first
-            if product == nil {
+            if let product {
+                // The storefront, said out loud, because "why is the price in
+                // dollars" is otherwise unanswerable from a bug report.
+                //
+                // It is the ACCOUNT's storefront, not the device's location,
+                // region setting or SIM. Someone in London signed in to a US
+                // Apple Account sees dollars and is right to: that is the
+                // currency they would be charged in. Nothing here should try
+                // to correct that. Formatting the number into pounds ourselves
+                // would put a price on screen that the person will never pay,
+                // which is worse than an unfamiliar currency symbol and is the
+                // kind of thing App Review looks for.
+                // Two statements rather than optional chaining through an
+                // async property, which is the sort of expression that either
+                // compiles or does not depending on the toolchain.
+                let storefront = await Storefront.current
+                let code = storefront?.countryCode ?? "unknown"
+                print("[store] \(Self.productID) is \(product.displayPrice) "
+                      + "on the \(code) storefront")
+            } else {
                 // An EMPTY result, not an error. StoreKit returns this rather
                 // than throwing when the id is unknown to it, and every cause
                 // is a configuration problem outside this code:
