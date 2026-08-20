@@ -441,6 +441,16 @@ test("two events at the same address geocode once and share the result; an unres
         assert.equal(unresolved.lat, region.lat);
         assert.equal(unresolved.lng, region.lng);
 
+        // And says so. Without this flag the fallback is indistinguishable
+        // from a venue that genuinely sits in the middle of town, and the
+        // server measures a distance from it: zero miles for anyone standing
+        // in the town centre, and first place in a feed sorted by nearest.
+        // The two that really were located must NOT be flagged, or the flag
+        // costs every event its distance instead of only the guesses.
+        assert.equal(unresolved.approx, true);
+        assert.equal(first.approx, false);
+        assert.equal(second.approx, false);
+
         // One geocode call for the shared address, one for the unresolved
         // one: not three, because "First" and "Second" share a cache key.
         const geocodeCalls = calls.filter((c) => c.url.includes("nominatim.openstreetmap.org"));

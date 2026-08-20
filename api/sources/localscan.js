@@ -636,9 +636,16 @@ async function scanPage(seed, region, deadline = Infinity) {
     if (point) {
       e.lat = point.lat;
       e.lng = point.lng;
+      e.approx = false;
     } else {
+      // The town centre, so the event still has a pin. Flagged, because a
+      // distance measured from here is measured from somewhere the event is
+      // not. Left unflagged it reads as zero miles away to anyone standing in
+      // the middle of town, and worse, it sorts to the top of a feed ranked by
+      // nearest, pushing events we actually located below events we did not.
       e.lat = region.lat;
       e.lng = region.lng;
+      e.approx = true;
     }
   }
 

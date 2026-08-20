@@ -334,7 +334,11 @@ app.get("/api/events", async (req, res) => {
     const enriched = events
       .map((e) => ({
         ...e,
-        distanceKm: distanceKm(origin.lat, origin.lng, e.lat, e.lng),
+        // No distance for an event whose coordinates are the town centre
+        // standing in for a venue we could not locate. Null rather than a
+        // number, so the client shows nothing and the nearest sort puts it
+        // after everything we did locate, which is where a guess belongs.
+        distanceKm: e.approx ? null : distanceKm(origin.lat, origin.lng, e.lat, e.lng),
         startMs: e.start ? new Date(e.start).getTime() : null,
       }))
       // Only future (or undated) events.

@@ -113,7 +113,16 @@ test("makeEvent fills every field with a safe default", () => {
     source: "",
     price: "",
     description: "",
+    approx: false,
   });
+});
+
+test("an event's coordinates are precise unless a source says otherwise", () => {
+  // Defaulting the other way would quietly strip the distance off every event
+  // from every source that has never heard of this field, which is all of them
+  // but one.
+  assert.equal(makeEvent({ id: 1, lat: 51.5, lng: -0.12 }).approx, false);
+  assert.equal(makeEvent({ id: 1, lat: 51.5, lng: -0.12, approx: true }).approx, true);
 });
 
 test("makeEvent falls back to a placeholder title", () => {

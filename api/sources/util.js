@@ -131,6 +131,14 @@ export function makeEvent({
   // festivals and community listings), and it is also the source most likely
   // to have no ticket link at all, so a real description is worth carrying.
   description = "",
+  // True when lat/lng is a stand-in rather than the venue's own position,
+  // which in practice means the centre of the town. Those coordinates are good
+  // enough to put a pin on a map and not good enough to measure a distance
+  // from, and the difference matters: the app's primary sort is distance, so
+  // an event carrying a made up one does not merely display a wrong number, it
+  // wins a ranking it has no claim to. Declared here so the shape of an event
+  // says out loud that the coordinates can be a guess.
+  approx = false,
 }) {
   return {
     id: String(id),
@@ -146,6 +154,7 @@ export function makeEvent({
     source,
     price,
     description: decodeEntities(description).trim(),
+    approx: Boolean(approx),
   };
 }
 
