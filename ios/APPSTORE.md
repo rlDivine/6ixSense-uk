@@ -239,10 +239,30 @@ policies, and the one nobody edits is the one Apple reads.
 
 Setting it up, once:
 
-1. Repo Settings, Pages, Source: **GitHub Actions**.
+1. Repo Settings, Pages, Source: **GitHub Actions**. The workflow also tries to
+   turn this on by itself, so it may already be done.
 2. A DNS `CNAME` record, host `uk`, value `rldivine.github.io`.
 3. Settings, Pages, Custom domain: `uk.6ixsense.fyi`, then Enforce HTTPS once
    the certificate has issued.
+
+**This repository is private, and Pages on a private repository needs a paid
+GitHub plan.** On the free plan the deploy fails no matter what the workflow
+does, and there is no way around it from inside the repository. The three ways
+out, in the order worth considering them:
+
+- **Cloudflare Pages, Netlify or Vercel.** All three build private repositories
+  on their free tiers, all are static and always up, all take a custom domain.
+  Point the build at `api/public` with the same one-line render step from
+  `.github/workflows/pages.yml`. This is the least disruptive answer.
+- **A Render static site.** Render is already connected to this repository.
+  Static sites are a different product from web services: they are served from
+  a CDN, they do not sleep, and they do not consume the free instance hours the
+  API is already nearly using up. Publish directory `api/public`, build command
+  `node api/build-site.js api/public/index.html`.
+- **Make the repository public.** Free, immediate, and it publishes the source
+  along with the site. Nothing here is secret, since every API key lives in the
+  Render dashboard rather than the repository, but it is a decision rather than
+  a shortcut.
 
 Until the DNS is in place the site is live at
 `https://rldivine.github.io/6ixSense-uk/`, which is a perfectly valid URL to

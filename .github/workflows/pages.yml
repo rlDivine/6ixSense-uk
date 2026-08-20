@@ -46,7 +46,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # enablement: true turns Pages on for the repository if it is off, rather
+      # than failing with "Get Pages site failed ... Not Found" and waiting for
+      # somebody to find the setting. The first run did exactly that, because a
+      # push triggers this before anyone has been to Settings.
+      #
+      # It cannot conjure an entitlement, though: Pages on a PRIVATE repository
+      # needs a paid GitHub plan. On Free this still fails, and the answer is
+      # either to make the repository public, upgrade, or host the site
+      # somewhere else. See ios/APPSTORE.md.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/setup-node@v4
         with:
