@@ -126,7 +126,13 @@ In App Store Connect, under the app, Monetization, In-App Purchases:
 | Reference Name | VenTrack Full Unlock |
 | Product ID | `com.voice2jobs.ventrackuk.full` |
 | Display Name | VenTrack, unlocked |
-| Description | Browse any of more than 450 UK towns, see the whole calendar rather than the next seven days, and keep as many events as you like with reminders. |
+| Description | All UK towns, the full calendar, saves with reminders |
+
+Those two length limits are not advisory and are easy to walk into, because
+neither is the same field as the one with the same name on the app listing.
+Display Name is capped at **30** characters and Description at **55**. The long
+sentence about 450 towns and the seven day window is 145 characters: it belongs
+in the app's own description and on the paywall, not here.
 
 The Product ID must match `Store.productID` in
 `ios/VenTrack/Services/Store.swift` exactly. A mismatch is silent: the paywall
