@@ -111,12 +111,35 @@ final class AppState: NSObject, ObservableObject {
     /// starts from a cached guess.
     @Published private(set) var entitlementResolved = false
 
+    /// Whether a saved event still counts as a save.
+    ///
+    /// THE ONE DEFINITION, and it is one because it used to be two. The Saved
+    /// list showed only events that had not finished yet, while the allowance
+    /// counted every row in storage. So a bookmark on something that had since
+    /// happened quietly held one of the three free slots while being invisible
+    /// in the list and therefore impossible to remove: two events on screen,
+    /// three saves spent, and the unlock offered on what looked like the third
+    /// save rather than the fourth.
+    ///
+    /// Nothing here may count saves any other way. The list, the counter, the
+    /// full check and the gate all go through this.
+    ///
+    /// Six hours of grace, so an event you saved this morning is still in the
+    /// list while you are actually at it.
+    static func counts(_ e: Event) -> Bool {
+        guard let start = e.startDate else { return true }   // date to be announced
+        return start > .now.addingTimeInterval(-6 * 3600)
+    }
+
+    /// Saves that have not expired. The number every gate and label uses.
+    var liveSaveCount: Int { saved.values.filter(Self.counts).count }
+
     /// True when the free allowance is spent, so the interface can say so
     /// before the user taps a bookmark that will not take.
-    var savedIsFull: Bool { !unlocked && saved.count >= Self.freeSaveLimit }
+    var savedIsFull: Bool { !unlocked && liveSaveCount >= Self.freeSaveLimit }
 
     /// How many saves are left, for the line under the Saved list.
-    var savesRemaining: Int { max(0, Self.freeSaveLimit - saved.count) }
+    var savesRemaining: Int { max(0, Self.freeSaveLimit - liveSaveCount) }
 
     /// Set by any gate reached from one of the four tabs, and presented once by
     /// `MainTabView`. It lives here rather than in each screen because a gate
@@ -157,6 +180,9 @@ final class AppState: NSObject, ObservableObject {
         locManager.delegate = self
         locManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
         loadPersisted()
+        // Housekeeping, not correctness: see pruneExpiredSaves. Launch is the
+        // moment most saves have expired since anyone last looked.
+        pruneExpiredSaves()
     }
 
     // MARK: Location
@@ -432,10 +458,31 @@ final class AppState: NSObject, ObservableObject {
             persist()
             return true
         }
-        guard unlocked || saved.count < Self.freeSaveLimit else { return false }
+        guard unlocked || liveSaveCount < Self.freeSaveLimit else { return false }
         saved[e.id] = e
         persist()
         return true
+    }
+
+    /// Drops saves for events that have already happened.
+    ///
+    /// Not what makes the allowance correct. `liveSaveCount` is what does that,
+    /// and it is right whether or not this has run, which is deliberate: an
+    /// event can expire while the app is open, and a count that depended on
+    /// housekeeping having happened would be wrong for exactly as long as it
+    /// took to notice.
+    ///
+    /// This is here so storage does not grow forever, and so the bookmark on an
+    /// old event stops being filled in. Any reminder attached to a dropped
+    /// event goes with it: a notification for something that has finished is
+    /// worse than none.
+    func pruneExpiredSaves() {
+        let live = saved.filter { Self.counts($0.value) }
+        guard live.count != saved.count else { return }
+        for id in Set(saved.keys).subtracting(live.keys) { reminders.remove(id) }
+        saved = live
+        persist()
+        scheduleAllReminders()
     }
 
     /// False when locked. Switching a reminder off is still allowed, so a
@@ -453,9 +500,12 @@ final class AppState: NSObject, ObservableObject {
         return true
     }
 
+    /// What the Saved tab lists. The filter is `counts` rather than a copy of
+    /// it, which is the whole point: this list and the allowance were two
+    /// spellings of the same rule and they disagreed.
     var savedUpcoming: [Event] {
         saved.values
-            .filter { $0.startDate == nil || $0.startDate! > .now.addingTimeInterval(-6 * 3600) }
+            .filter(Self.counts)
             .sorted { ($0.startDate ?? .distantFuture) < ($1.startDate ?? .distantFuture) }
     }
 
