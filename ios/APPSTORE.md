@@ -161,10 +161,20 @@ does not do it anywhere. The local configuration stores the price as the bare
 number `4.99` and lets the storefront supply the symbol, and Xcode's default
 storefront is the United States.
 
-`VenTrack.storekit` now carries `"_storefront" : "GBR"` so the simulator shows
-£. If it still shows dollars, the scheme is overriding the file: Product,
-Scheme, Edit Scheme, Run, Options, and set Storefront to United Kingdom there
-too, since that setting wins.
+Which storefront answers depends on whether a StoreKit configuration is
+selected in the scheme, and the two cases have different fixes:
+
+- **StoreKit Configuration set to `VenTrack.storekit`.** The file decides. It
+  now carries `"_storefront" : "GBR"`, so this case shows £. There is no
+  storefront picker in the scheme editor to override it; that setting lives in
+  the file and nowhere else.
+- **StoreKit Configuration set to `None`.** Real StoreKit answers, and the
+  currency is the one belonging to the Apple Account signed in on the device.
+  A developer outside the UK sees their own currency, and nothing in the
+  project can or should change that. If you are seeing this case, note what it
+  proves: the product exists in App Store Connect, its id matches
+  `Store.productID` exactly, and the Paid Applications agreement is active
+  enough to serve it.
 
 In production this cannot happen. The purchase is priced from a GBP price point
 and the app is available in the United Kingdom only, so the only people who can
