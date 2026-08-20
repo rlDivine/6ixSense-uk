@@ -88,6 +88,20 @@ struct DiscoverView: View {
         }
     }
 
+    /// The height of one row of chips, which both filter rows are told
+    /// explicitly rather than left to work out.
+    ///
+    /// A ScrollView is greedy in BOTH axes, including the one it does not
+    /// scroll. Inside the feed that never showed, because there the rows sit in
+    /// a vertical scroll view that offers unbounded height and they settle at
+    /// their content size. On the loading, error and empty screens they sit in
+    /// a VStack that fills the display, and there two horizontal scroll views
+    /// will happily take a third of the screen each and squeeze whatever is
+    /// below them down to nothing. That is what a "black screen" on launch
+    /// turned out to be: the state below the filters crushed to zero height
+    /// while the app waited on a slow backend.
+    private static let chipRow: CGFloat = 34
+
     /// The town is the thing worth reading, so it gets the size. The wordmark
     /// above it only has to say which app you are in, and the date under it
     /// answers "as of when" without spending a line on a sentence.
@@ -185,6 +199,9 @@ struct DiscoverView: View {
             }
             .padding(.horizontal, S.s5)
         }
+        // See `chipRow`. Without this the row expands to fill whatever it is
+        // given, which on the non-feed screens is most of the display.
+        .frame(height: Self.chipRow)
     }
 
     /// Built from what is actually in the feed, never a fixed list, so a town
@@ -201,6 +218,7 @@ struct DiscoverView: View {
             }
             .padding(.horizontal, S.s5)
         }
+        .frame(height: Self.chipRow)
     }
 
     /// Shown only when the device is outside the UK. Without it the feed looks
@@ -331,7 +349,10 @@ struct DiscoverView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: S.s3) {
             headerRows
-            body()
+            // Explicitly the greedy one. Every row above it is a definite
+            // height, so the rest of the display belongs to the state, and
+            // saying so leaves nothing for the layout to decide.
+            body().frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .padding(.top, S.s3)
     }
