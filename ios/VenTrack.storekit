@@ -25,7 +25,8 @@
   "settings" : {
     "_applicationInternalID" : "C3D4E5F6",
     "_developerTeamID" : "CRLGA87MAF",
-    "_lastSynchronizedDate" : 0
+    "_lastSynchronizedDate" : 0,
+    "_storefront" : "GBR"
   },
   "subscriptionGroups" : [ ],
   "version" : {

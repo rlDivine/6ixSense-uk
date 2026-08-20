@@ -154,8 +154,24 @@ Transactions** to test the locked state again. Test at least: buy, relaunch and
 confirm it is still unlocked, delete the app and reinstall and use Restore, and
 Ask to Buy if you can, since that is the `.pending` path.
 
-What this does NOT prove is that the product exists in App Store Connect under
-the right id, because the local configuration answers instead of Apple. That is
+**If the button says $4.99, nothing is broken.** `Store.priceLabel` uses
+`product.displayPrice`, which is the price in the BUYER'S storefront and is the
+only correct thing to show: hardcoding a currency is a rejection, and the app
+does not do it anywhere. The local configuration stores the price as the bare
+number `4.99` and lets the storefront supply the symbol, and Xcode's default
+storefront is the United States.
+
+`VenTrack.storekit` now carries `"_storefront" : "GBR"` so the simulator shows
+£. If it still shows dollars, the scheme is overriding the file: Product,
+Scheme, Edit Scheme, Run, Options, and set Storefront to United Kingdom there
+too, since that setting wins.
+
+In production this cannot happen. The purchase is priced from a GBP price point
+and the app is available in the United Kingdom only, so the only people who can
+reach the paywall are on the UK storefront and see pounds.
+
+What the local configuration does NOT prove is that the product exists in App
+Store Connect under the right id, because it answers instead of Apple. That is
 what the sandbox below is for, and it is the step where a typo in the id
 finally shows up.
 
