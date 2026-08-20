@@ -148,6 +148,50 @@ Transactions** to test the locked state again. Test at least: buy, relaunch and
 confirm it is still unlocked, delete the app and reinstall and use Restore, and
 Ask to Buy if you can, since that is the `.pending` path.
 
+What this does NOT prove is that the product exists in App Store Connect under
+the right id, because the local configuration answers instead of Apple. That is
+what the sandbox below is for, and it is the step where a typo in the id
+finally shows up.
+
+### Testing the real product, in the sandbox
+
+Once the purchase exists in App Store Connect, test against Apple rather than
+against the local file. The two are mutually exclusive: a scheme with a
+StoreKit configuration selected never talks to the sandbox, so **set StoreKit
+Configuration back to None** before any of this, or you will be testing the
+local file again and learning nothing.
+
+1. **Make a sandbox tester.** App Store Connect, Users and Access, Sandbox,
+   Test Accounts. Use an email address that has never been an Apple Account,
+   including any alias of one. A plus-address on an existing mailbox
+   (`you+sandbox@example.com`) works and still delivers to you.
+2. **Sign in on the device**, not in the App Store app: Settings, Developer,
+   Sandbox Apple Account. Signing into the real App Store with a sandbox
+   account does not work and gets the account flagged.
+3. **Run a build signed with your team** on the device. Sandbox purchases only
+   happen in builds signed by the team that owns the product, so a build from
+   Xcode or TestFlight, not a simulator.
+
+Sandbox purchases are free and take real money from nobody. What to check:
+the price shows in the button rather than the bare "Unlock everything"
+fallback, buying unlocks, and Restore works on a fresh install.
+
+If the button has no price, the product is not reaching the app. `loadProduct`
+prints the reason to the Xcode console, and it is nearly always one of: the
+Paid Applications agreement is not active yet, the id does not match
+`Store.productID` character for character, or the purchase has never been
+submitted. All three are configuration, none of them are code.
+
+### The purchase ships with the first version, not before it
+
+A non-consumable cannot be approved on its own for a new app. It has to be
+attached to an app version and reviewed with it: on the version page, under
+In-App Purchases, add VenTrack Full Unlock before submitting.
+
+Miss this and the app can be approved while the purchase sits in **Waiting for
+Review** forever, which produces a live app whose paywall opens with no price
+and a button that does nothing. There is no error anywhere that says so.
+
 ### Availability is the UK only
 
 Every region in `sources/regions.js` is a British town, distances are in miles
