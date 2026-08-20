@@ -193,10 +193,18 @@ StoreKit configuration selected never talks to the sandbox, so **set StoreKit
 Configuration back to None** before any of this, or you will be testing the
 local file again and learning nothing.
 
-1. **Make a sandbox tester.** App Store Connect, Users and Access, Sandbox,
-   Test Accounts. Use an email address that has never been an Apple Account,
-   including any alias of one. A plus-address on an existing mailbox
-   (`you+sandbox@example.com`) works and still delivers to you.
+1. **Make a sandbox tester, and set its country to United Kingdom.** App Store
+   Connect, Users and Access, Sandbox, Test Accounts. Use an email address that
+   has never been an Apple Account, including any alias of one. A plus-address
+   on an existing mailbox (`you+sandbox@example.com`) works and still delivers
+   to you.
+
+   The country field on that account is the one that matters here and is easy
+   to skip past. A sandbox tester carries its OWN storefront, so a UK tester
+   makes StoreKit quote £4.99 on a device whose real Apple Account is American
+   or Canadian. That is the only way to see what a British customer sees
+   without owning a British Apple Account, and it is how you check the price,
+   the purchase and Restore as they will actually behave.
 2. **Sign in on the device**, not in the App Store app: Settings, Developer,
    Sandbox Apple Account. Signing into the real App Store with a sandbox
    account does not work and gets the account flagged.
@@ -207,6 +215,19 @@ local file again and learning nothing.
 Sandbox purchases are free and take real money from nobody. What to check:
 the price shows in the button rather than the bare "Unlock everything"
 fallback, buying unlocks, and Restore works on a fresh install.
+
+`loadProduct` prints the storefront that answered, so the console settles any
+argument about currency without guesswork:
+
+```
+[store] com.voice2jobs.ventrackuk.full is £4.99 on the GBR storefront
+```
+
+A different country code there is the account's, not the app's, and not the
+device's location. Someone in London signed in to an American Apple Account
+sees dollars and is right to, because dollars are what they would be charged.
+Nothing in the app should override that, and formatting the number into pounds
+ourselves would show a price the person will never pay.
 
 If the button has no price, the product is not reaching the app. `loadProduct`
 prints the reason to the Xcode console, and it is nearly always one of: the
