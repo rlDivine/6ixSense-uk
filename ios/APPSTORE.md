@@ -217,32 +217,55 @@ Ramsgate, because right now that is the thing actually limiting the ceiling.
 
 | Field | Value |
 | --- | --- |
-| Support URL | https://pulse-uk-api.onrender.com/support.html |
-| Privacy Policy URL | https://pulse-uk-api.onrender.com/privacy.html |
-| Marketing URL | https://pulse-uk-api.onrender.com/ |
+| Support URL | https://uk.6ixsense.fyi/support.html |
+| Privacy Policy URL | https://uk.6ixsense.fyi/privacy.html |
+| Marketing URL | https://uk.6ixsense.fyi/ |
 
-The marketing URL is the backend's root, which is now a VenTrack landing page
-rather than the web app it used to serve. Once the app is on sale, set
-`APP_STORE_URL` in the Render environment to the listing's URL and the page's
-button will link to it; until then it reads "Coming soon to the App Store" as
-plain text, so it is safe to give Apple this URL before launch.
+**Give Apple these, not the backend's.** The same three pages are served by the
+API at `pulse-uk-api.onrender.com`, and for a long time these fields named that
+host. Do not go back to it. The free Render plan sleeps after about fifteen
+minutes idle and the next request pays a thirty to sixty second cold start, so
+a reviewer clicking the privacy policy can get a spinner or a timeout, and that
+is a rejection for a reason that has nothing to do with the app. The keep-alive
+ping does not close it: the ping stops running when the instance stops, so a
+deploy during review leaves it asleep with nothing to wake it. The old advice
+here was to open the URL by hand the morning you submit and every day review is
+open, which is not a plan, it is a reminder to be lucky.
 
-Both of the pages below are served by the backend, already carry the VenTrack name,
-and point at contact@voice2jobs.com. Apple does check that the privacy policy
-URL loads, so confirm the Render service is awake before you submit. On the
-free plan it sleeps after about 15 minutes idle and the first request then
-takes 30 to 60 seconds. If a reviewer hits it cold and it times out, that is a
-rejection for a reason that has nothing to do with the app.
+`uk.6ixsense.fyi` is GitHub Pages, static and always up, published from
+`api/public` by `.github/workflows/pages.yml`. The pages are the same files the
+backend serves, not a copy: two copies of a privacy policy is two privacy
+policies, and the one nobody edits is the one Apple reads.
 
-The backend now pings itself every 10 minutes to stop that happening, which
-covers the ordinary case. It does not cover the case that matters most here:
-the ping stops while the instance is stopped, so a deploy during review, or any
-restart followed by a quiet night, leaves it asleep with nothing to wake it.
-Open the URL yourself the morning you submit and again each day review is open,
-or move to the paid Starter plan and stop thinking about it. See
-`api/DEPLOY.md`.
+Setting it up, once:
 
-The host is still called `pulse-uk-api` on purpose. See the note in
+1. Repo Settings, Pages, Source: **GitHub Actions**.
+2. A DNS `CNAME` record, host `uk`, value `rldivine.github.io`.
+3. Settings, Pages, Custom domain: `uk.6ixsense.fyi`, then Enforce HTTPS once
+   the certificate has issued.
+
+Until the DNS is in place the site is live at
+`https://rldivine.github.io/6ixSense-uk/`, which is a perfectly valid URL to
+give Apple. The custom domain can be added afterwards without resubmitting.
+
+A path on the main site, `6ixsense.fyi/uk`, was the original idea and is not
+what shipped. A path has to be served by whatever serves that domain, which is
+the 6ix Sense codebase, and that repository is not ours to change. A subdomain
+is a DNS record and touches nothing.
+
+Once the app is on sale, the landing page's button should link to the listing.
+`public/index.html` is a template carrying a `{{CTA}}` placeholder, and it is
+filled in from `APP_STORE_URL` in TWO places, both of which need setting:
+
+- the Render environment, for the copy the backend serves;
+- a **repository variable** of the same name (Settings, Secrets and variables,
+  Actions, Variables), for the static site.
+
+Until either is set the button reads "Coming soon to the App Store" as plain
+text rather than linking nowhere, which is correct before launch and safe to
+show a reviewer.
+
+The backend host is still called `pulse-uk-api` on purpose. See the note in
 `render.yaml`.
 
 ## Promotional text

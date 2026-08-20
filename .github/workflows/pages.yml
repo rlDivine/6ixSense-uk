@@ -48,11 +48,34 @@ jobs:
 
       - uses: actions/configure-pages@v5
 
-      # api/public and nothing else. The web app in api/webapp is a development
-      # convenience and is not part of the public site.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # public/index.html is a template, not a page: it carries a {{CTA}}
+      # placeholder that the running server fills in per request. Uploaded as
+      # it sits on disk it would put the literal text {{CTA}} on the marketing
+      # page, which is the page Apple is given. So it is rendered first, by the
+      # same landing.js the server uses.
+      #
+      # Assembled into a separate directory rather than rendered in place, so
+      # a rendered page can never be mistaken for the template and committed.
+      - name: Assemble the site
+        run: |
+          cp -R api/public site
+          node api/build-site.js site/index.html
+        env:
+          # Set this as a repository variable once the app is on sale and the
+          # button becomes a real link. Unset, the page reads "Coming soon to
+          # the App Store", which is correct before launch and safe to show a
+          # reviewer.
+          APP_STORE_URL: ${{ vars.APP_STORE_URL }}
+
+      # The assembled site and nothing else. The web app in api/webapp is a
+      # development convenience and is not part of the public site.
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: api/public
+          path: site
 
       - id: deploy
         uses: actions/deploy-pages@v4
