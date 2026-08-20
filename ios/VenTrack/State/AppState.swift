@@ -180,9 +180,12 @@ final class AppState: NSObject, ObservableObject {
         locManager.delegate = self
         locManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
         loadPersisted()
-        // Housekeeping, not correctness: see pruneExpiredSaves. Launch is the
-        // moment most saves have expired since anyone last looked.
-        pruneExpiredSaves()
+        // NOTE: pruneExpiredSaves() is deliberately NOT called here, though it
+        // was briefly. This initializer runs while the first frame is being
+        // put together, and that method writes UserDefaults and talks to
+        // UNUserNotificationCenter. Neither belongs on the path between launch
+        // and something appearing on screen. It runs from the root view's
+        // task instead, which is after the first render rather than before it.
     }
 
     // MARK: Location

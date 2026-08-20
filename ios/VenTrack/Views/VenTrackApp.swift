@@ -15,6 +15,13 @@ struct VenTrackApp: App {
                 .environmentObject(store)
                 .tint(Tok.accent)
                 .task {
+                    // Housekeeping, and it runs HERE rather than in AppState's
+                    // initializer because this task starts after the first
+                    // frame. Writing UserDefaults and scheduling notifications
+                    // is not much work, but none of it has any business
+                    // happening between launch and something being on screen.
+                    app.pruneExpiredSaves()
+
                     // AppState owns every gate; Store owns StoreKit. This is
                     // the one wire between them, set before the first refresh
                     // so no answer is missed.
