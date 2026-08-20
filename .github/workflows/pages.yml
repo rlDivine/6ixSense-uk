@@ -1,0 +1,58 @@
+# Publishes the marketing site, the privacy policy and the support page.
+#
+# WHY THESE ARE NOT LEFT ON THE BACKEND. They are served by the API too, at
+# pulse-uk-api.onrender.com, and that is fine for a link somebody follows out of
+# curiosity. It is not fine for the three URLs App Store Connect requires,
+# because the free Render plan sleeps after about fifteen minutes idle and the
+# next request pays a thirty to sixty second cold start. A reviewer clicking the
+# privacy policy and getting a timeout is a rejection that has nothing to do
+# with the app, and the keep-alive ping cannot help: it stops running when the
+# instance stops, so a deploy during review leaves it asleep with nothing to
+# wake it. GitHub Pages is static, free and always up.
+#
+# ONE SOURCE, NOT A COPY. This publishes api/public verbatim rather than keeping
+# a second set of pages under docs/. Two copies of a privacy policy is two
+# privacy policies, and the one nobody edits is the one Apple reads.
+name: Marketing site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'api/public/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+# Required by the Pages deployment actions. contents: read is the default and
+# is restated here because setting any permission clears the rest.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time, and never cancel one half way: an interrupted
+# deploy can leave the site serving a partial upload.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      # api/public and nothing else. The web app in api/webapp is a development
+      # convenience and is not part of the public site.
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: api/public
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
