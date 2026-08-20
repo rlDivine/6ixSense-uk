@@ -10,6 +10,7 @@ import { fetchCurated } from "./sources/curated.js";
 import { fetchEventbrite } from "./sources/eventbrite.js";
 import { fetchPredictHQ } from "./sources/predicthq.js";
 import { fetchLocalScan, localScanPageStats } from "./sources/localscan.js";
+import { rateLimit } from "./ratelimit.js";
 import { landingPage } from "./landing.js";
 import { startKeepAlive } from "./keepalive.js";
 import {
@@ -39,6 +40,35 @@ try {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// One proxy in front of us, which on Render is Render's own load balancer.
+//
+// This is what makes `req.ip` the caller's address rather than the proxy's,
+// and the rate limit below is worthless without it: every request would share
+// a single bucket and the first busy minute would refuse the entire internet
+// at once. The value is 1, not `true`. `true` trusts the whole
+// X-Forwarded-For chain including the part the CALLER wrote, so anybody could
+// hand us a fresh address per request and never be limited at all. 1 means
+// "one hop we trust", so the address used is the one Render observed.
+//
+// Change this only if the number of proxies actually changes.
+app.set("trust proxy", 1);
+
+// The JSON API, and only the JSON API.
+//
+// /healthz is deliberately outside it: Render's health checks hit it on a
+// schedule and keepalive.js pings it every ten minutes, and a limiter that
+// can refuse a health check can take the service down by itself. The static
+// marketing pages are outside it too, since serving a file costs nothing worth
+// metering.
+//
+// 120 a minute is loose on purpose. The app makes a handful of requests a
+// launch, so no real user comes close, but mobile carriers put a great many
+// subscribers behind one address and a tight limit would refuse a whole
+// carrier's worth of Londoners for the sake of an attacker who can rent more
+// addresses anyway. It is here to stop the cheap version of the attack, not to
+// be a wall.
+app.use("/api", rateLimit({ windowMs: 60_000, max: 120 }));
 
 // Every event source, keyed by the ids that regions list in `sources`.
 // Each one is handed the region so it searches around that town rather than
