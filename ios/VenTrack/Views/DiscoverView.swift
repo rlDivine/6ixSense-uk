@@ -101,18 +101,22 @@ struct DiscoverView: View {
                 .kerning(0.77)
                 .foregroundStyle(Tok.faint)
                 .lineLimit(1)
-            HStack(spacing: S.s2) {
-                Text(app.placeName)
-                    .font(F.display)
-                    .kerning(-1.1)
-                    .foregroundStyle(Tok.text)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Tok.muted)
-                Spacer(minLength: 0)
-            }
+            // NO CHEVRON. The town is a label here, not a control.
+            //
+            // There used to be one, and it was a bare Image with no button
+            // under it and no tap anywhere on this block, so it advertised a
+            // picker that did not exist. Changing town on the phone goes
+            // through the gear in the header, which opens Preferences and its
+            // town list, and that is the only route.
+            //
+            // The sidebar's copy of this title keeps its chevron, because there
+            // the whole row IS a button.
+            Text(app.placeName)
+                .font(F.display)
+                .kerning(-1.1)
+                .foregroundStyle(Tok.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
             Text(statusText)
                 .font(F.body)
                 .foregroundStyle(Tok.muted)
