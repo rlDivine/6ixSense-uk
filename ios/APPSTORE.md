@@ -520,15 +520,23 @@ The app uses HTTPS and nothing else, which is exempt.
 
 This is the part that needs a device and cannot be prepared in advance.
 
-`TARGETED_DEVICE_FAMILY` is `1`, iPhone only, so one set is all Apple asks for.
+`TARGETED_DEVICE_FAMILY` is `1,2`, so TWO sets are mandatory and App Store
+Connect will not let a submission through without both.
 
 | Device | Size | How many |
 | --- | --- | --- |
 | iPhone 6.9 inch | 1320 x 2868 or 1290 x 2796 | 3 to 10 |
+| iPad 13 inch | 2064 x 2752 or 2048 x 2732 | 3 to 10 |
 
-Apple scales that set down for smaller iPhones, so there is nothing else to
-capture. If iPad support is ever restored, a 13 inch set becomes mandatory
-again, and so does an iPad layout worth showing.
+Apple scales each set down for the smaller devices in its family, so there is
+nothing else to capture.
+
+**The iPad set has to show the iPad layout.** A stretched phone in those shots
+is the exact thing that got 6ix Sense 1.0 (1) rejected under Guideline 4, and a
+reviewer looks at the screenshots before opening the app. At least one of them
+should have the sidebar and the detail pane visible at once, because that is
+the claim being made. This obligation is permanent: every release that changes
+the interface needs both sets regenerated.
 
 Suggested five, in this order, since the first two are what people actually see
 in search results:

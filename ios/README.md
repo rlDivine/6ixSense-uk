@@ -191,12 +191,15 @@ resets a test purchase so the locked state can be tried again.
 - Deployment target **iOS 17**, set in `project.rb`. The map is UIKit's
   `MKMapView` behind a `UIViewRepresentable`, not the SwiftUI `Map` view, so
   the clustering and per-annotation styling go through `MKMapViewDelegate`.
-- `TARGETED_DEVICE_FAMILY` is `1`, iPhone only, and the `Views/iPad` layout it
-  used to pair with has been deleted. The rejection risk that got 6ix Sense
-  1.0 (1) turned down under Guideline 4 was claiming iPad support the app did
-  not honour, not this value on its own. If iPad support is ever restored, put
-  both halves back together; half the pair is what caused the rejection. The
-  long comment in `project.rb` has the full history.
+- `TARGETED_DEVICE_FAMILY` is `1,2`, and `Views/iPad` holds the regular width
+  layout that setting pairs with. The two ship together or not at all. The
+  rejection that got 6ix Sense 1.0 (1) turned down under Guideline 4 was
+  claiming iPad support the app did not honour: it carried the layout and
+  shipped device family `1`, so iPadOS ran it scaled and the layout never
+  activated once. There is a third half to the pair, which is a full set of
+  iPad screenshots showing the split view rather than a stretched phone. The
+  long comment in `project.rb` has the history, and `DESIGN_IPAD.md` has the
+  reasoning.
 - Bundle id is `com.voice2jobs.ventrackuk`, a new App Store product rather than
   an update to 6ix Sense. It is also distinct from the old
   `com.voice2jobs.pulseuk`, which is the point: VenTrack ships as its own

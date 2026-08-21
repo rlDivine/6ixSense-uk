@@ -11,7 +11,7 @@ What shipped, against what this asked for:
 | Layout | `ios/VenTrack/Views/iPad/`, a `NavigationSplitView` behind one size class branch in `RootView` |
 | Device family | `TARGETED_DEVICE_FAMILY = '1,2'` in `project.rb` |
 | Landscape | `UISupportedInterfaceOrientations~ipad`, all four |
-| Screenshots | **NOT DONE, and it is the remaining third of the gate.** See section 1 |
+| Screenshots | Uploaded for build 6. App Store Connect will not accept a submission from an iPad capable app without them, so their existence is certain; whether they show the split view rather than a stretched phone is the part that decides section 1, and that has not been checked here |
 
 One deviation from section 3, found by arithmetic rather than by taste: two
 columns do not fit a 13 inch with the detail pane open while the 340pt card
@@ -40,10 +40,13 @@ regular width sidebar layout in `Views/iPad`, but shipped with device family
 activated once. A reviewer opened it on an iPad Air 11 inch, saw a blown up
 phone app, and rejected it under Guideline 4, Design.
 
-VenTrack's answer was to delete the iPad layout rather than fix the setting,
-which is why `Views/iPad` is gone, `RootView` no longer branches on size class,
-and `project.rb` says `1`. A plainly iPhone only app is a normal, accepted
+VenTrack's first answer was to delete the iPad layout rather than fix the
+setting, so `Views/iPad` went, `RootView` stopped branching on size class, and
+`project.rb` said `1`. A plainly iPhone only app is a normal, accepted
 configuration and runs on iPad in compatibility mode by design.
+
+That was reversed later, and all three parts went in together, which is what
+the rest of this brief argues for.
 
 So this brief describes work that lands all three together or does not land.
 There is no useful halfway state, and the halfway state is specifically the one
