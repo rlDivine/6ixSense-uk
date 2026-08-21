@@ -85,6 +85,43 @@ struct DiscoverView: View {
         }
     }
 
+    /// The town is the thing worth reading, so it gets the size. The wordmark
+    /// above it only has to say which app you are in, and the date under it
+    /// answers "as of when" without spending a line on a sentence.
+    ///
+    /// PHONE ONLY, which is why it stayed here when the controls below it moved
+    /// to FeedControls. At regular width the town lives in the sidebar, because
+    /// it applies to every destination rather than to this one screen, and a
+    /// feed that repeated it would be saying the same thing twice on one
+    /// screen.
+    private var titleBlock: some View {
+        VStack(alignment: .leading, spacing: S.s1) {
+            Text(todayLine.uppercased())
+                .font(F.caption)
+                .kerning(0.77)
+                .foregroundStyle(Tok.faint)
+                .lineLimit(1)
+            HStack(spacing: S.s2) {
+                Text(app.placeName)
+                    .font(F.display)
+                    .kerning(-1.1)
+                    .foregroundStyle(Tok.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Tok.muted)
+                Spacer(minLength: 0)
+            }
+            Text(statusText)
+                .font(F.body)
+                .foregroundStyle(Tok.muted)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, S.s5)
+    }
+
     // MARK: Content
 
     /// Which of the four screens the feed tab is currently showing. Worked out
