@@ -6,6 +6,36 @@ field by field. Contact details and the support address are the same ones
 
 No em dashes anywhere in this file, including the copy below.
 
+## The five things blocking "Add for Review"
+
+App Store Connect refuses to start a review until these are answered, and it
+names them without saying what the answers are. Each one is spelled out in full
+further down; this is the short version for working through the form in one
+sitting. App id 6799718570.
+
+| Blocker | Where | Answer |
+| --- | --- | --- |
+| Primary category | App Information | Entertainment, with Travel secondary |
+| Age ratings | App Information | **None** to every question except Alcohol, Tobacco, or Drug Use or References, which is **Infrequent or Mild**. Unrestricted Web Access **No**. User Generated Content **No**. Lands at 12+ |
+| Price tier | Pricing | **Free**, available in the United Kingdom only. Free is right even though there is a purchase: the app itself costs nothing |
+| Privacy practices | App Privacy | **Yes** to collecting data, then Location, Precise Location only: used for App Functionality, NOT linked to identity, NOT used for tracking. **No** to every other category and to the tracking question |
+| Privacy Policy URL | App Privacy | `https://pulse-uk-api.onrender.com/privacy.html` |
+
+Two of those deserve a second look before you paste them.
+
+**The age rating answer is the honest one rather than the flattering one.** The
+app lists club nights, bars and beer festivals and the listing text comes from
+third parties, so Infrequent or Mild is true and None would not be.
+
+**Use the backend's privacy URL for now, not `uk.6ixsense.fyi`.** Apple checks
+that the URL loads, and the static hosting is not live yet. Swap it before
+review actually opens, for the cold start reason set out under URLs below.
+Changing it does not require resubmitting.
+
+After these five, what remains is screenshots, the description, keywords, the
+support URL, and attaching the in-app purchase to the version. All of that copy
+is below, ready to paste.
+
 ## Build status
 
 It compiles. Xcode 16.4, iOS 18.5 simulator SDK, arm64 and x86_64, zero errors.
