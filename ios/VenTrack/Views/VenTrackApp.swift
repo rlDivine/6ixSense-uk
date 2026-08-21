@@ -51,12 +51,36 @@ struct VenTrackApp: App {
 struct RootView: View {
     @EnvironmentObject var app: AppState
 
+    /// THE ONLY LAYOUT BRANCH IN THE APP, and it needs to stay that way.
+    ///
+    /// One decision, at the top, so there is exactly one place to look when a
+    /// layout turns up at the wrong size. Every screen below this point is size
+    /// class agnostic, which is what makes Split View, Slide Over and Stage
+    /// Manager correct without any of them being thought about individually.
+    ///
+    /// It is also what made this work tractable. The compact path is the app
+    /// that already shipped, so the job was adding a regular path beside it
+    /// rather than making twelve screens adaptive.
+    ///
+    /// Regular does NOT mean iPad and compact does NOT mean iPhone. An iPad in
+    /// Slide Over is compact, an iPad in a half width Split View is compact,
+    /// and both should be getting the phone layout. Branching on the idiom
+    /// instead of the size class is the classic way to produce a two column
+    /// layout squeezed into a third of a screen.
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
     var body: some View {
         Group {
-            if app.onboarded {
-                MainTabView()
-            } else {
+            if !app.onboarded {
+                // Onboarding is one column at any width. It is a first run
+                // sequence rather than a place you navigate, so a sidebar
+                // pointing at destinations you have not reached yet would be
+                // offering navigation to nowhere.
                 OnboardingView()
+            } else if sizeClass == .regular {
+                PadRootView()
+            } else {
+                MainTabView()
             }
         }
         .preferredColorScheme(nil) // follow system

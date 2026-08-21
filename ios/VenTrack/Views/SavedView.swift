@@ -8,6 +8,17 @@ struct SavedView: View {
     @EnvironmentObject var app: AppState
     @State private var selected: Event?
 
+    /// Set by the iPad layout, which owns a detail pane and therefore does not
+    /// want a sheet. When present, choosing an event reports its id here and
+    /// the pane draws it; when nil, this screen presents its own sheet exactly
+    /// as it always has on the phone.
+    ///
+    /// An optional binding rather than a size class check, because this screen
+    /// should not know what device it is on. One decision about layout is made
+    /// in RootView and nothing below it branches.
+    var padSelection: Binding<String?>?
+
+
     /// One day's worth of saved events. `savedUpcoming` is already in date
     /// order, so grouping in the order it hands them over keeps the days in
     /// order too, with no second sort.
@@ -60,7 +71,7 @@ struct SavedView: View {
                             .padding(.top, 18)
                             .padding(.bottom, 9)
                         ForEach(group.events) { e in
-                            Button { selected = e } label: { EventCard(event: e) }
+                            Button { choose(e) } label: { EventCard(event: e) }
                                 .buttonStyle(PressableRow())
                             reminderRow(e)
                         }
@@ -201,4 +212,15 @@ struct SavedView: View {
         let date = d.formatted(.dateTime.day().month(.defaultDigits).locale(gb))
         return "\(weekday), \(date)"
     }
+
+    /// The one place selection is decided, so the sheet and the pane cannot
+    /// drift apart.
+    private func choose(_ e: Event) {
+        if let padSelection {
+            padSelection.wrappedValue = e.id
+        } else {
+            selected = e
+        }
+    }
+
 }

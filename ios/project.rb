@@ -61,26 +61,29 @@ target.build_configurations.each do |config|
   s['GENERATE_INFOPLIST_FILE'] = 'NO'
   s['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
   s['SWIFT_VERSION'] = '5.0'
-  # iPhone only.
+  # iPhone AND iPad, and the two halves of that are not separable.
   #
-  # This used to be '1,2', and the comment here warned it had to stay that way.
-  # The reason was specific: the app carried a regular-width sidebar layout in
-  # Views/iPad, and shipping as iPhone-only made iPadOS run it in scaled-iPhone
-  # compatibility mode so that layout never activated. A reviewer on an iPad Air
-  # 11-inch saw a blown-up phone app, and 6ix Sense build 1.0 (1) was rejected
-  # under Guideline 4, Design.
+  # The history, because it cost a rejection and the same mistake is one edit
+  # away in either direction. 6ix Sense carried a regular width sidebar layout
+  # in Views/iPad while shipping this value as '1'. iPadOS therefore ran it in
+  # scaled iPhone compatibility mode and that layout never activated once. A
+  # reviewer on an iPad Air 11 inch saw a blown up phone app, and build 1.0 (1)
+  # was rejected under Guideline 4, Design.
   #
-  # That warning does not apply now, because the thing it was protecting is
-  # gone. Views/iPad has been deleted and RootView no longer branches on size
-  # class, so there is no iPad layout left to fail to activate. What ships is a
-  # plainly iPhone-only app, which is a normal and accepted configuration and
-  # runs on iPad in compatibility mode by design rather than by accident.
+  # VenTrack then deleted its iPad layout rather than fix the setting, and for
+  # several releases shipped as plainly iPhone only, which is a normal and
+  # accepted configuration.
   #
-  # The rejection risk that remains is not this setting, it is claiming iPad
-  # support the app does not honour. So if iPad support is ever restored, put
-  # BOTH back together: the layout and this value. Half of the pair is what got
-  # the sibling app rejected.
-  s['TARGETED_DEVICE_FAMILY'] = '1'        # iPhone only
+  # It is now '1,2' because the layout is back and it genuinely activates:
+  # RootView branches on horizontalSizeClass and hands regular width to
+  # PadRootView, a real NavigationSplitView. See ios/VenTrack/Views/iPad/.
+  #
+  # THE RULE, in both directions. iPad support is three things: a layout that
+  # activates at regular width, this value, and a full second set of App Store
+  # screenshots taken on a 13 inch iPad. Shipping any subset is worse than
+  # shipping none, and the specific subset that gets rejected is a layout
+  # without this value. If iPad support is ever withdrawn, withdraw all three.
+  s['TARGETED_DEVICE_FAMILY'] = '1,2'      # iPhone and iPad
   s['CODE_SIGN_STYLE'] = 'Automatic'
   # NOTE: do NOT force CODE_SIGNING_ALLOWED=NO here. It breaks signing in the
   # Xcode UI. For headless simulator builds pass it on the command line instead:

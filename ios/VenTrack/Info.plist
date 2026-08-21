@@ -22,9 +22,27 @@
   <true/>
   <key>UILaunchScreen</key>
   <dict/>
+  <!-- The phone stays portrait only. A one column feed read one handed has no
+       landscape case worth the layout work, and the map is the only screen
+       that would benefit. -->
   <key>UISupportedInterfaceOrientations</key>
   <array>
     <string>UIInterfaceOrientationPortrait</string>
+  </array>
+  <!-- The iPad supports all four, and this is not optional once
+       TARGETED_DEVICE_FAMILY includes iPad.
+       A portrait only iPad app is a rejection under Guideline 4 in its own
+       right, and it is also just wrong for the device: an iPad lives in a
+       keyboard case as often as it is held, and the split view layout is at
+       its best in landscape, which is where two grid columns fit.
+       Home indicator orientation is left to the system, so this is the full
+       set rather than three of four. -->
+  <key>UISupportedInterfaceOrientations~ipad</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+    <string>UIInterfaceOrientationPortraitUpsideDown</string>
+    <string>UIInterfaceOrientationLandscapeLeft</string>
+    <string>UIInterfaceOrientationLandscapeRight</string>
   </array>
   <key>ITSAppUsesNonExemptEncryption</key>
   <false/>

@@ -81,167 +81,7 @@ struct DiscoverView: View {
     private var headerRows: some View {
         VStack(alignment: .leading, spacing: S.s3) {
             titleBlock
-            outOfMarketNotice
-            sortControl
-            rangeRow
-            categoryRow
-        }
-    }
-
-    /// The height of one row of chips, which both filter rows are told
-    /// explicitly rather than left to work out.
-    ///
-    /// A ScrollView is greedy in BOTH axes, including the one it does not
-    /// scroll. Inside the feed that never showed, because there the rows sit in
-    /// a vertical scroll view that offers unbounded height and they settle at
-    /// their content size. On the loading, error and empty screens they sit in
-    /// a VStack that fills the display, and there two horizontal scroll views
-    /// will happily take a third of the screen each and squeeze whatever is
-    /// below them down to nothing. That is what a "black screen" on launch
-    /// turned out to be: the state below the filters crushed to zero height
-    /// while the app waited on a slow backend.
-    private static let chipRow: CGFloat = 34
-
-    /// The town is the thing worth reading, so it gets the size. The wordmark
-    /// above it only has to say which app you are in, and the date under it
-    /// answers "as of when" without spending a line on a sentence.
-    private var titleBlock: some View {
-        VStack(alignment: .leading, spacing: S.s1) {
-            Text(todayLine.uppercased())
-                .font(F.caption)
-                .kerning(0.77)
-                .foregroundStyle(Tok.faint)
-                .lineLimit(1)
-            HStack(spacing: S.s2) {
-                Text(app.placeName)
-                    .font(F.display)
-                    .kerning(-1.1)
-                    .foregroundStyle(Tok.text)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Tok.muted)
-                Spacer(minLength: 0)
-            }
-            Text(statusText)
-                .font(F.body)
-                .foregroundStyle(Tok.muted)
-                .lineLimit(1)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, S.s5)
-    }
-
-    /// Two segments in a full width `panel2` track, the live one filled with
-    /// `activeBg` under `activeFg`. It used to fill with red, which put a third
-    /// competing red on a screen that already had the "today" overline and the
-    /// primary button; selection is monochrome everywhere now, and that is what
-    /// leaves the accent free to mean one thing.
-    ///
-    /// Both segments are labelled with an SF Symbol. These were the last two
-    /// emoji in the app and they are gone: an emoji renders in its own font at
-    /// its own weight and colour, so it never matched the label beside it.
-    private var sortControl: some View {
-        HStack(spacing: 0) {
-            sortSegment("location.fill", "Nearest", .nearest)
-            sortSegment("clock.fill", "Soonest", .soonest)
-        }
-        .padding(2)
-        .background(Tok.panel2, in: RoundedRectangle(cornerRadius: 11))
-        .padding(.horizontal, S.s5)
-        .frame(height: 44)
-    }
-
-    /// The symbol is decorative, so it stays out of the accessibility label:
-    /// VoiceOver says "sort by nearest" rather than reading the pin out loud.
-    private func sortSegment(_ symbol: String, _ label: String,
-                             _ value: EventService.Sort) -> some View {
-        let on = app.sort == value
-        return Button {
-            guard app.sort != value else { return }
-            app.sort = value
-            Task { await app.load() }
-        } label: {
-            Label(label, systemImage: symbol)
-                .labelStyle(.titleAndIcon)
-                .font(.system(size: 15, weight: .medium))
-                .imageScale(.small)
-                .foregroundStyle(on ? Tok.activeFg : Tok.muted)
-                .frame(maxWidth: .infinity)
-                .frame(height: 36)
-                .background(on ? Tok.activeBg : Color.clear,
-                            in: RoundedRectangle(cornerRadius: 9))
-                .contentShape(RoundedRectangle(cornerRadius: 9))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Sort by \(label.lowercased())")
-        .accessibilityAddTraits(on ? .isSelected : [])
-    }
-
-    /// The free app looks seven days ahead, so "All upcoming" carries a padlock
-    /// until the unlock is bought. It stays in the row rather than being hidden:
-    /// a control you can see and understand is a better offer than one that
-    /// silently is not there, and hiding it would leave the row looking like the
-    /// whole feature set.
-    private var rangeRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 7) {
-                ForEach(EventService.Range.allCases, id: \.self) { r in
-                    let locked = r == .all && !app.unlocked
-                    Pill(text: r.label, active: app.range == r, locked: locked) {
-                        guard app.range != r else { return }
-                        if locked { app.unlockPrompt = .dateRange; return }
-                        app.range = r
-                        Task { await app.load() }
-                    }
-                }
-            }
-            .padding(.horizontal, S.s5)
-        }
-        // See `chipRow`. Without this the row expands to fill whatever it is
-        // given, which on the non-feed screens is most of the display.
-        .frame(height: Self.chipRow)
-    }
-
-    /// Built from what is actually in the feed, never a fixed list, so a town
-    /// with no football listings does not offer a Football chip that returns
-    /// nothing.
-    private var categoryRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 7) {
-                ForEach(app.categoryChips, id: \.self) { c in
-                    CategoryChip(name: c, active: app.category == c) {
-                        app.category = c
-                    }
-                }
-            }
-            .padding(.horizontal, S.s5)
-        }
-        .frame(height: Self.chipRow)
-    }
-
-    /// Shown only when the device is outside the UK. Without it the feed looks
-    /// broken, showing London listings under a "near you" heading, when in fact
-    /// it is working exactly as intended for a UK-only app. Not dismissible,
-    /// because the condition persists.
-    @ViewBuilder private var outOfMarketNotice: some View {
-        if !app.inMarket && app.placeOverride == nil {
-            HStack(alignment: .top, spacing: 9) {
-                Image(systemName: "info.circle")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(Tok.muted)
-                Text("VenTrack covers the UK only. You appear to be outside it, so we are showing \(app.placeName).")
-                    .font(F.footnote)
-                    .foregroundStyle(Tok.text)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .multilineTextAlignment(.leading)
-                Spacer(minLength: 0)
-            }
-            .padding(S.s3)
-            .background(Tok.panel2, in: RoundedRectangle(cornerRadius: R.well))
-            .padding(.horizontal, S.s5)
-            .accessibilityElement(children: .combine)
+            FeedControls()
         }
     }
 
@@ -311,7 +151,7 @@ struct DiscoverView: View {
                     // else.
                     .onAppear { titleVisible = true }
                     .onDisappear { titleVisible = false }
-                sectionHeader
+                FeedSectionHeader()
                 ForEach(Array(app.visibleEvents.enumerated()), id: \.element.id) { i, e in
                     Button { selected = e } label: {
                         // Exactly one feature per screen, at the top, where
@@ -322,7 +162,7 @@ struct DiscoverView: View {
                     }
                     .buttonStyle(PressableRow())
                 }
-                freeWindowGate
+                FreeWindowGate()
             }
             .padding(.top, S.s3)
             .padding(.bottom, S.s6)
@@ -355,52 +195,6 @@ struct DiscoverView: View {
             body().frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .padding(.top, S.s3)
-    }
-
-    /// Names what the run of cards below actually is, rather than repeating
-    /// the count already in the header.
-    private var sectionHeader: some View {
-        Text(app.range == .today ? "TONIGHT" : "TONIGHT AND THIS WEEK")
-            .font(F.caption)
-            .kerning(0.77)
-            .foregroundStyle(Tok.faint)
-            .padding(.horizontal, S.s5)
-            .padding(.top, S.s5)
-            .padding(.bottom, S.s3)
-    }
-
-    /// The end of the free week is a STATED gate, never a blur or a fade.
-    ///
-    /// A fade is a gradient, and it is also dishonest: it implies there is
-    /// something just out of reach rather than saying what the boundary is. So
-    /// this names how many more events exist, explains the boundary in one
-    /// sentence, and offers one button. The shape of the paid tier is legible
-    /// before anyone hits it.
-    @ViewBuilder private var freeWindowGate: some View {
-        if !app.unlocked, app.range != .all, !app.visibleEvents.isEmpty {
-            VStack(alignment: .leading, spacing: S.s2) {
-                Text("That is the free week")
-                    .font(F.title)
-                    .kerning(-0.7)
-                    .foregroundStyle(Tok.text)
-                Text("VenTrack looks seven days ahead on the free tier. Unlocking opens the whole month, every town in the UK, and unlimited saves.")
-                    .font(F.body)
-                    .foregroundStyle(Tok.muted)
-                    .fixedSize(horizontal: false, vertical: true)
-                Button { app.unlockPrompt = .dateRange } label: {
-                    Text("See what unlocking adds")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(Tok.accentFill, in: RoundedRectangle(cornerRadius: R.button))
-                }
-                .buttonStyle(PressableRow())
-                .padding(.top, S.s2)
-            }
-            .padding(.horizontal, S.s5)
-            .padding(.top, S.s7)
-        }
     }
 
     // MARK: Copy

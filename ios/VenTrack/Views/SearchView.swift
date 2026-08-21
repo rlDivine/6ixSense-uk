@@ -7,6 +7,17 @@ import SwiftUI
 struct SearchView: View {
     @EnvironmentObject var app: AppState
     @State private var selected: Event?
+
+    /// Set by the iPad layout, which owns a detail pane and therefore does not
+    /// want a sheet. When present, choosing an event reports its id here and
+    /// the pane draws it; when nil, this screen presents its own sheet exactly
+    /// as it always has on the phone.
+    ///
+    /// An optional binding rather than a size class check, because this screen
+    /// should not know what device it is on. One decision about layout is made
+    /// in RootView and nothing below it branches.
+    var padSelection: Binding<String?>?
+
     /// Set while CLGeocoder is resolving a typed address.
     @State private var locating = false
     /// Shown when a typed address could not be found.
@@ -135,7 +146,7 @@ struct SearchView: View {
                 ScrollView {
                     LazyVStack(spacing: 10) {
                         ForEach(hits) { e in
-                            Button { selected = e } label: { EventCard(event: e) }
+                            Button { choose(e) } label: { EventCard(event: e) }
                                 .buttonStyle(PressableRow())
                         }
                     }
@@ -257,6 +268,17 @@ struct SearchView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 2)
     }
+
+    /// The one place selection is decided, so the sheet and the pane cannot
+    /// drift apart.
+    private func choose(_ e: Event) {
+        if let padSelection {
+            padSelection.wrappedValue = e.id
+        } else {
+            selected = e
+        }
+    }
+
 }
 
 /// Minimal wrapping HStack for chips. Three to a row, which is what the two
