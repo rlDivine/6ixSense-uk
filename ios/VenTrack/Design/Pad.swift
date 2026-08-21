@@ -54,6 +54,22 @@ enum Pad {
         width >= 1300 ? S.s7 : S.s6
     }
 
+    /// The narrowest window that can hold all three columns honestly.
+    ///
+    /// Derived rather than chosen, which is the point: a sidebar, a content
+    /// column wide enough for one card at the floor, a detail pane at its
+    /// minimum, and a gutter between and either side. Anything narrower is a
+    /// three column layout pretending, and what it produces is a squeezed
+    /// detail pane and a content column below the width its own cards need.
+    ///
+    /// It works out at 1092, which lands exactly where it should. Both iPad
+    /// landscapes clear it (1194 and 1366) and both portraits do not (834 and
+    /// 1024). So portrait pushes the detail like the phone, and landscape keeps
+    /// the pane, and neither is a special case anybody had to name.
+    static var paneMinimum: CGFloat {
+        sidebarIdeal + gridMin + detailMin + 3 * S.s6
+    }
+
     /// How many columns fit in the measure actually left after the sidebar and
     /// the detail pane, rather than in the screen width. Always at least one.
     static func columns(measure: CGFloat) -> Int {
