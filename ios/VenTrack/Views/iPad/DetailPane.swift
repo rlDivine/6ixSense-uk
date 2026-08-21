@@ -18,6 +18,15 @@ struct DetailPane: View {
     /// reload and the pane would keep showing the old one.
     let selectedID: String?
 
+    /// Whether this is a page that was pushed, rather than a pane sitting
+    /// beside the list.
+    ///
+    /// Pushed, the event needs a way back and the navigation bar is hidden, so
+    /// the back button over the hero is the only one and is the same control
+    /// the phone uses. As a pane it needs neither, because nothing is covered
+    /// and nothing has to be dismissed.
+    var pushed: Bool = false
+
     @EnvironmentObject var app: AppState
 
     /// Resolved from the live list on every render, so the pane always shows
@@ -36,7 +45,7 @@ struct DetailPane: View {
     var body: some View {
         Group {
             if let event {
-                EventDetailView(event: event)
+                EventDetailView(event: event, showsBack: pushed)
             } else {
                 DetailEmptyView()
             }

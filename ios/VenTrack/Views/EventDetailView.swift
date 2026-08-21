@@ -12,6 +12,18 @@ import UIKit
 /// photo simply covers it when one loads.
 struct EventDetailView: View {
     let event: Event
+
+    /// Whether to draw the back button over the hero.
+    ///
+    /// True everywhere the view is presented as a sheet, which is every phone
+    /// route and the map's tap-a-pin route on iPad, because a sheet has to
+    /// carry its own way out.
+    ///
+    /// False in the iPad detail pane, where there is nothing to go back to: the
+    /// pane is not covering anything, it sits beside the list. A chevron there
+    /// is a control that does nothing, which is the same complaint as a
+    /// navigation bar with an empty stack behind it.
+    var showsBack: Bool = true
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
 
@@ -79,7 +91,9 @@ struct EventDetailView: View {
 
     private var heroControls: some View {
         HStack {
-            circleBtn("chevron.left", "Back") { dismiss() }
+            if showsBack {
+                circleBtn("chevron.left", "Back") { dismiss() }
+            }
             Spacer()
             circleBtn(app.isSaved(event) ? "bookmark.fill" : "bookmark",
                       app.isSaved(event) ? "Remove from saved" : "Save event") {

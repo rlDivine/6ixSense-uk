@@ -122,23 +122,28 @@ struct PadRootView: View {
                     max: Pad.sidebarMax)
         } detail: {
             NavigationStack(path: $path) {
-                column(selection: pushed, hasPane: false)
+                column(selection: pushSelection, hasPane: false)
                     .navigationDestination(for: String.self) { id in
-                        DetailPane(selectedID: id)
-                            .navigationBarTitleDisplayMode(.inline)
-                            // Two controls at the top left is one too many.
+                        DetailPane(selectedID: id, pushed: true)
+                            // NO NAVIGATION BAR, and that is the whole fix.
                             //
-                            // The split view puts a sidebar toggle in the
-                            // detail column's bar, which is right for the list
-                            // and wrong the moment something is pushed on top
-                            // of it: the toggle and the back chevron sit side
-                            // by side as a pair of near identical circles, and
-                            // the honest reading of that is two back buttons.
+                            // EventDetailView was written as a sheet body: it
+                            // ignores the top safe area so the hero runs to the
+                            // edge of the screen, and it carries its own back
+                            // button and its own save button floating over the
+                            // photograph. Pushing it into a stack put a second
+                            // back chevron in a bar above it, plus the split
+                            // view's sidebar toggle beside that, so the top of
+                            // the page had three controls and a band of empty
+                            // white where the picture should have been.
                             //
-                            // Removed here rather than everywhere, so the list
-                            // keeps its toggle and the sidebar stays reachable
-                            // one tap away.
-                            .toolbar(removing: .sidebarToggle)
+                            // Hiding the bar leaves exactly the arrangement the
+                            // phone has, which is what was asked for: the hero
+                            // full bleed, one back button on it, one save
+                            // button opposite. The button calls dismiss(),
+                            // which pops this stack, so it goes back without
+                            // needing to know it is not a sheet any more.
+                            .toolbar(.hidden, for: .navigationBar)
                     }
             }
         }
@@ -149,7 +154,7 @@ struct PadRootView: View {
     /// Reading from the path as well as writing to it is what keeps the back
     /// button and the edge swipe honest: when either of them pops, this reports
     /// nil without anybody having to notice and clear a separate flag.
-    private var pushed: Binding<String?> {
+    private var pushSelection: Binding<String?> {
         Binding(
             get: { path.last },
             set: { id in path = id.map { [$0] } ?? [] }
