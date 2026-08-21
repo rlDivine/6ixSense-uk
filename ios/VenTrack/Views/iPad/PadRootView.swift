@@ -69,11 +69,12 @@ struct PadRootView: View {
         case .discover:
             PadFeedView(selectedID: $selectedID)
         case .map:
+            // No column width here. PadMapList sets its own, and applying it
+            // twice means two modifiers arguing about one number, which is the
+            // kind of thing that resolves differently between OS versions.
+            // The list is the one that knows why it wants to be narrow: the map
+            // is what benefits from area, so every extra point goes to it.
             PadMapList(selectedID: $selectedID)
-                .navigationSplitViewColumnWidth(
-                    min: Pad.mapListMin,
-                    ideal: Pad.mapListIdeal,
-                    max: Pad.mapListIdeal)
         case .saved:
             SavedView(padSelection: $selectedID)
         case .search:
