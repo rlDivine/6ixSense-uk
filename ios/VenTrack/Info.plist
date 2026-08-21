@@ -14,8 +14,15 @@
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
   <string>1.0.0</string>
+  <!-- The build number App Store Connect de-duplicates on. It must go UP for
+       every upload, and a number already used is refused even if the binary
+       differs. Builds 1 to 6 are already taken. This lives here, tracked, so
+       it stops being a hand edit that only ever existed on one Mac: for the
+       first six builds this file said 1 while App Store Connect counted to 6,
+       which is exactly the kind of gap that produces a failed upload at the
+       worst moment. Bump it here, commit it, then archive. -->
   <key>CFBundleVersion</key>
-  <string>1</string>
+  <string>7</string>
   <key>CFBundleDevelopmentRegion</key>
   <string>en-GB</string>
   <key>LSRequiresIPhoneOS</key>
