@@ -38,16 +38,19 @@ struct VenTrackApp: App {
     }
 }
 
-/// iPhone only. There was a separate regular size class layout here, a three
-/// pane iPad shell, and it has been removed rather than left switched off: it
-/// was the least exercised part of the app, and shipping it would have meant
-/// maintaining a second layout and supplying a second set of App Store
-/// screenshots for it. `TARGETED_DEVICE_FAMILY` in `project.rb` is now `1` to
-/// match, so the App Store listing is iPhone only and Apple stops asking.
+/// Both layouts, and everything they share.
 ///
-/// It is in the history if it is ever wanted back, and the size class is the
-/// right thing to branch on when that day comes, since Split View and Stage
-/// Manager hand an app a compact width on an iPad too.
+/// The size class picks the layout. What sits AROUND that choice is the app's
+/// launch work and its one unlock sheet, and those belong here rather than in
+/// either branch, because they are not properties of a tab bar or of a split
+/// view.
+///
+/// They used to live on `MainTabView`, and that was a real bug rather than an
+/// untidiness. `AppState.unlockPrompt` is written from a dozen places, and with
+/// the sheet attached to the tab bar the iPad wrote to a published property
+/// nothing was observing: a fourth save, the sidebar's unlock row and a locked
+/// date range all silently did nothing at all. The first load and the location
+/// request were stranded the same way.
 struct RootView: View {
     @EnvironmentObject var app: AppState
 
@@ -77,13 +80,41 @@ struct RootView: View {
                 // pointing at destinations you have not reached yet would be
                 // offering navigation to nowhere.
                 OnboardingView()
-            } else if sizeClass == .regular {
+            } else {
+                layout
+            }
+        }
+        .preferredColorScheme(nil) // follow system
+    }
+
+    /// The layout branch, and the things both sides of it need.
+    ///
+    /// Wrapped rather than applied to the outer Group so that onboarding is
+    /// excluded: it does its own location priming on its second step, with a
+    /// screen explaining why, and a request fired at launch would pre-empt that
+    /// with a system alert and no context.
+    @ViewBuilder private var layout: some View {
+        Group {
+            if sizeClass == .regular {
                 PadRootView()
             } else {
                 MainTabView()
             }
         }
-        .preferredColorScheme(nil) // follow system
+        // The one unlock sheet for the whole app.
+        //
+        // Here rather than per screen because a gate can fire from a row inside
+        // a lazy list, and a sheet attached to every row is how you get one that
+        // presents the wrong thing or nothing at all. Here rather than on either
+        // layout because both of them gate, and a gate that writes to a property
+        // nobody is watching is worse than no gate: the user taps, nothing
+        // happens, and the app looks broken rather than paid. The two screens
+        // that are themselves sheets still carry their own.
+        .paywall($app.unlockPrompt)
+        .task {
+            app.requestLocation()   // ask on first launch so the user can grant it
+            if app.events.isEmpty { await app.load() }
+        }
     }
 }
 
@@ -106,16 +137,8 @@ struct MainTabView: View {
                 .tabItem { Label("Search", systemImage: "magnifyingglass") }.tag(3)
         }
         .tint(Tok.accent)
-        // The one unlock sheet for everything reachable from the four tabs.
-        // Presented here rather than per screen because a gate can fire from a
-        // row inside a lazy list, and a sheet attached to every row is how you
-        // get one that presents the wrong thing or nothing at all. The two
-        // screens that are themselves sheets carry their own.
-        .paywall($app.unlockPrompt)
-        .task {
-            app.requestLocation()   // ask on first launch so the user can grant it
-            if app.events.isEmpty { await app.load() }
-        }
+        // No paywall and no launch task here. Both are on RootView, because the
+        // iPad needs them too and neither is a property of a tab bar.
     }
 }
 

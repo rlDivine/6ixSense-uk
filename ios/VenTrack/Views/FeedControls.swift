@@ -28,6 +28,23 @@ struct FeedControls: View {
         }
     }
 
+    /// A chip's own height. Both `Pill` and `CategoryChip` are built to it.
+    static let chipHeight: CGFloat = 34
+
+    /// Plain, draggable surface above and below the chips.
+    ///
+    /// Not decoration. Every chip is a `Button` filling the full height of the
+    /// row, so with the scroll view sized exactly to the chips there was no
+    /// part of it that was not a button, and a horizontal drag had to begin on
+    /// a control while a vertical scroll view sat underneath competing for the
+    /// same gesture. That is a well known way to make a nested horizontal row
+    /// feel stuck: it scrolls if you flick it just right and refuses if you
+    /// drag it slowly, which reads as broken rather than fiddly.
+    ///
+    /// Five points top and bottom gives the gesture somewhere to start that is
+    /// not a control, on both rows, and changes nothing about how a chip looks.
+    static let chipPad: CGFloat = 5
+
     /// The height of one row of chips, told to the rows explicitly.
     ///
     /// A ScrollView is greedy in BOTH axes, including the one it does not
@@ -36,7 +53,12 @@ struct FeedControls: View {
     /// that fills the display, two horizontal scroll views will take a third of
     /// the screen each and crush whatever is below them to nothing. That is
     /// what a "black screen on launch" turned out to be once already.
-    static let chipRow: CGFloat = 34
+    ///
+    /// So it stays an explicit number. It is now derived from the two above
+    /// rather than written as a literal, because the row and its contents have
+    /// to agree: framed shorter than its content, the row clips instead of
+    /// scrolling.
+    static let chipRow: CGFloat = chipHeight + chipPad * 2
 
     /// Two segments in a full width `panel2` track, the live one filled with
     /// `activeBg` under `activeFg`. Selection is monochrome everywhere, and
@@ -101,6 +123,7 @@ struct FeedControls: View {
                 }
             }
             .padding(.horizontal, gutter)
+            .padding(.vertical, Self.chipPad)
         }
         .frame(height: Self.chipRow)
     }
@@ -118,6 +141,7 @@ struct FeedControls: View {
                 }
             }
             .padding(.horizontal, gutter)
+            .padding(.vertical, Self.chipPad)
         }
         .frame(height: Self.chipRow)
     }
