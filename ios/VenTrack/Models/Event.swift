@@ -113,6 +113,12 @@ struct Region: Codable, Hashable {
     let timeZone: String?   // IANA id, e.g. "Europe/London"
     let unit: String?       // "mi"
     let center: Center?
+    /// How far the backend actually searched around `center`, in kilometres.
+    /// The ceiling on the "how far to look" control in Settings: the app must
+    /// not offer a radius wider than the data behind it. Optional so a build
+    /// still decodes against a backend that predates the field, in which case
+    /// AppState falls back to the 50 km every region ships with.
+    let radiusKm: Double?
     let generic: Bool?      // legacy field, always false
 
 }

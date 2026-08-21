@@ -250,14 +250,16 @@ struct DiscoverView: View {
         return "\(weekday), \(date)"
     }
 
-    /// "128 events near London, nearest first". Both halves matter: the count
-    /// says whether the filters bit, and the order says why the top card is on
-    /// top.
+    /// "128 events near London, nearest first", or "9 events near London within
+    /// 5 mi, nearest first". Three parts, each earning its place: the count says
+    /// whether the filters bit, the order says why the top card is on top, and
+    /// the radius says so out loud because it is set away from here, in
+    /// Settings, and an unexplained short list reads as a broken feed.
     private var statusText: String {
         let n = app.visibleEvents.count
         let noun = n == 1 ? "event" : "events"
         let order = app.sort == .nearest ? "nearest first" : "soonest first"
-        return "\(n) \(noun) \(app.originPhrase), \(order)"
+        return "\(n) \(noun) \(app.originPhrase)\(app.radiusPhrase), \(order)"
     }
 }
 

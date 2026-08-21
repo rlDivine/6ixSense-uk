@@ -32,6 +32,10 @@ struct PreferencesView: View {
 
                     Divider().overlay(Tok.hairline).padding(.vertical, 4)
 
+                    radiusSection
+
+                    Divider().overlay(Tok.hairline).padding(.vertical, 4)
+
                     Text("Show me events about…")
                         .font(.system(size: 14)).foregroundStyle(Tok.muted).padding(.horizontal, 4)
 
@@ -121,6 +125,44 @@ struct PreferencesView: View {
                         .padding(.horizontal, 4)
                 }
             }
+        }
+    }
+
+    // MARK: Radius
+
+    /// How far out the feed reaches. A standing preference rather than a chip on
+    /// Discover, because it is the sort of thing set once, like the town, and
+    /// the filter row is already carrying dates and a dozen categories.
+    ///
+    /// The choices come from `AppState.radiusChoices`, which is capped by the
+    /// radius the backend actually searched, so this row can never offer a
+    /// distance with no data behind it.
+    private var radiusSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("How far to look")
+                .font(.system(size: 14)).foregroundStyle(Tok.muted).padding(.horizontal, 4)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    Pill(text: "Any distance", active: !app.isRadiusFiltered, small: true) {
+                        guard app.isRadiusFiltered else { return }
+                        app.setRadius(nil)
+                    }
+                    ForEach(app.radiusChoices, id: \.self) { d in
+                        Pill(text: "\(Int(d)) \(Fmt.distanceUnit)",
+                             active: app.isRadius(d), small: true) {
+                            guard !app.isRadius(d) else { return }
+                            app.setRadius(Fmt.toKm(d))
+                        }
+                    }
+                }
+                .padding(.horizontal, 4).padding(.vertical, 2)
+            }
+
+            Text(app.radiusDescription)
+                .font(.system(size: 12.5))
+                .foregroundStyle(app.isRadiusFiltered ? Tok.accent : Tok.muted)
+                .padding(.horizontal, 4)
         }
     }
 

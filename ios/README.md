@@ -89,10 +89,28 @@ carrying its four configured API keys across, which is its own migration.
 | **Event detail** | Hero, key facts, a still venue map from `MKMapSnapshotter` with an Apple Maps directions link, Share, Save, "Get tickets and details" |
 | **Saved** | Grouped by date, per-event reminder as a local notification 2h before |
 | **Search** | Live filter over title, venue and category, plus date phrases ("this weekend", "25/7") and UK address lookup |
-| **Preferences** | Interests, a location picker over all 454 UK towns grouped by nation and county, and the unlock with Restore |
+| **Preferences** | Interests, how far to look, a location picker over all 454 UK towns grouped by nation and county, and the unlock with Restore |
 | **Unlock** | One non-consumable in-app purchase. Free covers the town you are in, seven days ahead and three saves |
+| **iPad** | A real regular-width layout: `NavigationSplitView` sidebar, adaptive grid, map pane |
 | **Design** | Union flag palette, restrained category colours, light and dark (follows system), no gradients |
 | **Persistence** | Saved events, reminders, interests and location override in `UserDefaults`. No account. |
+
+## How far to look
+
+Settings carries a radius, applied to Discover and the map. It is filtered on
+the client: every event already arrives with its `distanceKm`, so narrowing is
+instant and needs no request, and the server keeps one cache per region rather
+than one per radius.
+
+The choices are capped by `region.radiusKm` from the API, which is how far the
+backend actually searched. The app will not offer a distance with no data
+behind it, and raising a region's radius server-side widens the control without
+a new build. Because the control lives away from the feed, Discover names the
+radius in its status line and the empty state offers to drop it: a limit set
+once and forgotten otherwise reads as a broken app.
+
+A listing with no coordinate is hidden while the filter is on, since there is
+no distance to test it against, and returns when it is off.
 
 ## UK specifics
 

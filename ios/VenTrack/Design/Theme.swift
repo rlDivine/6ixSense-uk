@@ -604,4 +604,26 @@ enum Fmt {
         guard v != nil else { return "n/a" }
         return "\(km(v)) \(distanceUnit)"
     }
+
+    // The radius control in Settings is chosen in the unit on the road signs
+    // and compared against an API that only ever speaks kilometres, so the
+    // conversion lives here beside `km(_:)` rather than being written out a
+    // second time somewhere else. One factor, one place, one authority.
+
+    /// A distance the user picked, in `distanceUnit`, as kilometres.
+    static func toKm(_ display: Double) -> Double {
+        usesMiles ? display / 0.621371 : display
+    }
+
+    /// A distance from the API, in kilometres, in `distanceUnit`.
+    static func toDisplay(_ km: Double) -> Double {
+        usesMiles ? km * 0.621371 : km
+    }
+
+    /// A whole-number radius with its unit, e.g. "10 mi". Radii are chosen from
+    /// a short list of round numbers, so unlike `km(_:)` this never needs a
+    /// decimal place.
+    static func radius(_ km: Double) -> String {
+        "\(Int(toDisplay(km).rounded())) \(distanceUnit)"
+    }
 }

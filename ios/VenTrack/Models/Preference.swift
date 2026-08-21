@@ -31,7 +31,11 @@ enum Preferences {
         // word British listings actually use for a scheduled match.
         .init(id: "sports",    label: "Sports",           symbol: "soccerball", family: .sport, keywords: ["sport", "football", "rugby", "cricket", "netball", "athletics", "boxing", "darts", "snooker", "racing", "match", "fixture", "league"]),
         .init(id: "free",      label: "Free Events",      symbol: "ticket", family: nil, keywords: ["free"]),
-        .init(id: "popup",     label: "Pop-ups & Markets", symbol: "bag", family: .food, keywords: ["pop-up", "popup", "market", "bazaar"]),
+        // "boot" covers both British names for the same Sunday morning: a car
+        // boot sale everywhere, a boot fair in Kent and Sussex. Matched against
+        // the title as well as the category, so a listing called "Ashford
+        // Market Boot Fair" reaches this interest whichever source found it.
+        .init(id: "popup",     label: "Pop-ups & Markets", symbol: "bag", family: .food, keywords: ["pop-up", "popup", "market", "bazaar", "boot", "jumble", "flea"]),
         .init(id: "family",    label: "Family",           symbol: "figure.2.and.child.holdinghands", family: .culture, keywords: ["family", "kid", "child"]),
         // Outdoors is a real canonical category again, so this selects it
         // rather than quietly resolving to Museums. Heritage tours stay in the

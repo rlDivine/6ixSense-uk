@@ -86,6 +86,13 @@ services:
       # localscan.js for the caching that keeps that cost bounded.
       - key: OPENAI_API_KEY
         sync: false
+      # Gates AI search and submission extraction. Unset and both are inert,
+      # so this can be deployed before there is a key and nothing breaks.
+      - key: AI_API_KEY
+        sync: false
+      # Shuts the moderation queue unless set. See api/.env.example.
+      - key: MODERATION_TOKEN
+        sync: false
 
 
   # The monthly discovery Cron Job that used to live here has been removed.

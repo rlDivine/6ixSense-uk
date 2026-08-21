@@ -22,6 +22,16 @@ final class AppState: NSObject, ObservableObject {
     /// away once unlocked. See `Gate` below.
     @Published var range: EventService.Range = .week
     @Published var category: String = "All"
+    /// How far out the feed reaches, in kilometres, or nil for no limit.
+    /// Set in Settings rather than on Discover, because it is a standing
+    /// preference like interests and the town, not a per-browse toggle.
+    ///
+    /// Applied on the client, not the server. Every event already arrives with
+    /// its `distanceKm`, so narrowing is instant and free: no request, no wait
+    /// on a cold backend, and the feed re-filters the moment the pill is
+    /// tapped. The server keeps one cache per region precisely so it does not
+    /// have to hold a copy per radius.
+    @Published private(set) var radiusKm: Double?
     @Published var search: String = ""
 
     // Region: which UK town the backend built this feed for. Resolved
@@ -374,13 +384,89 @@ final class AppState: NSObject, ObservableObject {
         persist()
     }
 
+    // MARK: Radius
+
+    /// The furthest the feed can usefully reach: the radius the backend really
+    /// searched around this region. Offering more would be promising coverage
+    /// that was never fetched, and a user who picked 50 miles would get a feed
+    /// that quietly stopped at 31. Falls back to the 50 km every region ships
+    /// with when talking to a backend that predates the field.
+    var maxRadiusKm: Double { region?.radiusKm ?? 50 }
+
+    /// The limit actually in force. A radius persisted under one region can
+    /// outreach another, so it is clamped rather than trusted; past the search
+    /// radius the filter is a no-op anyway.
+    var effectiveRadiusKm: Double? { radiusKm.map { min($0, maxRadiusKm) } }
+
+    var isRadiusFiltered: Bool { radiusKm != nil }
+
+    /// The distances offered in Settings, in the display unit. Anything that
+    /// reaches past what was searched is dropped, so the list shortens by
+    /// itself if a region is ever searched less widely.
+    var radiusChoices: [Double] {
+        let ceiling = Fmt.toDisplay(maxRadiusKm)
+        return [2.0, 5, 10, 20, 30].filter { $0 < ceiling - 0.5 }
+    }
+
+    /// Whether `display` (in the display unit) is the radius in force.
+    func isRadius(_ display: Double) -> Bool {
+        guard let km = radiusKm else { return false }
+        return abs(Fmt.toDisplay(km) - display) < 0.5
+    }
+
+    func setRadius(_ km: Double?) {
+        radiusKm = km
+        persist()
+    }
+
+    /// What Settings says under the pills, and the reason the feed is thin.
+    var radiusDescription: String {
+        guard let km = effectiveRadiusKm else {
+            return "Showing everything we found around \(placeName), out to about \(Fmt.radius(maxRadiusKm))."
+        }
+        return "Only events within \(Fmt.radius(km)) of \(placeName)."
+    }
+
+    /// The clause Discover adds to its status line. Empty when unfiltered: the
+    /// control lives in Settings, so the feed has to say out loud why it is
+    /// short, or a forgotten radius reads as a broken app.
+    var radiusPhrase: String {
+        guard let km = effectiveRadiusKm else { return "" }
+        return " within \(Fmt.radius(km))"
+    }
+
+    private func withinRadius(_ e: Event) -> Bool {
+        guard let limit = effectiveRadiusKm else { return true }
+        // A listing with no coordinate has no distance to test. Keeping it
+        // under a "within 5 miles" filter would assert something we cannot
+        // know, so it drops out while the filter is on and comes back when it
+        // is off.
+        guard let d = e.distanceKm else { return false }
+        return d <= limit
+    }
+
     /// True if the event matches the user's chosen interests (or if none chosen).
+    ///
+    /// Matched against the title as well as the category, because a category is
+    /// a single choice and plenty of events honestly belong to two interests. A
+    /// food festival is the clearest case: the API files it under Food, which is
+    /// the more useful of the two buckets to browse, but someone who picked
+    /// Festivals and nothing else still wants to see it. The title says
+    /// "festival" and now that is enough.
+    ///
+    /// The keywords are specific enough to survive the wider net. The one to
+    /// watch is "free", which is why that interest is answered by the event's
+    /// own price flag above and never by a keyword: "free" appears in the title
+    /// of plenty of events that are not.
     func matchesPreferences(_ e: Event) -> Bool {
         guard !preferredCategories.isEmpty else { return true }
         let cat = e.category.lowercased()
+        let title = e.title.lowercased()
         for pref in Preferences.with(ids: preferredCategories) {
-            if pref.id == "free" && e.isFree { return true }
-            if pref.keywords.contains(where: { cat.contains($0) }) { return true }
+            if pref.id == "free" { if e.isFree { return true }; continue }
+            if pref.keywords.contains(where: { cat.contains($0) || title.contains($0) }) {
+                return true
+            }
         }
         return false
     }
@@ -394,7 +480,9 @@ final class AppState: NSObject, ObservableObject {
     // MARK: Derived
 
     /// Base browse feed: preference- and date-filtered. Discover + Map use this.
-    var feed: [Event] { events.filter { matchesPreferences($0) && passesDateGuard($0) } }
+    var feed: [Event] {
+        events.filter { matchesPreferences($0) && passesDateGuard($0) && withinRadius($0) }
+    }
 
     var categoryChips: [String] {
         var counts: [String: Int] = [:]
@@ -537,6 +625,10 @@ final class AppState: NSObject, ObservableObject {
            let map = try? JSONDecoder().decode([String: Event].self, from: data) { saved = map }
         if let arr = d.array(forKey: "reminders") as? [String] { reminders = Set(arr) }
         if let arr = d.array(forKey: "preferredCategories") as? [String] { preferredCategories = Set(arr) }
+        // `object(forKey:)` rather than `double(forKey:)`: the latter returns 0
+        // for a missing key, which would read as a zero-mile radius and empty
+        // the feed for anyone who has never set one.
+        if let r = d.object(forKey: "radiusKm") as? Double { radiusKm = r }
         if let data = d.data(forKey: "placeOverride"),
            let o = try? JSONDecoder().decode(PlaceOverride.self, from: data) { placeOverride = o }
     }
@@ -545,6 +637,7 @@ final class AppState: NSObject, ObservableObject {
         d.set(try? JSONEncoder().encode(saved), forKey: "saved")
         d.set(Array(reminders), forKey: "reminders")
         d.set(Array(preferredCategories), forKey: "preferredCategories")
+        if let r = radiusKm { d.set(r, forKey: "radiusKm") } else { d.removeObject(forKey: "radiusKm") }
         if let o = placeOverride {
             d.set(try? JSONEncoder().encode(o), forKey: "placeOverride")
         } else {

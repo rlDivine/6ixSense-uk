@@ -80,9 +80,55 @@ const CATEGORY_ALIASES = new Map(Object.entries({
   "arts & theatre": "Theatre", "performing arts": "Theatre",
   film: "Film", "film & media": "Film", cinema: "Film",
   food: "Food", "food & drink": "Food", "food and drink": "Food", drink: "Food",
+  // Eventbrite's food vertical crossed with its format filters, which is how
+  // food festivals and food expos arrive now that those pages are scraped too.
+  "food festival": "Food", "food & drink festival": "Food", "food expo": "Food",
   family: "Family", kids: "Family", "family & education": "Family",
+  // A boot sale is a market to anyone browsing, so it folds onto the bucket
+  // that already has a colour and a glyph rather than minting a new one.
+  "car boot": "Markets", "car boot sale": "Markets", "boot sale": "Markets",
+  "boot fair": "Markets", "flea market": "Markets", "jumble sale": "Markets",
+  "farmers market": "Markets",
   "things to do": "Things to do", miscellaneous: "Things to do", other: "Things to do",
 }));
+
+// Titles that mean more than the shelf a listing was found on.
+//
+// A source's category is only ever the name of that shelf. Eventbrite returns
+// "Food & Drink" for a car boot someone listed under food and "Festivals" for a
+// beer festival; Skiddle calls both of those FEST; PredictHQ files farmers
+// markets and village fetes under "community", which drops them all into the
+// generic bucket. In every one of those cases the title says plainly what the
+// thing is and the category does not.
+//
+// So these run after the source's own wording and beat it, but only for phrases
+// that admit no second reading. Deliberately absent: bare "festival", "market"
+// and "food", each of which turns up in the name of plenty of events that are
+// none of the three.
+//
+// Order matters: a "car boot and food fair" is a car boot.
+const TITLE_RULES = [
+  [/\bcar[\s-]?boot\b|\bboot\s?(?:sale|fair)\b|\bjumble\s+sale\b|\bflea\s+market\b|\bbric[\s-]?a[\s-]?brac\b|\btable[\s-]?top\s+sale\b/i, "Markets"],
+  [/\bfarmers?['’`]?\s+market\b|\bproduce\s+market\b/i, "Markets"],
+  [
+    // Food and drink festivals, named by the drink as often as by the food.
+    // The festival word has to be adjacent: "beer festival" is one of these,
+    // "beer at the festival" is not.
+    /\b(?:food|street[\s-]?food|beer|ale|cider|gin|wine|whisky|whiskey|rum|coffee|cheese|chilli|chocolate|seafood|curry|vegan|bbq|barbecue)\s*(?:&|and)?\s*(?:drink\s+)?(?:festival|fest|fayre|fair|expo)\b/i,
+    "Food",
+  ],
+  [/\bfood\s*(?:&|and)\s*drink\b|\bstreet\s+food\b/i, "Food"],
+];
+
+/// The category a title asserts outright, or null when it asserts nothing.
+export function categoryFromTitle(title) {
+  const t = String(title || "");
+  if (!t) return null;
+  for (const [pattern, category] of TITLE_RULES) {
+    if (pattern.test(t)) return category;
+  }
+  return null;
+}
 
 /// Fold a source's own wording onto the shared vocabulary above.
 export function canonicalCategory(raw) {
@@ -140,10 +186,13 @@ export function makeEvent({
   // says out loud that the coordinates can be a guess.
   approx = false,
 }) {
+  const cleanTitle = decodeEntities((title || "Untitled event").trim());
   return {
     id: String(id),
-    title: decodeEntities((title || "Untitled event").trim()),
-    category: canonicalCategory(decodeEntities(category)),
+    title: cleanTitle,
+    // The title wins when it names the thing outright, because a source's own
+    // category is only ever the shelf the listing sat on. See TITLE_RULES.
+    category: categoryFromTitle(cleanTitle) || canonicalCategory(decodeEntities(category)),
     start, // ISO 8601 or null if unknown
     venue: decodeEntities(venue),
     address: decodeEntities(address),

@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 // For Timer.publish, which the loading state's clock is built on. SwiftUI does
 // not re-export Combine, so without this the file does not build.
@@ -249,20 +250,37 @@ struct EmptyState: View {
                    message: message) {
             HStack(spacing: 10) {
                 StateButton(title: "Clear filters", kind: .primary, action: reset)
-                StateButton(title: "Try this week", kind: .secondary, action: widenAction)
+                StateButton(title: secondaryTitle, kind: .secondary, action: widenAction)
             }
         }
+    }
+
+    /// A distance limit set once in Settings is the easiest filter to forget,
+    /// and the one most likely to be the reason nothing is here, so it is named
+    /// outright rather than left to be rediscovered.
+    private var secondaryTitle: String {
+        app.isRadiusFiltered ? "Search further out" : "Try this week"
     }
 
     private var message: String {
         let town = place.trimmingCharacters(in: .whitespacesAndNewlines)
         let name = town.isEmpty ? app.placeName : town
+        if let km = app.effectiveRadiusKm {
+            return "Nothing matches those filters within \(Fmt.radius(km)) of \(name). Search further out, widen the dates, or drop a category."
+        }
         return "Nothing matches those filters in \(name). Widen the dates, or drop a category, and the list fills up again."
     }
 
     private func widenAction() {
         if let widen = widen {
             widen()
+            return
+        }
+        // Dropping the radius costs nothing: it filters events already in hand,
+        // so the list refills without a request. Widening the dates does need
+        // one, so it is only reached once distance is no longer the constraint.
+        if app.isRadiusFiltered {
+            app.setRadius(nil)
             return
         }
         app.range = .week
