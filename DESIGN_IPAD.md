@@ -1,10 +1,27 @@
 # VenTrack: iPad design brief
 
-VenTrack ships iPhone only. This describes what an iPad version would be, and
-what has to be true before one can exist at all.
+**Status: built.** This was written as a brief before the layout existed. It is
+kept as written rather than rewritten in the past tense, because what it argues
+for is still what the code does and the reasoning is worth more than the tense.
+
+What shipped, against what this asked for:
+
+| | |
+| --- | --- |
+| Layout | `ios/VenTrack/Views/iPad/`, a `NavigationSplitView` behind one size class branch in `RootView` |
+| Device family | `TARGETED_DEVICE_FAMILY = '1,2'` in `project.rb` |
+| Landscape | `UISupportedInterfaceOrientations~ipad`, all four |
+| Screenshots | **NOT DONE, and it is the remaining third of the gate.** See section 1 |
+
+One deviation from section 3, found by arithmetic rather than by taste: two
+columns do not fit a 13 inch with the detail pane open while the 340pt card
+floor holds, so that case is one column capped at 520 and centred. The floor
+holds because dropping it to 280 fits the second column and breaks the card,
+which loses its price and source out of the footer.
 
 Read section 1 before anything else. It is not preamble, it is the reason the
-sibling app was rejected.
+sibling app was rejected, and two thirds of it being done is the dangerous
+state rather than the safe one.
 
 ---
 
