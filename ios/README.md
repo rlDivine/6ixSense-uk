@@ -17,12 +17,24 @@ ruby project.rb          # (re)generate VenTrack.xcodeproj from the Swift source
 open VenTrack.xcodeproj
 ```
 
-`project.rb` needs the `xcodeproj` gem (`gem install xcodeproj`). The generated
-project is committed, so you only need to re-run it after adding or renaming a
-Swift file.
+`project.rb` needs the `xcodeproj` gem (`gem install xcodeproj`).
 
-Pick an iPhone simulator and hit Cmd-R. The app is iPhone only; see the note
-on `TARGETED_DEVICE_FAMILY` below.
+**Run it every time, and run it before opening the project.** `VenTrack.xcodeproj`
+is generated and is NOT committed, so a fresh clone has no project to open until
+you generate one. That is deliberate. It used to be committed, and a stale copy
+cost real time: the iPad layout landed with `TARGETED_DEVICE_FAMILY = '1,2'` in
+`project.rb` and CI compiled it green, while the committed project still said
+`'1'` and referenced none of the new files. Anyone opening it in Xcode built the
+old iPhone only app and quite reasonably concluded the iPad layout was broken.
+
+Untracked, `open VenTrack.xcodeproj` fails loudly when you have skipped the
+generator. That is a much better failure than silently building last week's app.
+
+Pick an iPhone or iPad simulator and hit Cmd-R. The app supports both: at
+compact width it is the phone layout, and at regular width `RootView` hands
+over to `Views/iPad/PadRootView`, a NavigationSplitView. See the note on
+`TARGETED_DEVICE_FAMILY` in `project.rb`, which explains why the layout and
+that setting have to ship together.
 
 ## Running on your own iPhone
 

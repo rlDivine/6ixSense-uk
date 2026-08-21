@@ -1,4 +1,27 @@
 # Xcode and Swift, for the VenTrack iOS app.
+
+## The Xcode project itself, because it is GENERATED, not written.
+#
+# project.rb is the source of truth. It globs VenTrack/**/*.swift and writes
+# every build setting, and it mints fresh UUIDs on every run, so a committed
+# copy is dirty the moment anyone regenerates and can never be checked for
+# staleness in CI. The workflow already regenerates it rather than trusting
+# what is committed, which is the correct instinct.
+#
+# It used to be committed anyway, and that cost real time. The iPad layout
+# landed with TARGETED_DEVICE_FAMILY = '1,2' in project.rb and CI compiled it
+# green, while the committed project still said '1' and referenced none of the
+# new files. Anyone opening it in Xcode therefore built the OLD iPhone only app
+# and quite reasonably concluded the iPad layout did not work.
+#
+# Untracked, `open VenTrack.xcodeproj` fails loudly when you have not run the
+# generator, which is a far better failure than silently building last week's
+# app. Always:
+#
+#   cd ios && ruby project.rb && open VenTrack.xcodeproj
+#
+VenTrack.xcodeproj/
+
 ## Build generated
 build/
 DerivedData/
