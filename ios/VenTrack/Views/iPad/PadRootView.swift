@@ -126,6 +126,19 @@ struct PadRootView: View {
                     .navigationDestination(for: String.self) { id in
                         DetailPane(selectedID: id)
                             .navigationBarTitleDisplayMode(.inline)
+                            // Two controls at the top left is one too many.
+                            //
+                            // The split view puts a sidebar toggle in the
+                            // detail column's bar, which is right for the list
+                            // and wrong the moment something is pushed on top
+                            // of it: the toggle and the back chevron sit side
+                            // by side as a pair of near identical circles, and
+                            // the honest reading of that is two back buttons.
+                            //
+                            // Removed here rather than everywhere, so the list
+                            // keeps its toggle and the sidebar stays reachable
+                            // one tap away.
+                            .toolbar(removing: .sidebarToggle)
                     }
             }
         }
