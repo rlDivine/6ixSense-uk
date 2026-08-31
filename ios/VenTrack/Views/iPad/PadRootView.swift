@@ -61,20 +61,54 @@ struct PadRootView: View {
     /// Portrait was previously given three columns and squeezed them. The
     /// visible symptom was a back button at the top left that did nothing,
     /// because there was a navigation bar with nowhere to go back to.
+    /// The window's width, which is the only input to the layout decision.
+    ///
+    /// Seeded from UIKit rather than starting at zero so the FIRST frame is
+    /// already the right layout. Starting at zero means launching into the
+    /// narrow layout and swapping a frame later, and swapping a split view for
+    /// a different split view is not a free redraw: it rebuilds both columns
+    /// and loses the scroll position in whichever one was showing.
+    @State private var width: CGFloat = Pad.windowWidth ?? 0
+
+    /// THE SPLIT VIEW IS NOT INSIDE A GEOMETRY READER, and that is deliberate.
+    ///
+    /// It used to be, as the obvious way to get a width to branch on. A
+    /// NavigationSplitView expects to own its container: it places its own
+    /// columns, decides for itself whether the sidebar sits beside the content
+    /// or floats over it, and coordinates the safe areas of all three against
+    /// the window. Handed a plain proposed rectangle by a GeometryReader, that
+    /// coordination goes wrong at the widths where it is tightest, and an 11
+    /// inch in landscape is the tightest case that still asks for three
+    /// columns. The reported symptom was the content column overlapping the
+    /// sidebar when the sidebar was open.
+    ///
+    /// So the width is measured from the BACKGROUND instead. The split view is
+    /// the primary content and lays itself out against the window as it wants
+    /// to; the geometry reader is a transparent layer behind it that reports
+    /// the same size without being its parent.
     var body: some View {
-        GeometryReader { geo in
-            if geo.size.width >= Pad.paneMinimum {
-                wideLayout
-            } else {
-                narrowLayout
+        layout
+            .background {
+                GeometryReader { geo in
+                    Color.clear
+                        .onAppear { width = geo.size.width }
+                        .onChange(of: geo.size.width) { _, new in width = new }
+                }
             }
-        }
-        // The map is the one destination whose detail is not an event, so a
-        // selection carried into it would draw an event pane behind a map that
-        // has nothing to do with it.
-        .onChange(of: app.tab) { _, _ in
-            selectedID = nil
-            path = []
+            // The map is the one destination whose detail is not an event, so a
+            // selection carried into it would draw an event pane behind a map
+            // that has nothing to do with it.
+            .onChange(of: app.tab) { _, _ in
+                selectedID = nil
+                path = []
+            }
+    }
+
+    @ViewBuilder private var layout: some View {
+        if width >= Pad.paneMinimum {
+            wideLayout
+        } else {
+            narrowLayout
         }
     }
 

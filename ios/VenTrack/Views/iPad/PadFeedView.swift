@@ -1,7 +1,4 @@
 import SwiftUI
-// For the window read in `windowWidth`. SwiftUI pulls UIKit in transitively on
-// iOS, but the dependency is real here rather than incidental, so it is stated.
-import UIKit
 
 /// Discover, as the content column of the split view.
 ///
@@ -62,16 +59,12 @@ struct PadFeedView: View {
     // The window rather than the screen, because in Split View multitasking the
     // app owns a slice of the display and the slice is what it is laying out in.
 
-    /// The app window's width, or nil when there is no window to ask, which
-    /// happens during previews and snapshotting. The caller falls back to the
-    /// column, which is wrong by at most one step of the scale and is never
-    /// wrong enough to be worth crashing over.
-    private var windowWidth: CGFloat? {
-        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-        let scene = scenes.first { $0.activationState == .foregroundActive } ?? scenes.first
-        guard let width = scene?.keyWindow?.bounds.width, width > 0 else { return nil }
-        return width
-    }
+    /// One definition, in `Pad`, because `PadRootView` needs the same number to
+    /// pick the layout and two readings of the window would be two things to
+    /// keep in step. Nil during previews and snapshotting, where the caller
+    /// falls back to the column: wrong by at most one step of the scale, and
+    /// never wrong enough to be worth crashing over.
+    private var windowWidth: CGFloat? { Pad.windowWidth }
 
     // MARK: Which screen
 

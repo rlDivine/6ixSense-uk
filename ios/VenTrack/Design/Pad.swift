@@ -1,4 +1,7 @@
 import SwiftUI
+// For the window read in `windowWidth`. The dependency is real here rather
+// than incidental, so it is stated.
+import UIKit
 
 /// Layout constants for regular width, and nothing else.
 ///
@@ -68,6 +71,20 @@ enum Pad {
     /// the pane, and neither is a special case anybody had to name.
     static var paneMinimum: CGFloat {
         sidebarIdeal + gridMin + detailMin + 3 * S.s6
+    }
+
+    /// The app window's width, or nil when there is no window to ask, which
+    /// happens during previews and snapshotting.
+    ///
+    /// The WINDOW rather than the screen, because in Split View multitasking
+    /// the app owns a slice of the display and the slice is what it is laying
+    /// out in. Asking the screen would have a half width app believing it had a
+    /// 13 inch to spend.
+    static var windowWidth: CGFloat? {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        let scene = scenes.first { $0.activationState == .foregroundActive } ?? scenes.first
+        guard let width = scene?.keyWindow?.bounds.width, width > 0 else { return nil }
+        return width
     }
 
     /// How many columns fit in the measure actually left after the sidebar and
